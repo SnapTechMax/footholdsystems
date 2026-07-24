@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
+import { CALENDLY_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "The 5 Levels of AI",
@@ -350,7 +351,18 @@ export default function GuidePage() {
               find there, and what it costs small businesses like yours. Free,
               whether or not you hire us.
             </p>
-            <div className="mt-6 space-y-1 font-mono text-sm">
+            <a
+              href={CALENDLY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#1b1b1b] px-7 py-3.5 text-lg font-bold text-[#f2efe6] transition-colors hover:bg-[#2c2c29]"
+            >
+              Book a call &rarr;
+            </a>
+            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-[#1b1b1b]/60">
+              Or reach us directly
+            </p>
+            <div className="mt-2 space-y-1 font-mono text-sm">
               <a href={`tel:${CONTACT_PHONE_TEL}`} className="block font-bold text-[#1b1b1b] hover:underline">
                 {CONTACT_PHONE}
               </a>

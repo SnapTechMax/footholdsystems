@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CALENDLY_URL } from "@/lib/site";
 
 export function Header() {
   return (
@@ -32,12 +33,14 @@ export function Header() {
           >
             The guide
           </Link>
-          <Link
-            href="/#book-a-call"
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-lg bg-[#f6be00] px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1b1b1b] transition-colors hover:bg-[#ffd23d]"
           >
             Book a call
-          </Link>
+          </a>
         </nav>
       </div>
     </header>
