@@ -146,7 +146,7 @@ export default function HomePage() {
       </section>
 
       {/* ============================= FINAL CTA ============================= */}
-      <section className="border-t border-[#d4d1c6] bg-[#e2dfd4]">
+      <section id="book-a-call" className="scroll-mt-20 border-t border-[#d4d1c6] bg-[#e2dfd4]">
         <div className="mx-auto max-w-4xl px-6 py-20">
           <div className="bg-[#f6be00] p-8 text-[#1b1b1b] sm:p-12">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#1b1b1b]/70">

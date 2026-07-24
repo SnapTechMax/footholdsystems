@@ -33,10 +33,10 @@ export function Header() {
             The guide
           </Link>
           <Link
-            href="/guide#get-the-guide"
+            href="/#book-a-call"
             className="rounded-lg bg-[#f6be00] px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1b1b1b] transition-colors hover:bg-[#ffd23d]"
           >
-            Free guide
+            Book a call
           </Link>
         </nav>
       </div>
