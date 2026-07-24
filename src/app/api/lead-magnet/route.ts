@@ -18,8 +18,11 @@ const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO:
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "max@snaptechrepair.com";
 
 // Which address the delivery email comes from. Must be on a Resend-verified domain.
-// footholdsystems.com must be verified in Resend before this will send.
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "noreply@footholdsystems.com";
+// The free Resend plan only allows one verified domain, so we reuse the already-
+// verified snaptechrepair.com (no second domain / paid plan needed). The email still
+// shows the "Foothold Systems" display name and replies go to max@footholdsystems.com.
+// To send from footholdsystems.com later, verify it in Resend and set CONTACT_FROM_EMAIL.
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "noreply@snaptechrepair.com";
 
 // Public base URL used to build the download link
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://footholdsystems.com").replace(/\/$/, "");
