@@ -47,6 +47,14 @@ export const metadata: Metadata = {
     description:
       "The plain-English version. Five levels. Find yours in ten minutes. Free guide.",
     url: "/",
+    images: [
+      {
+        url: "/images/foothold-mark.png",
+        width: 1080,
+        height: 1080,
+        alt: "Foothold Systems",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",

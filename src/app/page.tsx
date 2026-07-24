@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 
 // display font utility (Archivo is loaded globally in layout.tsx)
@@ -6,7 +7,7 @@ const display = "font-[family-name:var(--font-archivo)]";
 // BRAND / CONTACT — placeholders. Swap for the real Foothold Systems details.
 const CONTACT_PHONE = "(626) 838-2862"; // TODO: confirm Foothold phone
 const CONTACT_PHONE_TEL = "6268382862"; // TODO: confirm Foothold phone
-const CONTACT_EMAIL = "hello@footholdsystems.com";
+const CONTACT_EMAIL = "max@footholdsystems.com";
 
 const levels = [
   {
@@ -76,6 +77,19 @@ export default function HomePage() {
       {/* ============================= HERO (dark cover) ============================= */}
       <section className="bg-[#1b1b1b] text-[#f2efe6]">
         <div className="mx-auto max-w-4xl px-6 py-20 sm:py-24">
+          <div className="mb-14 flex items-center gap-3">
+            <Image
+              src="/images/foothold-mark.png"
+              alt="Foothold Systems logo"
+              width={44}
+              height={44}
+              className="h-11 w-11 rounded-md"
+              priority
+            />
+            <span className="font-mono text-sm font-bold uppercase tracking-[0.18em] text-[#f2efe6]">
+              Foothold Systems
+            </span>
+          </div>
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
             Foothold Systems &nbsp;&middot;&nbsp; AI for Small Business
           </p>

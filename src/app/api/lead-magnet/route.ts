@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // BRAND / CONTACT — placeholders. Swap these for the real Foothold Systems
 // details (phone is currently reused from SnapTech; address is a placeholder).
 const BRAND_NAME = "Foothold Systems";
-const CONTACT_EMAIL = "hello@footholdsystems.com";
+const CONTACT_EMAIL = "max@footholdsystems.com";
 const CONTACT_PHONE = "(626) 838-2862"; // TODO: confirm Foothold phone
 const CONTACT_PHONE_TEL = "6268382862"; // TODO: confirm Foothold phone
 const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO: confirm Foothold mailing address (required on marketing email footers)
