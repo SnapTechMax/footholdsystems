@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Source_Serif_4, Inter, JetBrains_Mono, Archivo } from "next/font/google";
 import Script from "next/script";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const sourceSerif = Source_Serif_4({
@@ -34,11 +36,11 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   metadataBase: new URL("https://footholdsystems.com"),
   title: {
-    default: "The 5 Levels of AI for Small Business | Foothold Systems",
+    default: "AI Integration for Small Business | Foothold Systems",
     template: "%s | Foothold Systems",
   },
   description:
-    "If you run a small business, everybody says you should use AI. Nobody says what that means. The plain-English version for owners: five levels, find yours in ten minutes, then find out what staying there is costing you. A free guide from Foothold Systems.",
+    "Foothold Systems sets up AI for small businesses, in plain English. The right tool, built for how your shop really runs, and looked after once it's live. Start with our free guide, The 5 Levels of AI.",
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -75,7 +77,9 @@ export default function RootLayout({
       <body
         className={`${sourceSerif.variable} ${inter.variable} ${jetbrainsMono.variable} ${archivo.variable} antialiased`}
       >
+        <Header />
         {children}
+        <Footer />
         {/* Meta (Facebook) Pixel base code */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1460434995827375');fbq('track','PageView');`}
