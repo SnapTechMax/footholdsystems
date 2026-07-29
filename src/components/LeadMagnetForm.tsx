@@ -43,6 +43,12 @@ export function LeadMagnetForm() {
         event_category: "lead-magnet",
         event_label: "5 Levels of AI",
       });
+      // GA4 recommended lead event — powers GA4's built-in lead-gen reports.
+      // Fires only on a successful submission (guide actually delivered).
+      window.gtag?.("event", "generate_lead", {
+        event_category: "lead-magnet",
+        event_label: "5 Levels of AI",
+      });
       // Meta Pixel lead conversion
       window.fbq?.("track", "Lead", { content_name: "5 Levels of AI" });
     } catch {
