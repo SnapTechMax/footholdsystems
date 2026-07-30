@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stamp a "Book a call" button and a printable booking URL onto the guide PDF.
+"""Stamp a "Book a call" button onto the guide PDF and strip the phone number.
 
 The guide is designed and exported elsewhere; this script adds the booking
 call-to-action afterwards so the PDF in public/downloads always carries it. Rerun
@@ -19,21 +19,34 @@ copy get there via footholdsystems.com, which the page already shows. If the
 Calendly link is ever renamed to something Foothold-branded, printing it becomes
 worthwhile — see BOOKING.md.
 
-Requires: pypdf, reportlab  (pip install pypdf reportlab)
+It also removes the phone number from the last page. This is a real removal, not a
+box drawn over the top: the text is deleted from the content stream, so it cannot be
+selected, copied or searched. Inbound is meant to go through Calendly for now. The
+tidier long-term fix is to take the number out of the design source and re-export;
+until then this keeps the published PDF consistent with the website.
+
+Requires: pypdf, reportlab, pdfplumber
 """
 
 from __future__ import annotations
 
 import io
+import logging
+import re
 import sys
 from pathlib import Path
 
+import pdfplumber
 from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import Link
-from pypdf.generic import ArrayObject, NameObject, NumberObject
+from pypdf.generic import ArrayObject, DecodedStreamObject, NameObject, NumberObject
 from reportlab.lib.colors import Color
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
+
+# pdfminer, under pdfplumber, warns about missing FontBBox on every subsetted font
+# in this PDF. Harmless, and it drowns out this script's own output.
+logging.getLogger("pdfminer").setLevel(logging.ERROR)
 
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE = REPO / "public" / "downloads" / "Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf"
@@ -60,9 +73,138 @@ BTN_RADIUS = 5.0
 BTN_LABEL = "BOOK A CALL"
 BTN_FONT, BTN_SIZE = "Helvetica-Bold", 12.0
 
+# Text runs matching this are deleted from the last page.
+PHONE_RE = re.compile(r"\(?\d{3}\)?[\s.–-]*\d{3}[\s.–-]*\d{4}")
+
+
+Matrix = tuple[float, float, float, float, float, float]
+IDENTITY: Matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+
+# BT/ET first so a text object is consumed whole and its innards are never
+# mistaken for operators.
+TOKEN_RE = re.compile(
+    rb"(?P<bt>BT\b.*?\bET\b)"
+    rb"|(?P<cm>(?:[-\d.]+\s+){6}cm\b)"
+    rb"|(?P<q>\bq\b)"
+    rb"|(?P<Q>\bQ\b)",
+    re.S,
+)
+TM_RE = re.compile(rb"((?:[-\d.]+\s+){6})Tm\b")
+
+
+def mat_mul(m: Matrix, n: Matrix) -> Matrix:
+    """Concatenate m onto n, as PDF's `cm` does (result = m x n)."""
+    a1, b1, c1, d1, e1, f1 = m
+    a2, b2, c2, d2, e2, f2 = n
+    return (
+        a1 * a2 + b1 * c2,
+        a1 * b2 + b1 * d2,
+        c1 * a2 + d1 * c2,
+        c1 * b2 + d1 * d2,
+        e1 * a2 + f1 * c2 + e2,
+        e1 * b2 + f1 * d2 + f2,
+    )
+
+
+def text_objects(stream: bytes):
+    """Yield (start, end, page_x, page_y) for each text object in the stream.
+
+    Walks the operators tracking the q/Q stack and the current transform, because
+    the page contains several nested `cm` transforms and a text object's position
+    only makes sense against the one in effect where it appears.
+    """
+    ctm: Matrix = IDENTITY
+    stack: list[Matrix] = []
+
+    for token in TOKEN_RE.finditer(stream):
+        if token.group("q"):
+            stack.append(ctm)
+        elif token.group("Q"):
+            if stack:
+                ctm = stack.pop()
+        elif token.group("cm"):
+            values = tuple(float(v) for v in token.group("cm").split()[:6])
+            ctm = mat_mul(values, ctm)  # type: ignore[arg-type]
+        else:
+            tm = TM_RE.search(token.group("bt"))
+            if not tm:
+                continue
+            matrix = tuple(float(v) for v in tm.group(1).split()[:6])
+            rendering = mat_mul(matrix, ctm)  # type: ignore[arg-type]
+            yield token.start(), token.end(), rendering[4], rendering[5]
+
+
+def strip_phone(reader: PdfReader, page_index: int, source: Path) -> int:
+    """Delete phone-number text runs from a page's content stream.
+
+    Returns how many runs were removed. Works by locating the number's bounding
+    box with pdfplumber, then dropping whole `BT`/`ET` text objects whose origin
+    falls inside it. Those objects set only a font and a text matrix — no colour
+    or graphics state that later drawing depends on — so removing them changes
+    nothing but the glyphs.
+    """
+    with pdfplumber.open(str(source)) as doc:
+        page = doc.pages[page_index]
+        height = float(page.height)
+        words = page.extract_words()
+
+    # A number like "(626) 838-2862" comes back as two separate words, so test
+    # windows of adjacent words on the same line rather than words in isolation.
+    lines: dict[int, list[dict]] = {}
+    for w in words:
+        lines.setdefault(round(w["top"] / 3), []).append(w)
+
+    boxes = []
+    for line in lines.values():
+        line.sort(key=lambda w: w["x0"])
+        for start in range(len(line)):
+            for size in (1, 2, 3):
+                window = line[start : start + size]
+                if len(window) < size:
+                    break
+                if not PHONE_RE.fullmatch(" ".join(w["text"] for w in window).strip()):
+                    continue
+                boxes.append(
+                    (  # to PDF space, origin bottom-left
+                        min(w["x0"] for w in window),
+                        height - max(w["bottom"] for w in window),
+                        max(w["x1"] for w in window),
+                        height - min(w["top"] for w in window),
+                    )
+                )
+                break
+
+    if not boxes:
+        return 0
+
+    data = reader.pages[page_index].get_contents().get_data()
+
+    pad = 4.0
+    removed = 0
+    out = bytearray()
+    cursor = 0
+    for start, end, px, py in text_objects(data):
+        if start < cursor:
+            continue
+        if any(
+            x0 - pad <= px <= x1 + pad and y0 - pad <= py <= y1 + pad
+            for x0, y0, x1, y1 in boxes
+        ):
+            out += data[cursor:start]
+            cursor = end
+            removed += 1
+
+    if removed:
+        out += data[cursor:]
+        replacement = DecodedStreamObject()
+        replacement.set_data(bytes(out))
+        reader.pages[page_index][NameObject("/Contents")] = replacement
+
+    return removed
+
 
 def build_overlay(width: float, height: float) -> PdfReader:
-    """Draw the button and URL onto a transparent single-page overlay."""
+    """Draw the button onto a transparent single-page overlay."""
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=(width, height))
 
@@ -136,6 +278,9 @@ def main() -> int:
     width = float(last.mediabox.width)
     height = float(last.mediabox.height)
 
+    # Delete the phone number before the pages are copied into the writer.
+    stripped = strip_phone(reader, last_index, source)
+
     writer = PdfWriter()
     for page in reader.pages:
         writer.add_page(page)
@@ -164,10 +309,26 @@ def main() -> int:
     tmp = OUTPUT.with_suffix(".tmp.pdf")
     with open(tmp, "wb") as fh:
         writer.write(fh)
+
+    # Confirm the number really is gone from the extractable text before the
+    # result replaces the published file.
+    with pdfplumber.open(str(tmp)) as doc:
+        text = "\n".join((pg.extract_text() or "") for pg in doc.pages)
+    leftover = PHONE_RE.search(text)
+    if leftover:
+        tmp.unlink()
+        print(
+            f"error: a phone number is still extractable ({leftover.group(0)!r}); "
+            "refusing to write the output",
+            file=sys.stderr,
+        )
+        return 1
+
     tmp.replace(OUTPUT)
 
     print(f"wrote {OUTPUT.relative_to(REPO)} ({OUTPUT.stat().st_size:,} bytes)")
     print(f"  booking CTA stamped on page {last_index + 1} of {len(reader.pages)}")
+    print(f"  phone number text runs removed: {stripped}")
     return 0
 
 
