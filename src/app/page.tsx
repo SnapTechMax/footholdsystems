@@ -4,11 +4,6 @@ import { BookCallButton } from "@/components/BookCallButton";
 // display font utility (Archivo is loaded globally in layout.tsx)
 const display = "font-[family-name:var(--font-archivo)]";
 
-// Contact placeholders — phone reused from SnapTech for now.
-const CONTACT_PHONE = "(626) 838-2862";
-const CONTACT_PHONE_TEL = "6268382862";
-const CONTACT_EMAIL = "max@footholdsystems.com";
-
 const services = [
   {
     label: "Build",
@@ -165,17 +160,6 @@ export default function HomePage() {
               entryPoint="homepage"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#1b1b1b] px-7 py-3.5 text-lg font-bold text-[#f2efe6] transition-colors hover:bg-[#2c2c29]"
             />
-            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-[#1b1b1b]/60">
-              Or reach us directly
-            </p>
-            <div className="mt-2 space-y-1 font-mono text-sm">
-              <a href={`tel:${CONTACT_PHONE_TEL}`} className="block font-bold text-[#1b1b1b] hover:underline">
-                {CONTACT_PHONE}
-              </a>
-              <a href={`mailto:${CONTACT_EMAIL}`} className="block text-[#1b1b1b] hover:underline">
-                {CONTACT_EMAIL}
-              </a>
-            </div>
           </div>
         </div>
       </section>

@@ -1,10 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
-// Contact placeholders — phone reused from SnapTech for now.
-const CONTACT_PHONE = "(626) 838-2862";
-const CONTACT_PHONE_TEL = "6268382862";
-const CONTACT_EMAIL = "max@footholdsystems.com";
+import { BookCallButton } from "@/components/BookCallButton";
 
 export function Footer() {
   return (
@@ -51,16 +47,16 @@ export function Footer() {
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
               Get in touch
             </p>
-            <ul className="mt-3 space-y-2 font-mono text-sm">
+            {/* Booking only — no phone or email published while inbound is
+                being kept to scheduled calls. */}
+            <ul className="mt-3 space-y-2 font-serif text-[15px]">
               <li>
-                <a href={`tel:${CONTACT_PHONE_TEL}`} className="transition-colors hover:text-[#f2efe6]">
-                  {CONTACT_PHONE}
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${CONTACT_EMAIL}`} className="transition-colors hover:text-[#f2efe6]">
-                  {CONTACT_EMAIL}
-                </a>
+                <BookCallButton
+                  entryPoint="footer"
+                  className="transition-colors hover:text-[#f2efe6]"
+                >
+                  Book a call
+                </BookCallButton>
               </li>
             </ul>
           </div>

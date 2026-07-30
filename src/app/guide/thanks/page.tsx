@@ -16,11 +16,6 @@ const display = "font-[family-name:var(--font-archivo)]";
 
 const GUIDE_PATH = "/downloads/foothold-5-levels-of-ai.pdf";
 
-// BRAND / CONTACT — placeholders, kept in step with /guide.
-const CONTACT_PHONE = "(626) 838-2862"; // TODO: confirm Foothold phone
-const CONTACT_PHONE_TEL = "6268382862"; // TODO: confirm Foothold phone
-const CONTACT_EMAIL = "max@footholdsystems.com";
-
 // ─────────────────────────────────────────────────────────────────────────────
 // THE INTRO VIDEO
 //
@@ -205,24 +200,6 @@ export default function GuideThanksPage() {
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-[#1b1b1b]/60">
             Weekday afternoons, 1–4pm Pacific &middot; Next 7 days
           </p>
-
-          <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-[#1b1b1b]/60">
-            Or reach me directly
-          </p>
-          <div className="mt-2 space-y-1 font-mono text-sm">
-            <a
-              href={`tel:${CONTACT_PHONE_TEL}`}
-              className="block font-bold text-[#1b1b1b] hover:underline"
-            >
-              {CONTACT_PHONE}
-            </a>
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="block text-[#1b1b1b] hover:underline"
-            >
-              {CONTACT_EMAIL}
-            </a>
-          </div>
         </div>
 
         <p className="mt-8 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
