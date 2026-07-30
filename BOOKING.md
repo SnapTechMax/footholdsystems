@@ -66,12 +66,30 @@ Open the link in a private window and confirm:
 Each entry point tags its link with a `utm_campaign` so bookings can be told apart in
 Calendly's UTM reporting, via `calendlyUrl()` in [`src/lib/site.ts`](src/lib/site.ts):
 
-| `utm_campaign` | Where |
-| --- | --- |
-| `header` | Site header, every page |
-| `homepage` | Homepage "next step" block |
-| `guide` | Guide page, bottom CTA |
-| `guide-thanks` | Thank-you page after a guide request |
+| `utm_campaign` | `utm_medium` | Where |
+| --- | --- | --- |
+| `header` | `website` | Site header, every page |
+| `homepage` | `website` | Homepage "next step" block |
+| `guide` | `website` | Guide page, bottom CTA |
+| `guide-thanks` | `website` | Thank-you page after a guide request |
+| `footer` | `website` | Site footer, every page |
+| `guide-email` | `email` | Guide delivery email |
+| `guide-pdf` | `pdf` | Button on the guide PDF's last page |
 
-They also fire a `book_call_click` event to GA4 / UET / Meta, labelled with the same
-entry point.
+The on-site buttons also fire a `book_call_click` event to GA4 / UET / Meta, labelled
+with the same entry point.
+
+## The username still says SnapTech
+
+The booking link is `calendly.com/max-snaptechrepair/...`. Nothing on the website or
+in the PDF spells that URL out — the buttons hide it behind a click — but it is
+visible in the address bar once someone books, and on hover in most PDF readers.
+
+Renaming the Calendly link to something Foothold-branded is done in Calendly under
+**Account → My link**. It changes every booking URL at once, so if it happens:
+
+1. Update `CALENDLY_URL` in [`src/lib/site.ts`](src/lib/site.ts)
+2. Rerun `python3 scripts/add-booking-cta-to-guide.py <clean-export.pdf>` to restamp
+   the PDF button with the new URL
+3. Consider printing the URL under the PDF button at that point — worth doing once
+   it is brand-safe, since a printed page has no clickable button

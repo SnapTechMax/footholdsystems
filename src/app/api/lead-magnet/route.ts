@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { GUIDE_PATH, calendlyUrl } from "@/lib/site";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -9,8 +10,7 @@ export const dynamic = "force-dynamic";
 // details (phone is currently reused from SnapTech; address is a placeholder).
 const BRAND_NAME = "Foothold Systems";
 const CONTACT_EMAIL = "max@footholdsystems.com";
-const CONTACT_PHONE = "(626) 838-2862"; // TODO: confirm Foothold phone
-const CONTACT_PHONE_TEL = "6268382862"; // TODO: confirm Foothold phone
+// No phone number published — inbound is kept to scheduled calls via Calendly.
 const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO: confirm Foothold mailing address (required on marketing email footers)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -27,9 +27,11 @@ const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "noreply@snaptechrepair.com
 // Public base URL used to build the download link
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://footholdsystems.com").replace(/\/$/, "");
 
-// The lead magnet lives in /public/downloads
-const GUIDE_PATH = "/downloads/foothold-5-levels-of-ai.pdf";
+// The lead magnet lives in /public/downloads (path shared with the thank-you page)
 const GUIDE_URL = `${SITE_URL}${GUIDE_PATH}`;
+
+// Booking link, tagged so calls that came out of the delivery email are visible.
+const BOOKING_URL = calendlyUrl("guide-email", "email");
 
 interface LeadPayload {
   email?: string;
@@ -80,10 +82,8 @@ export async function POST(request: NextRequest) {
             <hr style="border:none;border-top:1px solid #d4d1c6;margin:24px 0;">
             <p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><strong>The map is free. Your step takes one call.</strong></p>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">The guide tells you your level. It can't tell you which move is yours or what it's worth. That's twenty minutes with us, free whether or not you hire us.</p>
-            <p style="margin:0;font-size:15px;line-height:1.7;">
-              <a href="tel:${CONTACT_PHONE_TEL}" style="color:#1b1b1b;font-weight:600;">${CONTACT_PHONE}</a><br>
-              <a href="mailto:${CONTACT_EMAIL}" style="color:#1b1b1b;">${CONTACT_EMAIL}</a>
-            </p>
+            <a href="${BOOKING_URL}" style="display:inline-block;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">Book a call &rarr;</a>
+            <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Twenty minutes, weekday afternoons. Or just reply to this email &mdash; it reaches <a href="mailto:${CONTACT_EMAIL}" style="color:#1b1b1b;">${CONTACT_EMAIL}</a>.</p>
           </div>
           <div style="padding:16px 32px;background:#e0ddd2;color:#7a786f;font-size:11px;font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:0.08em;">
             ${BRAND_NAME} &middot; ${BRAND_ADDRESS}
@@ -103,8 +103,9 @@ export async function POST(request: NextRequest) {
       `The map is free. Your step takes one call.`,
       `The guide tells you your level. It can't tell you which move is yours or what it's worth. That's twenty minutes with us, free whether or not you hire us.`,
       ``,
-      CONTACT_PHONE,
-      CONTACT_EMAIL,
+      `Book a call: ${BOOKING_URL}`,
+      ``,
+      `Twenty minutes, weekday afternoons. Or just reply to this email - it reaches ${CONTACT_EMAIL}.`,
       ``,
       `${BRAND_NAME} · ${BRAND_ADDRESS}`,
     ].join("\n");

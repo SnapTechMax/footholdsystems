@@ -6,6 +6,13 @@ export const CALENDLY_URL =
 // Where the lead-magnet form sends people once the guide is actually delivered.
 export const THANKS_PATH = "/guide/thanks";
 
+// The lead magnet in public/downloads. Kept here because both the thank-you page
+// and the delivery email link to it, and a mismatch silently breaks the download.
+// Hyphenated rather than spaced so the URL needs no percent-encoding — the plain
+// text version of the delivery email prints this link raw.
+export const GUIDE_PATH =
+  "/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf";
+
 // NOTE ON THE BOOKING WINDOW
 // The "max 7 days out, 1–4pm PT" rule is enforced inside Calendly, on the event
 // type's Availability settings — Calendly has no URL parameter for a maximum
@@ -15,13 +22,17 @@ export const THANKS_PATH = "/guide/thanks";
 // See BOOKING.md for the exact settings.
 
 /**
- * Calendly link tagged with the on-site entry point it was clicked from, so
- * bookings can be told apart in Calendly's UTM reporting.
+ * Calendly link tagged with the entry point it was clicked from, so bookings can
+ * be told apart in Calendly's UTM reporting.
+ *
+ * @param entryPoint Where the link lives, e.g. "header" or "guide-email".
+ * @param medium     Channel it went out on. Defaults to the website; the
+ *                   delivery email and the PDF pass their own.
  */
-export function calendlyUrl(entryPoint: string): string {
+export function calendlyUrl(entryPoint: string, medium = "website"): string {
   const url = new URL(CALENDLY_URL);
   url.searchParams.set("utm_source", "footholdsystems");
-  url.searchParams.set("utm_medium", "website");
+  url.searchParams.set("utm_medium", medium);
   url.searchParams.set("utm_campaign", entryPoint);
   return url.toString();
 }

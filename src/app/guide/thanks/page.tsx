@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BookCallButton } from "@/components/BookCallButton";
 import { ThanksAnalytics } from "@/components/ThanksAnalytics";
+import { GUIDE_PATH } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Your guide is on the way",
@@ -14,7 +15,6 @@ export const metadata: Metadata = {
 // display font utility (Archivo is loaded globally in layout.tsx)
 const display = "font-[family-name:var(--font-archivo)]";
 
-const GUIDE_PATH = "/downloads/foothold-5-levels-of-ai.pdf";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE INTRO VIDEO
