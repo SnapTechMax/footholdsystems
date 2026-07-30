@@ -22,24 +22,24 @@ const CONTACT_PHONE_TEL = "6268382862"; // TODO: confirm Foothold phone
 const CONTACT_EMAIL = "max@footholdsystems.com";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DROP YOUR VIDEO IN HERE
+// THE INTRO VIDEO
 //
-// Option A — self-hosted file (full control, no third-party branding):
-//   1. Put the file at  public/videos/foothold-welcome.mp4
-//   2. Set VIDEO_SRC   = "/videos/foothold-welcome.mp4"
-//   3. Optional: save a still frame to public/images/video-poster.jpg and set
-//      VIDEO_POSTER = "/images/video-poster.jpg"  (shows before play; avoids a
-//      black box on first paint)
-//   Keep it under ~50 MB — it is served straight off the web host.
+// Currently self-hosted out of public/videos: 1920x1080 H.264/AAC, 57s, ~18 MB.
+// To swap it, drop the new file in public/videos and repoint VIDEO_SRC.
 //
-// Option B — YouTube / Vimeo / Loom (cheaper bandwidth, faster start):
-//   Set VIDEO_EMBED_URL to the *embed* URL, not the share URL. For example:
-//     "https://www.youtube.com/embed/AbCdEf12345"
-//     "https://player.vimeo.com/video/123456789"
+// VIDEO_POSTER is the still shown before play. With none set, the browser shows
+// the video's first frame — fine, but a chosen frame looks better. To add one:
+// save a JPG to public/images/video-poster.jpg and set VIDEO_POSTER to
+// "/images/video-poster.jpg".
 //
-// Leave all three null and the slot renders a labelled placeholder, so the page
-// is shippable before the video exists.
-const VIDEO_SRC: string | null = null;
+// To move to YouTube / Vimeo / Loom instead (cheaper bandwidth, faster start),
+// set VIDEO_EMBED_URL to the *embed* URL — not the share URL — and null out
+// VIDEO_SRC. Embeds take precedence. For example:
+//   "https://www.youtube.com/embed/AbCdEf12345"
+//   "https://player.vimeo.com/video/123456789"
+//
+// With all three null the slot renders a labelled placeholder.
+const VIDEO_SRC: string | null = "/videos/foothold-guide-intro.mp4";
 const VIDEO_EMBED_URL: string | null = null;
 const VIDEO_POSTER: string | null = null;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ export default function GuideThanksPage() {
       <section className="border-b border-[#d4d1c6] bg-[#232320]">
         <div className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-            Two minutes
+            One minute
           </p>
           <h2
             className={`${display} mt-3 text-3xl font-black uppercase leading-[0.98] tracking-tight text-[#f2efe6] sm:text-5xl`}
@@ -157,8 +157,8 @@ export default function GuideThanksPage() {
             Watch this first
           </h2>
           <p className="mt-5 max-w-xl font-serif text-[17px] leading-relaxed text-[#cfccc2]">
-            Before you open the guide — here&apos;s how to read it, and the one
-            mistake that costs small businesses the most.
+            A minute from me before you dig into the guide. Then, if it lands,
+            let&apos;s put a number on where you actually are.
           </p>
 
           <div className="mt-10">

@@ -1,5 +1,7 @@
 // Shared site-wide constants.
-export const CALENDLY_URL = "https://calendly.com/max-snaptechrepair/new-meeting";
+// The dedicated event type carrying the rolling 7-day / 1–4pm Pacific window.
+export const CALENDLY_URL =
+  "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call";
 
 // Where the lead-magnet form sends people once the guide is actually delivered.
 export const THANKS_PATH = "/guide/thanks";

@@ -5,8 +5,11 @@ rules live in Calendly, not in this codebase** — Calendly has no URL parameter
 maximum bookable date, so the window cannot be set from a link. Everything below is a
 one-time change in the Calendly dashboard.
 
-Event type: `calendly.com/max-snaptechrepair/new-meeting`
+Event type: `calendly.com/max-snaptechrepair/20-minute-ai-strategy-call`
 (the value of `CALENDLY_URL` in [`src/lib/site.ts`](src/lib/site.ts))
+
+This is a dedicated event type created to carry the window below, so changing its
+availability can't affect any other kind of meeting.
 
 ## The rules we want
 
