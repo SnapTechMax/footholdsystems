@@ -7,6 +7,8 @@ import {
   GUIDE_PATH,
   calendlyUrl,
 } from "@/lib/site";
+import { DATABASE_CONFIGURED, initSchema, recordEvent } from "@/lib/cro/db";
+import { VISITOR_COOKIE } from "@/lib/cro/assign";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -43,6 +45,9 @@ interface LeadPayload {
   email?: string;
   name?: string;
   source?: string;
+  /** Set when a CRO experiment is running on the page that produced the lead. */
+  experimentId?: number | null;
+  variant?: "a" | "b" | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -132,7 +137,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to send the guide" }, { status: 500 });
     }
 
-    // 2) Lead notification (best-effort; don't fail the request if this errors)
+    // 2) Attribute the conversion to its experiment arm. Recorded server-side,
+    // so unlike the Meta pixel this sees every submission — no ad blocker or
+    // tracking prevention in the way. Best-effort: the guide has already been
+    // delivered and a bookkeeping failure must not fail the request.
+    try {
+      const experimentId = body.experimentId;
+      const variant = body.variant;
+      if (
+        DATABASE_CONFIGURED &&
+        typeof experimentId === "number" &&
+        Number.isInteger(experimentId) &&
+        (variant === "a" || variant === "b")
+      ) {
+        const visitorId = request.cookies.get(VISITOR_COOKIE)?.value;
+        if (visitorId) {
+          await initSchema();
+          await recordEvent(experimentId, variant, "conversion", visitorId);
+        }
+      }
+    } catch (croErr) {
+      console.error("CRO conversion logging failed (lead still delivered):", croErr);
+    }
+
+    // 3) Lead notification (best-effort; don't fail the request if this errors)
     try {
       const submittedAt = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
       await resend.emails.send({

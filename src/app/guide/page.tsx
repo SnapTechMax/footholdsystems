@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 import { BookCallButton } from "@/components/BookCallButton";
+import { CroTracker } from "@/components/CroTracker";
+import { getActiveVariant } from "@/lib/cro/serve";
+
+// Copy on this page is served per-visitor by the CRO engine, so it can't be
+// prerendered. With no experiment running it renders the shipped copy.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "The 5 Levels of AI",
@@ -74,9 +80,28 @@ const inside = [
   },
 ];
 
-export default function GuidePage() {
+export default async function GuidePage() {
+  const { content, experimentId, variant, visitorId } =
+    await getActiveVariant("/guide");
+
+  const captureForm = (
+    <LeadMagnetForm
+      submitLabel={content.submitLabel}
+      footnote={content.formFootnote}
+      experimentId={experimentId}
+      variant={variant}
+    />
+  );
+
   return (
     <div className="bg-[#eae8e1] text-[#1f1f1d]">
+      {experimentId && variant && visitorId && (
+        <CroTracker
+          experimentId={experimentId}
+          variant={variant}
+          visitorId={visitorId}
+        />
+      )}
       {/* ============================= HERO (dark cover) ============================= */}
       <section className="bg-[#1b1b1b] text-[#f2efe6]">
         <div className="mx-auto max-w-4xl px-6 py-20 sm:py-24">
@@ -131,7 +156,7 @@ export default function GuidePage() {
               href="#get-the-guide"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#f6be00] px-8 py-4 text-lg font-bold text-[#1b1b1b] transition-colors hover:bg-[#ffd23d]"
             >
-              Get the free guide &rarr;
+              {content.heroCtaLabel}
             </a>
             <p className="font-mono text-xs uppercase tracking-[0.14em] text-[#8a887f]">
               The map is free. Your step takes one call.
@@ -144,6 +169,21 @@ export default function GuidePage() {
           </p>
         </div>
       </section>
+
+      {/* Second capture block, switched on by the CRO engine when Clarity shows
+          visitors aren't scrolling far enough to reach the form at the bottom. */}
+      {content.formAboveFold && (
+        <section className="border-b border-[#d4d1c6] bg-[#232320]">
+          <div className="mx-auto max-w-3xl px-6 py-12">
+            <h2
+              className={`${display} text-2xl font-black uppercase leading-tight tracking-tight text-[#f2efe6] sm:text-3xl`}
+            >
+              {content.captureHeading}
+            </h2>
+            <div className="mt-6">{captureForm}</div>
+          </div>
+        </section>
+      )}
 
       {/* ============================= THE LADDER ============================= */}
       <section className="mx-auto max-w-4xl px-6 py-20">
@@ -240,16 +280,14 @@ export default function GuidePage() {
             The map is free
           </p>
           <h2 className={`${display} mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight text-[#f2efe6] sm:text-6xl`}>
-            Get the 5 Levels of AI
+            {content.captureHeading}
           </h2>
           <p className="mt-5 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2]">
-            Drop your email and we&apos;ll send the guide straight over. Find the
-            level your small business is really on, and what the next one up is
-            worth to an owner like you.
+            {content.captureSubcopy}
           </p>
 
           <div className="mt-10 rounded-2xl border border-[#33332f] bg-[#232320] p-6 sm:p-8">
-            <LeadMagnetForm />
+            {captureForm}
           </div>
         </div>
       </section>

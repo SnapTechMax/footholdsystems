@@ -4,7 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { THANKS_PATH } from "@/lib/site";
 
-export function LeadMagnetForm() {
+export function LeadMagnetForm({
+  submitLabel = "Send me the guide →",
+  footnote = "Free. One email. No spam, no drip sequence you can't escape.",
+  experimentId = null,
+  variant = null,
+}: {
+  submitLabel?: string;
+  footnote?: string;
+  /** Set when a CRO experiment is running, so conversions can be attributed. */
+  experimentId?: number | null;
+  variant?: "a" | "b" | null;
+} = {}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -29,6 +40,8 @@ export function LeadMagnetForm() {
           email,
           name,
           source: "Foothold Systems - 5 Levels of AI",
+          experimentId,
+          variant,
         }),
       });
 
@@ -46,8 +59,13 @@ export function LeadMagnetForm() {
         event_category: "lead-magnet",
         event_label: "5 Levels of AI",
       });
-      // Meta Pixel lead conversion
-      window.fbq?.("track", "Lead", { content_name: "5 Levels of AI" });
+      // Meta Pixel lead conversion. `variant` is sent as custom data so the
+      // pixel's conversions can be split by experiment arm via the Graph API's
+      // custom_data_field aggregation — see lib/cro/meta.ts.
+      window.fbq?.("track", "Lead", {
+        content_name: "5 Levels of AI",
+        ...(variant ? { variant, experiment_id: experimentId } : {}),
+      });
 
       // Soft-navigate to the thank-you page. A client-side push (rather than a
       // full page load) means the conversion hits above are never cut off by an
@@ -117,7 +135,7 @@ export function LeadMagnetForm() {
             Sending&hellip;
           </>
         ) : (
-          "Send me the guide →"
+          submitLabel
         )}
       </button>
 
@@ -128,7 +146,7 @@ export function LeadMagnetForm() {
       )}
 
       <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[#8a887f]">
-        Free. One email. No spam, no drip sequence you can&apos;t escape.
+        {footnote}
       </p>
     </form>
   );
