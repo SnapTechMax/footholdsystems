@@ -8,6 +8,8 @@ declare global {
     fbq?: (...args: unknown[]) => void;
     /** Google Analytics 4. */
     gtag?: (...args: unknown[]) => void;
+    /** Microsoft Clarity. */
+    clarity?: (...args: unknown[]) => void;
   }
 }
 
