@@ -17,13 +17,43 @@ import type {
  * is a short-lived serverless invocation, where a connection pool is a liability.
  */
 
-export const DATABASE_CONFIGURED = Boolean(process.env.DATABASE_URL);
+/**
+ * Connection string, under whichever name the provider used.
+ *
+ * The Neon integration, the older Vercel Postgres integration and a hand-added
+ * variable all pick different names, and the difference is invisible until
+ * something 503s in production. Pooled URLs come first — every caller here is a
+ * short-lived serverless invocation, so the pooler is what should absorb them.
+ */
+const CONNECTION_ENV_VARS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "DATABASE_URL_UNPOOLED",
+  "POSTGRES_URL_NON_POOLING",
+] as const;
+
+function connectionString(): string | undefined {
+  for (const name of CONNECTION_ENV_VARS) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return undefined;
+}
+
+export const DATABASE_CONFIGURED = Boolean(connectionString());
+
+/** Shown when no connection string is found, so the cause is diagnosable from the response. */
+export const DATABASE_HINT =
+  `No Postgres connection string found. Looked for: ${CONNECTION_ENV_VARS.join(", ")}. ` +
+  "Vercel only exposes environment variables to deployments built after they were added — redeploying is often the fix.";
 
 function sql() {
-  const url = process.env.DATABASE_URL;
+  const url = connectionString();
   if (!url) {
     throw new Error(
-      "DATABASE_URL is not set — provision Postgres and add it to the environment"
+      `No Postgres connection string found. Looked for: ${CONNECTION_ENV_VARS.join(", ")}. ` +
+        "Note that Vercel only exposes environment variables to deployments built after they were added, so a redeploy may be all that's needed."
     );
   }
   return neon(url);

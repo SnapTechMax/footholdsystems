@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DATABASE_CONFIGURED, getSettings, initSchema, saveSettings } from "@/lib/cro/db";
+import {
+  DATABASE_CONFIGURED,
+  DATABASE_HINT,
+  getSettings,
+  initSchema,
+  saveSettings,
+} from "@/lib/cro/db";
 import type { Settings } from "@/lib/cro/types";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +50,7 @@ function sanitise(input: Partial<Settings>): Partial<Settings> {
 
 export async function GET() {
   if (!DATABASE_CONFIGURED) {
-    return NextResponse.json({ ok: false, error: "DATABASE_URL is not set." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: DATABASE_HINT }, { status: 503 });
   }
   await initSchema();
   return NextResponse.json({ ok: true, settings: await getSettings() });
@@ -52,7 +58,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   if (!DATABASE_CONFIGURED) {
-    return NextResponse.json({ ok: false, error: "DATABASE_URL is not set." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: DATABASE_HINT }, { status: 503 });
   }
   try {
     await initSchema();

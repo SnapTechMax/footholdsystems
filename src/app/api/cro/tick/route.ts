@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tick } from "@/lib/cro/engine";
-import { DATABASE_CONFIGURED } from "@/lib/cro/db";
+import { DATABASE_CONFIGURED, DATABASE_HINT } from "@/lib/cro/db";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,7 +35,7 @@ async function run(request: NextRequest) {
 
   if (!DATABASE_CONFIGURED) {
     return NextResponse.json(
-      { ok: false, error: "DATABASE_URL is not set." },
+      { ok: false, error: DATABASE_HINT },
       { status: 503 }
     );
   }

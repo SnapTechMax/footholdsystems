@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   DATABASE_CONFIGURED,
+  DATABASE_HINT,
   DEFAULT_SETTINGS,
   getSettings,
   getTotals,
@@ -134,7 +135,7 @@ function ExperimentCard({
 
 export default async function CroDashboard() {
   const missing: string[] = [];
-  if (!DATABASE_CONFIGURED) missing.push("DATABASE_URL — no data can be stored or read.");
+  if (!DATABASE_CONFIGURED) missing.push(DATABASE_HINT);
   if (!CLARITY_CONFIGURED()) missing.push("CLARITY_API_TOKEN — no Clarity signals, so no new experiments.");
   if (!META_CONFIGURED()) missing.push("META_ACCESS_TOKEN / META_PIXEL_ID — falls back to server-side conversion counts.");
   if (!process.env.CRON_SECRET) missing.push("CRON_SECRET — the scheduled run cannot be triggered.");
