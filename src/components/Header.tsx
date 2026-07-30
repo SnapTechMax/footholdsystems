@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CALENDLY_URL } from "@/lib/site";
+import { BookCallButton } from "@/components/BookCallButton";
 
 export function Header() {
   return (
@@ -33,14 +33,12 @@ export function Header() {
           >
             The guide
           </Link>
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <BookCallButton
+            entryPoint="header"
             className="rounded-lg bg-[#f6be00] px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1b1b1b] transition-colors hover:bg-[#ffd23d]"
           >
             Book a call
-          </a>
+          </BookCallButton>
         </nav>
       </div>
     </header>

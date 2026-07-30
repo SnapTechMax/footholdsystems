@@ -1,22 +1,20 @@
 "use client";
 
-import { useState } from "react";
-
-declare global {
-  interface Window {
-    uetq?: unknown[];
-    fbq?: (...args: unknown[]) => void;
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
-const GUIDE_PATH = "/downloads/foothold-5-levels-of-ai.pdf";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "error">("idle");
+
+  // Warm the thank-you route so the redirect after submit is instant.
+  useEffect(() => {
+    router.prefetch(THANKS_PATH);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +34,6 @@ export function LeadMagnetForm() {
 
       if (!response.ok) throw new Error("Submission failed");
 
-      setStatus("success");
       // Microsoft UET conversion event (no-op if UET isn't loaded)
       window.uetq = window.uetq || [];
       window.uetq.push("event", "other", {
@@ -51,9 +48,14 @@ export function LeadMagnetForm() {
       });
       // Meta Pixel lead conversion
       window.fbq?.("track", "Lead", { content_name: "5 Levels of AI" });
+
+      // Soft-navigate to the thank-you page. A client-side push (rather than a
+      // full page load) means the conversion hits above are never cut off by an
+      // unload. isSubmitting stays true so the button keeps its spinner and the
+      // form can't be double-submitted while the route transitions.
+      router.push(THANKS_PATH);
     } catch {
       setStatus("error");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -75,31 +77,6 @@ export function LeadMagnetForm() {
       content_name: "5 Levels of AI",
     });
   };
-
-  if (status === "success") {
-    return (
-      <div className="rounded-xl bg-[#f6be00] p-8 text-[#1b1b1b] sm:p-10">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#1b1b1b]/70">
-          You&apos;re in
-        </p>
-        <h3 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
-          Check your inbox.
-        </h3>
-        <p className="mt-3 max-w-md font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
-          The 5 Levels of AI is on its way{email ? ` to ${email}` : ""}. It can take a
-          minute. If it&apos;s not there, check spam, or grab it directly below.
-        </p>
-        <a
-          href={GUIDE_PATH}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg border-2 border-[#1b1b1b] px-6 py-3 font-semibold transition-colors hover:bg-[#1b1b1b] hover:text-[#f6be00]"
-        >
-          Download it now &rarr;
-        </a>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
