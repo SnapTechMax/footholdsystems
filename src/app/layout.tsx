@@ -40,9 +40,10 @@ const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-3G72HMB7VK";
 
 // Microsoft Clarity — heatmaps and session replay, for how pages actually get
-// used. Found in Clarity under Settings → Overview → Project ID. Left blank the
-// tag simply isn't rendered, so the site works fine without it.
-const CLARITY_PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || "";
+// used. Project ID is in Clarity under Settings → Overview. Env var overrides the
+// default; set it to an empty string to drop the tag entirely.
+const CLARITY_PROJECT_ID =
+  process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID ?? "xurw6i8he8";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://footholdsystems.com"),
