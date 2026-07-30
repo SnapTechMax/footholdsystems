@@ -6,6 +6,14 @@ export const CALENDLY_URL =
 // Where the lead-magnet form sends people once the guide is actually delivered.
 export const THANKS_PATH = "/guide/thanks";
 
+// Direct line. Published to people who have opted in — the delivery email and the
+// guide PDF — but deliberately NOT on the public website, so it stays off the
+// pages anonymous visitors and scrapers hit. Keep those two surfaces in mind
+// before adding it anywhere new.
+export const CONTACT_PHONE = "(909) 407-6602";
+export const CONTACT_PHONE_TEL = "9094076602";
+export const CONTACT_EMAIL = "max@footholdsystems.com";
+
 // The lead magnet in public/downloads. Kept here because both the thank-you page
 // and the delivery email link to it, and a mismatch silently breaks the download.
 // Hyphenated rather than spaced so the URL needs no percent-encoding — the plain

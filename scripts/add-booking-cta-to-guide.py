@@ -19,11 +19,14 @@ copy get there via footholdsystems.com, which the page already shows. If the
 Calendly link is ever renamed to something Foothold-branded, printing it becomes
 worthwhile — see BOOKING.md.
 
-It also removes the phone number from the last page. This is a real removal, not a
-box drawn over the top: the text is deleted from the content stream, so it cannot be
-selected, copied or searched. Inbound is meant to go through Calendly for now. The
-tidier long-term fix is to take the number out of the design source and re-export;
-until then this keeps the published PDF consistent with the website.
+It also replaces the phone number on the last page. Whatever number the export
+carries is deleted from the content stream — a real removal, not a box drawn over
+the top, so the old number cannot be selected, copied or searched — and the current
+one from src/lib/site.ts is drawn in its place. That means the published PDF always
+shows the right number even when the design source is out of date.
+
+Note the number is published here and in the delivery email, both of which reach
+people who opted in, but deliberately not on the public website.
 
 Requires: pypdf, reportlab, pdfplumber
 """
@@ -52,12 +55,30 @@ REPO = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE = REPO / "public" / "downloads" / "Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf"
 OUTPUT = REPO / "public" / "downloads" / "Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf"
 
-# Must stay in step with CALENDLY_URL in src/lib/site.ts. Tagged as its own
-# entry point so bookings that came out of the PDF are identifiable.
+SITE_TS = REPO / "src" / "lib" / "site.ts"
+
+
+def site_constant(name: str) -> str:
+    """Read an exported string constant out of src/lib/site.ts.
+
+    Parsed rather than duplicated so the PDF cannot drift from the site — the
+    booking link and phone number are defined in exactly one place.
+    """
+    match = re.search(
+        rf'export const {name}\s*(?::\s*string)?\s*=\s*\n?\s*"([^"]+)"',
+        SITE_TS.read_text(),
+    )
+    if not match:
+        raise RuntimeError(f"could not read {name} from {SITE_TS}")
+    return match.group(1)
+
+
+# Tagged as its own entry point so bookings that came out of the PDF are visible.
 BOOKING_URL = (
-    "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call"
+    f"{site_constant('CALENDLY_URL')}"
     "?utm_source=footholdsystems&utm_medium=pdf&utm_campaign=guide-pdf"
 )
+CONTACT_PHONE = site_constant("CONTACT_PHONE")
 
 # Brand colours, matching the site and the guide's own palette.
 DARK = Color(0.106, 0.106, 0.106)
@@ -73,7 +94,18 @@ BTN_RADIUS = 5.0
 BTN_LABEL = "BOOK A CALL"
 BTN_FONT, BTN_SIZE = "Helvetica-Bold", 12.0
 
-# Text runs matching this are deleted from the last page.
+# The phone line is stripped from the export and redrawn here, so the number in
+# the published PDF always comes from site.ts however stale the export is.
+# Courier-Bold because the guide's own mono font is a subset that has no glyphs
+# for the new digits, and it is pitch-matched (0.6 em advance) to the two contact
+# lines below so the column stays aligned.
+PHONE_X = 128.8
+PHONE_BASELINE = 88.5
+PHONE_FONT = "Courier-Bold"
+PHONE_SIZE = 11.4
+INK = Color(0.0824, 0.0941, 0.102)
+
+# Text runs matching this are deleted from the last page before redrawing.
 PHONE_RE = re.compile(r"\(?\d{3}\)?[\s.–-]*\d{3}[\s.–-]*\d{4}")
 
 
@@ -235,6 +267,11 @@ def build_overlay(width: float, height: float) -> PdfReader:
     c.line(ax0 + arrow_len - 3.6, ay + 3.4, ax0 + arrow_len, ay)
     c.line(ax0 + arrow_len - 3.6, ay - 3.4, ax0 + arrow_len, ay)
 
+    # Phone line, redrawn where the export's own number was stripped from.
+    c.setFillColor(INK)
+    c.setFont(PHONE_FONT, PHONE_SIZE)
+    c.drawString(PHONE_X, PHONE_BASELINE, CONTACT_PHONE)
+
     c.save()
     buf.seek(0)
     return PdfReader(buf)
@@ -310,15 +347,21 @@ def main() -> int:
     with open(tmp, "wb") as fh:
         writer.write(fh)
 
-    # Confirm the number really is gone from the extractable text before the
-    # result replaces the published file.
+    # The only phone number readable in the result must be the current one. This
+    # catches a stale number surviving in an export whose layout defeated the
+    # position matching above.
     with pdfplumber.open(str(tmp)) as doc:
         text = "\n".join((pg.extract_text() or "") for pg in doc.pages)
-    leftover = PHONE_RE.search(text)
-    if leftover:
+    expected = re.sub(r"\D", "", CONTACT_PHONE)
+    stale = [
+        found.group(0)
+        for found in PHONE_RE.finditer(text)
+        if re.sub(r"\D", "", found.group(0)) != expected
+    ]
+    if stale:
         tmp.unlink()
         print(
-            f"error: a phone number is still extractable ({leftover.group(0)!r}); "
+            f"error: unexpected phone number(s) still readable: {stale}; "
             "refusing to write the output",
             file=sys.stderr,
         )

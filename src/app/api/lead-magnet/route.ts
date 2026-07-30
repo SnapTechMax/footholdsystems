@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { GUIDE_PATH, calendlyUrl } from "@/lib/site";
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE,
+  CONTACT_PHONE_TEL,
+  GUIDE_PATH,
+  calendlyUrl,
+} from "@/lib/site";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -9,8 +15,8 @@ export const dynamic = "force-dynamic";
 // BRAND / CONTACT — placeholders. Swap these for the real Foothold Systems
 // details (phone is currently reused from SnapTech; address is a placeholder).
 const BRAND_NAME = "Foothold Systems";
-const CONTACT_EMAIL = "max@footholdsystems.com";
-// No phone number published — inbound is kept to scheduled calls via Calendly.
+// Contact details come from src/lib/site.ts. The phone number goes to people who
+// opted in — this email and the guide PDF — but not to the public website.
 const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO: confirm Foothold mailing address (required on marketing email footers)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -83,7 +89,8 @@ export async function POST(request: NextRequest) {
             <p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><strong>The map is free. Your step takes one call.</strong></p>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">The guide tells you your level. It can't tell you which move is yours or what it's worth. That's twenty minutes with us, free whether or not you hire us.</p>
             <a href="${BOOKING_URL}" style="display:inline-block;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">Book a call &rarr;</a>
-            <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Twenty minutes, weekday afternoons. Or just reply to this email &mdash; it reaches <a href="mailto:${CONTACT_EMAIL}" style="color:#1b1b1b;">${CONTACT_EMAIL}</a>.</p>
+            <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Twenty minutes, weekday afternoons.</p>
+            <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Rather just talk? Call <a href="tel:${CONTACT_PHONE_TEL}" style="color:#1b1b1b;font-weight:600;">${CONTACT_PHONE}</a>, or reply to this email &mdash; it reaches <a href="mailto:${CONTACT_EMAIL}" style="color:#1b1b1b;">${CONTACT_EMAIL}</a>.</p>
           </div>
           <div style="padding:16px 32px;background:#e0ddd2;color:#7a786f;font-size:11px;font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:0.08em;">
             ${BRAND_NAME} &middot; ${BRAND_ADDRESS}
@@ -105,7 +112,8 @@ export async function POST(request: NextRequest) {
       ``,
       `Book a call: ${BOOKING_URL}`,
       ``,
-      `Twenty minutes, weekday afternoons. Or just reply to this email - it reaches ${CONTACT_EMAIL}.`,
+      `Twenty minutes, weekday afternoons.`,
+      `Rather just talk? Call ${CONTACT_PHONE}, or reply to this email - it reaches ${CONTACT_EMAIL}.`,
       ``,
       `${BRAND_NAME} · ${BRAND_ADDRESS}`,
     ].join("\n");
