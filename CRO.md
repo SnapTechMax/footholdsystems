@@ -44,8 +44,13 @@ Early on, the value is the Clarity diagnostics, not the test results.
 
 ### 1. Database
 
-Vercel → Storage → Create → Postgres, connect it to the project. That sets
-`DATABASE_URL` automatically. Tables are created on first use.
+Vercel → Storage → Create → Postgres, connect it to the project. Tables are
+created on first use.
+
+The integration namespaces the variables it creates, so the connection string
+may arrive as `STORAGE_DATABASE_URL` rather than `DATABASE_URL` — this project's
+did. Each name is checked bare and with the `STORAGE_` and `NEON_` prefixes, so
+either works; the dashboard header shows which one it connected through.
 
 ### 2. Clarity API token
 
@@ -69,7 +74,7 @@ engine falls back to server-side counts and says so in the run log.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | Postgres. Nothing runs without it. |
+| `DATABASE_URL` or `STORAGE_DATABASE_URL` | yes | Postgres. Nothing runs without it. |
 | `CLARITY_API_TOKEN` | yes | Clarity Data Export API. |
 | `ADMIN_PASSWORD` | yes | Gate on `/admin/cro`. |
 | `CRON_SECRET` | yes | Authorises the scheduled run. |
