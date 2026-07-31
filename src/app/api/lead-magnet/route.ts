@@ -14,6 +14,7 @@ import {
   recordEvent,
 } from "@/lib/cro/db";
 import { VISITOR_COOKIE } from "@/lib/cro/assign";
+import { subscribeToSequence } from "@/lib/subscribe";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -142,7 +143,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to send the guide" }, { status: 500 });
     }
 
-    // 2) Attribute the conversion to its experiment arm. Recorded server-side,
+    // 2) Enrol them on the mailing list and start the nurture sequence.
+    // Best-effort: the guide is already delivered, and a list failure must not
+    // turn a successful download into an error for the person who asked.
+    try {
+      const result = await subscribeToSequence(resend, {
+        email,
+        firstName,
+        source,
+      });
+      if (result.notes.length > 0) {
+        console.error("Subscribe issues (guide still delivered):", result.notes);
+      }
+    } catch (subErr) {
+      console.error("Subscribe failed (guide still delivered):", subErr);
+    }
+
+    // 3) Attribute the conversion to its experiment arm. Recorded server-side,
     // so unlike the Meta pixel this sees every submission — no ad blocker or
     // tracking prevention in the way. Best-effort: the guide has already been
     // delivered and a bookkeeping failure must not fail the request.
@@ -170,7 +187,7 @@ export async function POST(request: NextRequest) {
       console.error("CRO conversion logging failed (lead still delivered):", croErr);
     }
 
-    // 3) Lead notification (best-effort; don't fail the request if this errors)
+    // 4) Lead notification (best-effort; don't fail the request if this errors)
     try {
       const submittedAt = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
       await resend.emails.send({
