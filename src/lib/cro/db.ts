@@ -25,13 +25,25 @@ import type {
  * something 503s in production. Pooled URLs come first — every caller here is a
  * short-lived serverless invocation, so the pooler is what should absorb them.
  */
-const CONNECTION_ENV_VARS = [
+const BASE_NAMES = [
   "DATABASE_URL",
   "POSTGRES_URL",
   "POSTGRES_PRISMA_URL",
+  // Direct (non-pooled) endpoints last: every caller here is a short-lived
+  // serverless invocation, so the pooler should absorb them where one exists.
   "DATABASE_URL_UNPOOLED",
   "POSTGRES_URL_NON_POOLING",
 ] as const;
+
+// Vercel's marketplace integrations let you namespace the variables they create,
+// and Neon's defaults to STORAGE_. Checking each base name bare and prefixed
+// covers both without needing to know how the integration was set up.
+// POSTGRES_URL_NO_SSL is deliberately absent — Neon requires TLS.
+const NAME_PREFIXES = ["", "STORAGE_", "NEON_"] as const;
+
+export const CONNECTION_ENV_VARS: string[] = BASE_NAMES.flatMap((base) =>
+  NAME_PREFIXES.map((prefix) => `${prefix}${base}`)
+);
 
 function connectionString(): string | undefined {
   for (const name of CONNECTION_ENV_VARS) {
@@ -39,6 +51,14 @@ function connectionString(): string | undefined {
     if (value) return value;
   }
   return undefined;
+}
+
+/** Which variable was actually used, for the dashboard to show. */
+export function connectionVarName(): string | null {
+  for (const name of CONNECTION_ENV_VARS) {
+    if (process.env[name]) return name;
+  }
+  return null;
 }
 
 export const DATABASE_CONFIGURED = Boolean(connectionString());

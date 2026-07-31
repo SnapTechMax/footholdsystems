@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { updateSettings } from "./actions";
 import type { Settings } from "@/lib/cro/types";
 
 const field =
@@ -10,31 +11,27 @@ const label =
 
 export function SettingsPanel({ initial }: { initial: Settings }) {
   const [settings, setSettings] = useState(initial);
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [state, setState] = useState<"idle" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [saving, startSaving] = useTransition();
 
   const update = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
     setState("idle");
   };
 
-  const save = async () => {
-    setState("saving");
-    try {
-      const response = await fetch("/api/cro/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-      const body = await response.json();
-      if (!response.ok || !body.ok) throw new Error(body.error || "Save failed");
-      setSettings(body.settings);
-      setState("saved");
-      setMessage("Saved. Values are clamped to safe ranges on the server.");
-    } catch (error) {
-      setState("error");
-      setMessage(error instanceof Error ? error.message : String(error));
-    }
+  const save = () => {
+    startSaving(async () => {
+      const result = await updateSettings(settings);
+      if (result.ok) {
+        setSettings(result.settings);
+        setState("saved");
+        setMessage("Saved. Values are clamped to safe ranges on the server.");
+      } else {
+        setState("error");
+        setMessage(result.error);
+      }
+    });
   };
 
   return (
@@ -143,10 +140,10 @@ export function SettingsPanel({ initial }: { initial: Settings }) {
       <div className="mt-5 flex items-center gap-3">
         <button
           onClick={save}
-          disabled={state === "saving"}
+          disabled={saving}
           className="rounded-md bg-[#f6be00] px-5 py-2 text-sm font-bold text-[#1b1b1b] transition-colors hover:bg-[#ffd23d] disabled:opacity-60"
         >
-          {state === "saving" ? "Saving…" : "Save settings"}
+          {saving ? "Saving…" : "Save settings"}
         </button>
         {message && (
           <span

@@ -3,6 +3,7 @@ import {
   DATABASE_CONFIGURED,
   DATABASE_HINT,
   DEFAULT_SETTINGS,
+  connectionVarName,
   getSettings,
   getTotals,
   initSchema,
@@ -156,13 +157,38 @@ export default async function CroDashboard() {
     );
   }
 
-  await initSchema();
-  const [settings, experiments, snapshots, runs] = await Promise.all([
-    getSettings(),
-    listExperiments(25),
-    listClaritySnapshots(5),
-    listRuns(10),
-  ]);
+  let settings, experiments, snapshots, runs;
+  try {
+    await initSchema();
+    [settings, experiments, snapshots, runs] = await Promise.all([
+      getSettings(),
+      listExperiments(25),
+      listClaritySnapshots(5),
+      listRuns(10),
+    ]);
+  } catch (error) {
+    // A connection string that's present but wrong is the likeliest cause, and
+    // a blank 500 is useless exactly when you're trying to work out why.
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-16">
+        <h1 className="text-3xl font-black uppercase tracking-tight text-[#f2efe6]">
+          CRO
+        </h1>
+        <p className="mt-4 text-sm text-[#cfccc2]">
+          Connected via{" "}
+          <code className="text-[#f6be00]">{connectionVarName()}</code>, but the
+          database could not be reached.
+        </p>
+        <pre className="mt-4 overflow-x-auto rounded-lg border border-[#5c2020] bg-[#2a1313] p-4 text-xs text-[#ff9d7a]">
+          {error instanceof Error ? error.message : String(error)}
+        </pre>
+        <p className="mt-4 text-xs text-[#7a786f]">
+          The live site is unaffected — /guide falls back to its shipped copy
+          whenever the optimiser is unavailable.
+        </p>
+      </main>
+    );
+  }
 
   const totalsById = new Map<number, ExperimentTotals>();
   for (const experiment of experiments.slice(0, 10)) {
@@ -187,7 +213,7 @@ export default async function CroDashboard() {
           CRO
         </h1>
         <p className={`${mono} text-[#8a887f]`}>
-          last run{" "}
+          db via {connectionVarName() ?? "—"} · last run{" "}
           {settings.lastRunAt
             ? new Date(settings.lastRunAt).toLocaleString()
             : "never"}
