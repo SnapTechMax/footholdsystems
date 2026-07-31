@@ -84,11 +84,12 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  verification: {
-    other: {
-      "facebook-domain-verification": "py2hzh8r29da4ahuedxx8v15jjsk05",
-    },
-  },
+  // No facebook-domain-verification tag on purpose. The previous token belonged
+  // to the Business Manager that holds the domain claim, and serving it was the
+  // only thing keeping that claim valid — Meta re-checks periodically and has
+  // nothing to find now. Add the new Business Manager's token here (or, better,
+  // as a DNS TXT record, which survives rebuilds and can't be displaced by a
+  // deploy) once the domain has been released.
 };
 
 export default function RootLayout({
