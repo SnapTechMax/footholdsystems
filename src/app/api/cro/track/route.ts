@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { COOKIE_OPTIONS, VISITOR_COOKIE, variantCookieName } from "@/lib/cro/assign";
-import { DATABASE_CONFIGURED, initSchema, recordEvent } from "@/lib/cro/db";
+import {
+  DATABASE_CONFIGURED,
+  initSchema,
+  recordBaselineEvent,
+  recordEvent,
+} from "@/lib/cro/db";
 import type { VariantKey } from "@/lib/cro/types";
 
 export const dynamic = "force-dynamic";
@@ -18,28 +23,53 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { experimentId, variant, visitorId } = (await request.json()) as {
-      experimentId?: number;
-      variant?: string;
-      visitorId?: string;
-    };
+    const { experimentId, variant, visitorId, pagePath } =
+      (await request.json()) as {
+        experimentId?: number | null;
+        variant?: string | null;
+        visitorId?: string;
+        pagePath?: string;
+      };
 
     if (
-      typeof experimentId !== "number" ||
-      !Number.isInteger(experimentId) ||
-      (variant !== "a" && variant !== "b") ||
       typeof visitorId !== "string" ||
-      !/^[a-z0-9]{8,64}$/i.test(visitorId)
+      !/^[a-z0-9]{8,64}$/i.test(visitorId) ||
+      typeof pagePath !== "string" ||
+      !pagePath.startsWith("/") ||
+      pagePath.length > 200
     ) {
       return NextResponse.json({ ok: false, reason: "bad-request" }, { status: 400 });
     }
 
+    const inExperiment =
+      typeof experimentId === "number" &&
+      Number.isInteger(experimentId) &&
+      (variant === "a" || variant === "b");
+
     await initSchema();
-    await recordEvent(experimentId, variant as VariantKey, "impression", visitorId);
+
+    if (inExperiment) {
+      await recordEvent(
+        experimentId as number,
+        variant as VariantKey,
+        "impression",
+        visitorId
+      );
+    } else {
+      // Between experiments: still count the view, so there's a real baseline
+      // rate for the next test to be judged against.
+      await recordBaselineEvent(pagePath, "impression", visitorId);
+    }
 
     const response = NextResponse.json({ ok: true });
     response.cookies.set(VISITOR_COOKIE, visitorId, COOKIE_OPTIONS);
-    response.cookies.set(variantCookieName(experimentId), variant, COOKIE_OPTIONS);
+    if (inExperiment) {
+      response.cookies.set(
+        variantCookieName(experimentId as number),
+        variant as string,
+        COOKIE_OPTIONS
+      );
+    }
     return response;
   } catch (error) {
     console.error("CRO track failed:", error);

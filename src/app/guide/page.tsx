@@ -95,11 +95,12 @@ export default async function GuidePage() {
 
   return (
     <div className="bg-[#eae8e1] text-[#1f1f1d]">
-      {experimentId && variant && visitorId && (
+      {visitorId && (
         <CroTracker
           experimentId={experimentId}
           variant={variant}
           visitorId={visitorId}
+          pagePath="/guide"
         />
       )}
       {/* ============================= HERO (dark cover) ============================= */}

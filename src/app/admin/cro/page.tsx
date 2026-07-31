@@ -4,6 +4,7 @@ import {
   DATABASE_HINT,
   DEFAULT_SETTINGS,
   connectionVarName,
+  getBaselineTotals,
   getSettings,
   getTotals,
   initSchema,
@@ -158,6 +159,7 @@ export default async function CroDashboard() {
   }
 
   let settings, experiments, snapshots, runs;
+  let baseline = { impressions: 0, conversions: 0 };
   try {
     await initSchema();
     [settings, experiments, snapshots, runs] = await Promise.all([
@@ -166,6 +168,7 @@ export default async function CroDashboard() {
       listClaritySnapshots(5),
       listRuns(10),
     ]);
+    baseline = await getBaselineTotals(settings.pagePath);
   } catch (error) {
     // A connection string that's present but wrong is the likeliest cause, and
     // a blank 500 is useless exactly when you're trying to work out why.
@@ -223,9 +226,40 @@ export default async function CroDashboard() {
       <div className="mt-6 space-y-6">
         <Missing items={missing} />
 
+        {/* Live counts, updated on every visit rather than on a run */}
+        <div className="rounded-lg border border-[#33332f] bg-[#232320] p-5">
+          <h2 className={`${mono} text-[#f6be00]`}>
+            Baseline · live, no experiment running
+          </h2>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            {[
+              ["Guide views", baseline.impressions.toLocaleString()],
+              ["Downloads", baseline.conversions.toLocaleString()],
+              [
+                "Conversion rate",
+                baseline.impressions > 0
+                  ? pct(baseline.conversions / baseline.impressions)
+                  : "—",
+              ],
+            ].map(([name, value]) => (
+              <div key={name} className="rounded border border-[#3a3a37] p-3">
+                <p className={`${mono} text-[#7a786f]`}>{name}</p>
+                <p className="mt-1 text-xl font-bold text-[#f2efe6]">{value}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-[#7a786f]">
+            Counted on our own server, so unaffected by ad blockers. Unique
+            visitors, deduplicated — a reload doesn&apos;t count twice. This
+            updates on every visit, unlike the Clarity figures below.
+          </p>
+        </div>
+
         {/* Clarity snapshot */}
         <div className="rounded-lg border border-[#33332f] bg-[#232320] p-5">
-          <h2 className={`${mono} text-[#f6be00]`}>Latest Clarity signals</h2>
+          <h2 className={`${mono} text-[#f6be00]`}>
+            Clarity signals · snapshot from the last run
+          </h2>
           {latest ? (
             <>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

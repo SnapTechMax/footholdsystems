@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import type {
+  ArmTotals,
   ClaritySignals,
   ConversionSource,
   Experiment,
@@ -126,6 +127,23 @@ export async function initSchema(): Promise<void> {
   await db`
     CREATE UNIQUE INDEX IF NOT EXISTS cro_events_unique_per_visitor
       ON cro_events (experiment_id, visitor_id, kind)`;
+
+  // Views and conversions while no experiment is running. Without this the
+  // system records nothing at all between tests, so real traffic arrives and
+  // leaves no trace, and the first experiment starts with no idea what the
+  // conversion rate it is trying to beat actually is.
+  await db`
+    CREATE TABLE IF NOT EXISTS cro_baseline_events (
+      id         BIGSERIAL PRIMARY KEY,
+      kind       TEXT NOT NULL,
+      page_path  TEXT NOT NULL,
+      visitor_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+
+  await db`
+    CREATE UNIQUE INDEX IF NOT EXISTS cro_baseline_unique_per_visitor
+      ON cro_baseline_events (page_path, visitor_id, kind)`;
 
   await db`
     CREATE TABLE IF NOT EXISTS cro_clarity_snapshots (
@@ -315,6 +333,39 @@ export async function getTotals(
     const arm = row.variant === "b" ? totals.b : totals.a;
     if (row.kind === "impression") arm.impressions = row.n;
     if (row.kind === "conversion") arm.conversions = row.n;
+  }
+  return totals;
+}
+
+/**
+ * Record a view or conversion outside any experiment.
+ *
+ * Deduplicated per visitor so the rate is "visitors who converted / visitors who
+ * looked", matching how experiment arms are counted.
+ */
+export async function recordBaselineEvent(
+  pagePath: string,
+  kind: "impression" | "conversion",
+  visitorId: string
+): Promise<void> {
+  const db = sql();
+  await db`
+    INSERT INTO cro_baseline_events (page_path, kind, visitor_id)
+    VALUES (${pagePath}, ${kind}, ${visitorId})
+    ON CONFLICT (page_path, visitor_id, kind) DO NOTHING`;
+}
+
+export async function getBaselineTotals(pagePath: string): Promise<ArmTotals> {
+  const db = sql();
+  const rows = (await db`
+    SELECT kind, COUNT(*)::int AS n
+    FROM cro_baseline_events WHERE page_path = ${pagePath}
+    GROUP BY kind`) as { kind: string; n: number }[];
+
+  const totals: ArmTotals = { impressions: 0, conversions: 0 };
+  for (const row of rows) {
+    if (row.kind === "impression") totals.impressions = row.n;
+    if (row.kind === "conversion") totals.conversions = row.n;
   }
   return totals;
 }

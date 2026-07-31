@@ -4,7 +4,7 @@ import {
   getBaselineContent,
   getRunningExperiment,
 } from "./db";
-import { resolveAssignment } from "./assign";
+import { ensureVisitorId, resolveAssignment } from "./assign";
 import { resolveContent } from "./variants";
 import type { VariantContent, VariantKey } from "./types";
 
@@ -36,9 +36,14 @@ export async function getActiveVariant(pagePath: string): Promise<ActiveVariant>
     const baseline = await getBaselineContent(pagePath);
     const experiment = await getRunningExperiment(pagePath);
 
-    // No test running: serve whatever last won.
+    // No test running: serve whatever last won, but still identify the visitor
+    // so the view and any conversion count towards the baseline rate.
     if (!experiment) {
-      return { ...fallback, content: resolveContent(baseline) };
+      return {
+        ...fallback,
+        content: resolveContent(baseline),
+        visitorId: await ensureVisitorId(),
+      };
     }
 
     const { visitorId, variant } = await resolveAssignment(experiment.id);

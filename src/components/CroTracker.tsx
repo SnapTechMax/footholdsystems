@@ -13,10 +13,13 @@ export function CroTracker({
   experimentId,
   variant,
   visitorId,
+  pagePath,
 }: {
-  experimentId: number;
-  variant: "a" | "b";
+  /** Null between experiments — the view still counts towards the baseline. */
+  experimentId: number | null;
+  variant: "a" | "b" | null;
   visitorId: string;
+  pagePath: string;
 }) {
   const sent = useRef(false);
 
@@ -27,12 +30,12 @@ export function CroTracker({
     fetch("/api/cro/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ experimentId, variant, visitorId }),
+      body: JSON.stringify({ experimentId, variant, visitorId, pagePath }),
       keepalive: true,
     }).catch(() => {
       /* never surface analytics failures */
     });
-  }, [experimentId, variant, visitorId]);
+  }, [experimentId, variant, visitorId, pagePath]);
 
   return null;
 }

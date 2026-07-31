@@ -23,6 +23,17 @@ function randomId(): string {
 }
 
 /**
+ * This visitor's id, minted if they don't have one yet.
+ *
+ * Needed even with no experiment running, so views and conversions still count
+ * towards the baseline rate rather than vanishing between tests.
+ */
+export async function ensureVisitorId(): Promise<string> {
+  const jar = await cookies();
+  return jar.get(VISITOR_COOKIE)?.value || randomId();
+}
+
+/**
  * Resolve this visitor's arm for an experiment, reading existing cookies where
  * present. Returns the values to set, since a Server Component cannot write
  * cookies itself — the route handler or middleware does that.

@@ -7,7 +7,12 @@ import {
   GUIDE_PATH,
   calendlyUrl,
 } from "@/lib/site";
-import { DATABASE_CONFIGURED, initSchema, recordEvent } from "@/lib/cro/db";
+import {
+  DATABASE_CONFIGURED,
+  initSchema,
+  recordBaselineEvent,
+  recordEvent,
+} from "@/lib/cro/db";
 import { VISITOR_COOKIE } from "@/lib/cro/assign";
 
 // Force this route to run at request time, not build time
@@ -144,16 +149,21 @@ export async function POST(request: NextRequest) {
     try {
       const experimentId = body.experimentId;
       const variant = body.variant;
-      if (
-        DATABASE_CONFIGURED &&
-        typeof experimentId === "number" &&
-        Number.isInteger(experimentId) &&
-        (variant === "a" || variant === "b")
-      ) {
-        const visitorId = request.cookies.get(VISITOR_COOKIE)?.value;
-        if (visitorId) {
-          await initSchema();
+      const visitorId = request.cookies.get(VISITOR_COOKIE)?.value;
+
+      if (DATABASE_CONFIGURED && visitorId) {
+        const inExperiment =
+          typeof experimentId === "number" &&
+          Number.isInteger(experimentId) &&
+          (variant === "a" || variant === "b");
+
+        await initSchema();
+        if (inExperiment) {
           await recordEvent(experimentId, variant, "conversion", visitorId);
+        } else {
+          // No test running — still count it, so the baseline rate reflects
+          // every download rather than only those during an experiment.
+          await recordBaselineEvent("/guide", "conversion", visitorId);
         }
       }
     } catch (croErr) {
