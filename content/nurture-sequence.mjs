@@ -32,8 +32,36 @@ export const GUIDE_URL =
   "https://www.footholdsystems.com/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf";
 export const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
 
+export function tagged(url, campaign, content = "cta") {
+  const target = new URL(url);
+  target.searchParams.set("utm_source", "footholdsystems");
+  target.searchParams.set("utm_medium", "email");
+  target.searchParams.set("utm_campaign", campaign);
+  // Which link inside the email was clicked. Two links to the same destination
+  // in one email are indistinguishable in analytics without it.
+  target.searchParams.set("utm_content", content);
+  return target.toString();
+}
+
 function booking(campaign) {
-  return `${BOOKING_URL}?utm_source=footholdsystems&utm_medium=email&utm_campaign=${campaign}`;
+  return tagged(BOOKING_URL, campaign, "cta-button");
+}
+
+/**
+ * Tag every link in an email body, not just the button.
+ *
+ * Written before the campaign existed, so the inline links, the guide download
+ * in email one and anything added later, arrive in analytics as untagged direct
+ * traffic and cannot be told apart from someone finding the site on their own.
+ * Resend reports no opens or clicks through its API, so these parameters are the
+ * only click data there is.
+ */
+function tagLinks(html, campaign) {
+  let index = 0;
+  return html.replace(/href="(https?:\/\/[^"]+)"/g, (_match, url) => {
+    index += 1;
+    return `href="${tagged(url, campaign, `body-link-${index}`)}"`;
+  });
 }
 
 const p = (text) => `      <p style="margin:0 0 16px;">${text}</p>`;
@@ -380,16 +408,12 @@ const emails = [
 
 export const SEQUENCE = emails.map((email, index) => {
   const campaign = `nurture-${String(index + 1).padStart(2, "0")}-${email.key}`;
+  const body = tagLinks(email.body.join("\n"), campaign);
   return {
     ...email,
     campaign,
     name: `foothold-nurture-${String(index + 1).padStart(2, "0")}-${email.key}`,
-    body: email.body.join("\n"),
-    html: shell({
-      body: email.body.join("\n"),
-      ask: email.ask,
-      cta: email.cta,
-      campaign,
-    }),
+    body,
+    html: shell({ body, ask: email.ask, cta: email.cta, campaign }),
   };
 });

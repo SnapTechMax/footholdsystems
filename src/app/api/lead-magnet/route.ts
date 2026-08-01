@@ -17,6 +17,7 @@ import {
 import { VISITOR_COOKIE } from "@/lib/cro/assign";
 import { subscribeToSequence } from "@/lib/subscribe";
 import { recordConsent } from "@/lib/consent";
+import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -89,10 +90,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    // The guide is only sent to people who agreed to the emails. The checkbox is
-    // `required`, so this is unreachable from the form itself, but the route is
-    // a public endpoint and the gate has to hold here or it does not hold.
-    if (body.optIn !== true) {
+    // The guide is gated behind the tick, except where consent has to be a free
+    // choice. Re-derived here rather than trusting the client: the route is a
+    // public endpoint, so a gate that only exists in the browser is not a gate.
+    const optedIn = body.optIn === true;
+    const gateApplies = consentMayBeRequired(countryFromHeaders(request.headers));
+
+    if (gateApplies && !optedIn) {
       return NextResponse.json(
         { error: "Please tick the box to confirm you'd like the guide and the emails." },
         { status: 400 }
@@ -168,12 +172,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to send the guide" }, { status: 500 });
     }
 
-    // 2) Record what they agreed to, then enrol them.
+    // 2) Record what they agreed to, then enrol them only if they agreed.
     //
-    // Everyone reaching this point ticked the box, since the request is rejected
-    // above otherwise. The record still stores the wording rather than a bare
-    // true, because the wording is the thing that has to be produced if a
-    // provider ever asks what these people actually agreed to.
+    // Under the gate everyone here ticked; where consent is a free choice they
+    // may not have, and that decision is recorded either way. The record stores
+    // the wording rather than a bare boolean, because the two wordings differ by
+    // region and which one someone saw is the whole of the evidence.
     //
     // Best-effort: the guide is already delivered by this point, and neither
     // step may turn a successful download into an error for the person who
@@ -181,7 +185,7 @@ export async function POST(request: NextRequest) {
     try {
       await recordConsent({
         email,
-        granted: true,
+        granted: optedIn,
         text: body.consentText ?? CONSENT_TEXT,
         source,
         // Both are evidence of when and from where consent was given, which is
@@ -194,17 +198,19 @@ export async function POST(request: NextRequest) {
       console.error("Consent record failed (guide still delivered):", consentErr);
     }
 
-    try {
-      const result = await subscribeToSequence(resend, {
-        email,
-        firstName,
-        source,
-      });
-      if (result.notes.length > 0) {
-        console.error("Subscribe issues (guide still delivered):", result.notes);
+    if (optedIn) {
+      try {
+        const result = await subscribeToSequence(resend, {
+          email,
+          firstName,
+          source,
+        });
+        if (result.notes.length > 0) {
+          console.error("Subscribe issues (guide still delivered):", result.notes);
+        }
+      } catch (subErr) {
+        console.error("Subscribe failed (guide still delivered):", subErr);
       }
-    } catch (subErr) {
-      console.error("Subscribe failed (guide still delivered):", subErr);
     }
 
     // 3) Attribute the conversion to its experiment arm. Recorded server-side,

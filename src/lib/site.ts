@@ -21,6 +21,14 @@ export const THANKS_PATH = "/guide/thanks";
 export const CONSENT_TEXT =
   "Yes, send me the guide and occasional AI tips for small businesses. Unsubscribe any time.";
 
+/**
+ * Shown where consent has to be a free choice, so the guide cannot be presented
+ * as conditional on it. Both wordings are stored verbatim with the consent
+ * record, which is how the difference stays provable later.
+ */
+export const CONSENT_TEXT_OPTIONAL =
+  "Also email me occasional AI tips for small businesses. Unsubscribe any time. The guide is yours either way.";
+
 // Direct line. Published to people who have opted in — the delivery email and the
 // guide PDF — but deliberately NOT on the public website, so it stays off the
 // pages anonymous visitors and scrapers hit. Keep those two surfaces in mind

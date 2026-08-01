@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { LeadMagnetForm } from "@/components/LeadMagnetForm";
 import { BookCallButton } from "@/components/BookCallButton";
+import { headers } from "next/headers";
 import { CroTracker } from "@/components/CroTracker";
 import { getActiveVariant } from "@/lib/cro/serve";
+import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
 
 // Copy on this page is served per-visitor by the CRO engine, so it can't be
 // prerendered. With no experiment running it renders the shipped copy.
@@ -84,12 +86,19 @@ export default async function GuidePage() {
   const { content, experimentId, variant, visitorId } =
     await getActiveVariant("/guide");
 
+  // The tick is required in the US and optional where GDPR applies, so the page
+  // has to know where the visitor is before it renders the form.
+  const consentRequired = consentMayBeRequired(
+    countryFromHeaders(await headers())
+  );
+
   const captureForm = (
     <LeadMagnetForm
       submitLabel={content.submitLabel}
       footnote={content.formFootnote}
       experimentId={experimentId}
       variant={variant}
+      consentRequired={consentRequired}
     />
   );
 

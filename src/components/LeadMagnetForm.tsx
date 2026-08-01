@@ -2,19 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CONSENT_TEXT, THANKS_PATH } from "@/lib/site";
+import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
   footnote = "Free. One email. No spam, no drip sequence you can't escape.",
   experimentId = null,
   variant = null,
+  consentRequired = true,
 }: {
   submitLabel?: string;
   footnote?: string;
   /** Set when a CRO experiment is running, so conversions can be attributed. */
   experimentId?: number | null;
   variant?: "a" | "b" | null;
+  /**
+   * False for visitors where consent has to be a free choice. They get the guide
+   * either way; ticking only decides whether they are enrolled.
+   */
+  consentRequired?: boolean;
 } = {}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -46,7 +52,7 @@ export function LeadMagnetForm({
           experimentId,
           variant,
           optIn,
-          consentText: CONSENT_TEXT,
+          consentText: consentRequired ? CONSENT_TEXT : CONSENT_TEXT_OPTIONAL,
         }),
       });
 
@@ -129,13 +135,13 @@ export function LeadMagnetForm({
         <input
           type="checkbox"
           name="optIn"
-          required
+          required={consentRequired}
           checked={optIn}
           onChange={(e) => setOptIn(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#f6be00]"
         />
         <span className="font-serif text-[14px] leading-relaxed text-[#cfccc2]">
-          {CONSENT_TEXT}
+          {consentRequired ? CONSENT_TEXT : CONSENT_TEXT_OPTIONAL}
         </span>
       </label>
 

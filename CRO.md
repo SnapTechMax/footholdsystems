@@ -20,9 +20,18 @@ who asked.
 
 ## Consent
 
-The checkbox is **required and unticked by default**. Required because the guide
-is only sent to people who agree to the emails; unticked because pre-ticking it
-would remove the affirmative action that makes the record worth anything.
+The checkbox is unticked by default, and **required or not depending on where the
+visitor is**. Unticked because pre-ticking it would remove the affirmative action
+that makes the record worth anything.
+
+`src/lib/geo.ts` reads Vercel's `x-vercel-ip-country` header. In the EU 27, the
+UK, the rest of the EEA and Switzerland the tick is optional and the wording
+changes to say the guide is theirs either way. Everywhere else it is required.
+An unknown country is treated as required, matching the US default: erring that
+way costs a conversion, erring the other way collects consent that is not valid.
+
+Both wordings are stored verbatim with the consent record, which is how the
+difference stays provable later.
 
 The gate is enforced server-side as well as with the `required` attribute. The
 route is a public endpoint, so a browser attribute alone would not be a gate.
@@ -31,11 +40,10 @@ Two things worth knowing about this arrangement:
 
 - **US law permits it.** CAN-SPAM requires accurate headers, a postal address and
   a working unsubscribe; it does not require prior consent at all.
-- **GDPR does not.** Article 7(4) says consent is not freely given where a service
-  is conditional on consenting to processing that is not necessary for it. For an
-  EU or UK visitor this consent is not valid however it is worded. The ads are
-  US-targeted but the site is reachable everywhere, so this is a live exposure
-  rather than a theoretical one.
+- **GDPR does not**, which is why the gate is switched off there. Article 7(4)
+  says consent is not freely given where a service is conditional on consenting to
+  processing that is not necessary for it, so a forced tick would produce invalid
+  consent however it is worded.
 
 Separately from the law, an email provider's own terms are stricter and are what
 actually ended the MailerLite account. Whether a required tick counts as
@@ -219,3 +227,32 @@ None of these ask you anything. They exist so unattended changes stay survivable
 - One experiment at a time.
 - Clarity budget is tracked so the API quota can't be exhausted.
 - Impressions are deduplicated per visitor, so reloads don't dilute the rate.
+
+---
+
+# Campaign dashboard
+
+`/admin/campaign`, behind the same gate as the CRO dashboard.
+
+Two sources, because neither is the whole picture. **Our database** knows who
+downloaded and who consented, including the people who declined and were
+therefore never enrolled. **Resend** knows who is in the sequence and how far
+each has got.
+
+Needs `RESEND_AUTOMATION_ID`, printed when `scripts/create-email-sequence.mjs`
+runs. Without it the top half still works and the sequence half stays at zero.
+
+Resend's list endpoint returns run status but not steps, so the per-email funnel
+fetches runs individually and is capped at 50. Past that the dashboard says it is
+showing a sample rather than quietly reporting a fraction as the total.
+
+## Opens and clicks
+
+Not shown, because Resend's API exposes neither for automations. Every link in
+every email instead carries `utm_campaign` identifying the email and
+`utm_content` identifying the link within it, so click-through is in GA4 under
+Acquisition rather than here.
+
+`scripts/build-sequence-steps.mjs` regenerates `src/lib/sequence-steps.ts` from
+the copy. Run it after changing subjects or delays, or the funnel labels drift
+from the emails actually being sent.
