@@ -14,6 +14,9 @@ import type { Resend } from "resend";
  * Both are best-effort. The guide has already been delivered by the time this
  * runs, and failing to enrol someone must never turn a successful download into
  * an error for the person who asked for it.
+ *
+ * The sequence itself lives in scripts/email-sequence.mjs and is pushed to
+ * Resend by scripts/create-email-sequence.mjs.
  */
 
 const EVENT_NAME = "guide.downloaded";
@@ -60,32 +63,22 @@ export async function subscribeToSequence(
     }
   }
 
-  // 2. Trigger the automation. Called over HTTP rather than through the SDK:
-  // the installed SDK (4.x) has no events API, and bumping two major versions
-  // to reach it would put the guide delivery path at risk for one endpoint.
+  // 2. Trigger the automation. Passing `email` rather than a contact id lets
+  // Resend create the contact if it doesn't know them yet, so this works even
+  // when the audience step above failed.
   try {
-    const response = await fetch("https://api.resend.com/events/send", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
+    const { error } = await resend.events.send({
+      event: EVENT_NAME,
+      email,
+      payload: {
+        first_name: firstName ?? "",
+        source,
       },
-      body: JSON.stringify({
-        event: EVENT_NAME,
-        email,
-        payload: {
-          first_name: firstName ?? "",
-          source,
-        },
-      }),
     });
-
-    if (response.ok) {
-      eventSent = true;
+    if (error) {
+      notes.push(`event: ${error.message}`);
     } else {
-      notes.push(
-        `event: ${response.status} ${(await response.text()).slice(0, 200)}`
-      );
+      eventSent = true;
     }
   } catch (error) {
     notes.push(`event: ${error instanceof Error ? error.message : String(error)}`);
