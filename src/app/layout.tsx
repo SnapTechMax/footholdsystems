@@ -53,7 +53,10 @@ const META_PIXEL_ID =
   process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "1149312161102608";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://footholdsystems.com"),
+  // www, because the apex 308s to it. Canonical tags and og:url pointing at a
+  // redirect send every share and every crawl through an extra hop, and paid
+  // clicks land on the redirect rather than the page.
+  metadataBase: new URL("https://www.footholdsystems.com"),
   title: {
     default: "AI Integration for Small Business | Foothold Systems",
     template: "%s | Foothold Systems",

@@ -44,7 +44,11 @@ const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "max@snaptechrepair.com";
 const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "max@footholdsystems.com";
 
 // Public base URL used to build the download link
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://footholdsystems.com").replace(/\/$/, "");
+// www, matching the canonical host. The apex 308s, and the download link in the
+// delivery email is the last place to spend a redirect.
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.footholdsystems.com"
+).replace(/\/$/, "");
 
 // The lead magnet lives in /public/downloads (path shared with the thank-you page)
 const GUIDE_URL = `${SITE_URL}${GUIDE_PATH}`;
