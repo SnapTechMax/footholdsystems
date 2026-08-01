@@ -1,51 +1,55 @@
 # Foothold automation
 
-Two systems: the CRO engine, and the lead-magnet nurture sequence.
+Two systems: MailerLite owns the nurture sequence, and the CRO engine optimises
+the page that feeds it.
 
-## Nurture sequence
+## Lead capture and nurture
 
-22 emails over 38 days, triggered by the `guide.downloaded` event that
-`/api/lead-magnet` sends when someone downloads the guide. Copy lives in
-`scripts/email-sequence.mjs`; `scripts/create-email-sequence.mjs` pushes it to
-Resend as templates plus an automation.
+When someone downloads the guide, `/api/lead-magnet` does three things:
 
-```bash
-RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs --dry-run   # inspect
-RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs             # create
-```
+1. **Resend** emails them the guide. Transactional and immediate, so it does not
+   wait on an automation platform to fire.
+2. **MailerLite** gets the subscriber, added to the group in
+   `MAILERLITE_GROUP_ID`. Joining that group is what triggers the automation, so
+   there is no separate event to send.
+3. **Resend** emails Max that a lead came in.
 
-The automation is created **disabled**. Note that Resend does not allow an
-enabled automation's steps to be edited, so changes mean duplicating all 67
-steps and switching over. Get the copy right before pressing Start.
+The nurture emails themselves live in MailerLite and are edited there. Nothing
+about the sequence is in this repo.
 
-### Booked contacts stop hearing the pitch
+All three steps run only after the guide has actually been sent, and the last two
+are best-effort: a MailerLite outage must not turn a successful download into an
+error for the person who asked for the guide.
 
-`/api/calendly/webhook` receives `invitee.created` and sets the `booked` contact
-property to `"yes"`; `invitee.canceled` sets it back to `"no"`. A condition step
-sits before every send and ends the run for anyone marked booked, so a booking on
-any of the 38 days stops the rest.
+| Variable | Purpose |
+| --- | --- |
+| `MAILERLITE_API_KEY` | API token. Without it the subscriber step is skipped and logged. |
+| `MAILERLITE_GROUP_ID` | Group that triggers the nurture automation. |
 
-The check is before *every* email rather than at a few checkpoints because a
-booking can land at any point, and every remaining email asks for something the
-reader has already done.
+The subscriber endpoint upserts, so a repeat downloader is updated rather than
+rejected, and omitted fields are left alone.
 
-Set `SUPPRESS_AFTER_BOOKING=0` to drop the checks. That removes a third of the
-steps and is the fallback if the automation is ever rejected for size.
+### Booked contacts
 
-### Calendly setup
+`/api/calendly/webhook` receives `invitee.created` and sets the subscriber's
+`booked` field to `"yes"`; `invitee.canceled` sets it back to `"no"`. It upserts,
+because someone can book a call without ever downloading the guide.
 
-Create the webhook subscription against
-`https://www.footholdsystems.com/api/calendly/webhook` for the `invitee.created`
-and `invitee.canceled` events, then put the signing key Calendly issues into
+**The suppression is built in MailerLite, not here.** Add a condition or exit rule
+on `booked` equals `yes` to the automation. This endpoint only supplies the fact.
+Create a `booked` text field in MailerLite first, or the value has nowhere to land.
+
+Subscribe the webhook at
+`https://www.footholdsystems.com/api/calendly/webhook` for `invitee.created` and
+`invitee.canceled`, then put Calendly's signing key in
 `CALENDLY_WEBHOOK_SECRET`.
 
 The endpoint fails closed. With no secret set it returns 503, and a request whose
-signature does not verify is rejected rather than trusted, because this endpoint
-decides who stops receiving email. Verification expects the
-`Calendly-Webhook-Signature` header as `t=<unix seconds>,v1=<hex hmac>` with the
-HMAC taken over `<t>.<raw body>`, and rejects anything more than five minutes old
-so a captured payload cannot be replayed. **Confirm this against Calendly's own
-docs with one real test booking**, and check the logs: a scheme mismatch shows up
+signature does not verify is rejected rather than trusted, because this decides
+who stops receiving email. Verification expects `Calendly-Webhook-Signature` as
+`t=<unix seconds>,v1=<hex hmac>` with the HMAC over `<t>.<raw body>`, and rejects
+anything older than five minutes so a captured payload cannot be replayed.
+**Confirm this with one real test booking**: a scheme mismatch appears in the logs
 as `Calendly webhook rejected: signature did not match`.
 
 ---
@@ -112,7 +116,7 @@ Clarity → Settings → Data Export → Generate new API token. Set as
 ### 3. Meta pixel access (optional)
 
 Needs a token with `ads_read` on the Business Manager owning the pixel. Set
-`META_ACCESS_TOKEN` and `META_PIXEL_ID` (`1460434995827375`). Without these the
+`META_ACCESS_TOKEN` and `META_PIXEL_ID` (`1149312161102608`). Without these the
 engine falls back to server-side counts and says so in the run log.
 
 ### 4. Secrets

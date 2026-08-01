@@ -14,7 +14,7 @@ import {
   recordEvent,
 } from "@/lib/cro/db";
 import { VISITOR_COOKIE } from "@/lib/cro/assign";
-import { subscribeToSequence } from "@/lib/subscribe";
+import { subscribeToNurture } from "@/lib/mailerlite";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -148,20 +148,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to send the guide" }, { status: 500 });
     }
 
-    // 2) Enrol them on the mailing list and start the nurture sequence.
-    // Best-effort: the guide is already delivered, and a list failure must not
-    // turn a successful download into an error for the person who asked.
+    // 2) Hand the lead to MailerLite, which owns the nurture sequence. Adding
+    // them to the group is what starts it.
+    //
+    // Best-effort: the guide is already delivered by this point, and a
+    // MailerLite outage must not turn a successful download into an error for
+    // the person who asked for it.
     try {
-      const result = await subscribeToSequence(resend, {
-        email,
-        firstName,
-        source,
-      });
-      if (result.notes.length > 0) {
-        console.error("Subscribe issues (guide still delivered):", result.notes);
+      const result = await subscribeToNurture({ email, firstName, source });
+      if (!result.ok) {
+        console.error(
+          `MailerLite subscribe failed (guide still delivered): ${result.note ?? "unknown"}`
+        );
       }
     } catch (subErr) {
-      console.error("Subscribe failed (guide still delivered):", subErr);
+      console.error("MailerLite subscribe threw (guide still delivered):", subErr);
     }
 
     // 3) Attribute the conversion to its experiment arm. Recorded server-side,
