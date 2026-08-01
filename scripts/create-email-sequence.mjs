@@ -71,10 +71,16 @@ async function main() {
       type: "string",
       fallbackValue: "no",
     });
-    if (error && !/already exists|duplicate/i.test(error.message ?? "")) {
+    // 409 means it already exists, which is the expected state on any re-run.
+    // Matched on status rather than message text: the wording here is "There is
+    // already a contact property with this key", which an "already exists" check
+    // does not catch. Status codes are the contract; the prose is not.
+    if (error && error.statusCode !== 409) {
       throw new Error(`contact property ${BOOKED_PROPERTY}: ${error.message}`);
     }
-    console.log(`  contact property ready: ${BOOKED_PROPERTY}\n`);
+    console.log(
+      `  contact property ready: ${BOOKED_PROPERTY}${error ? " (already existed)" : ""}\n`
+    );
   }
 
   const templateIds = [];

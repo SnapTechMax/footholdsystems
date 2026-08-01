@@ -56,8 +56,10 @@ export async function subscribeToSequence(
         // opens every email with "Hi ,".
         firstName: firstName?.trim() || "there",
       });
-      // An already-present contact is a success for our purposes.
-      if (error && !/already exists/i.test(error.message ?? "")) {
+      // An already-present contact is a success for our purposes. Matched on
+      // status rather than message text, because Resend's wording for a conflict
+      // varies by endpoint and a phrase match silently stops matching.
+      if (error && error.statusCode !== 409) {
         notes.push(`audience: ${error.message}`);
       } else {
         addedToAudience = true;
