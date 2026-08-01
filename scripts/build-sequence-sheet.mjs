@@ -49,8 +49,25 @@ function toPlainText(bodyHtml) {
 const esc = (s) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const FONT =
-  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+/**
+ * Font stacks, each with a real fallback first in mind.
+ *
+ * Gmail and Outlook strip @font-face, so Archivo, Source Serif and JetBrains
+ * Mono will not load for most recipients. What actually renders is the second
+ * name in each stack, so those are chosen to hold the site's character rather
+ * than to be a generic default: Georgia carries the serif body, and a monospace
+ * stack keeps the eyebrow labels looking like the site's.
+ */
+const SANS =
+  "Archivo,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
+const SERIF = "'Source Serif 4',Georgia,'Times New Roman',serif";
+const MONO =
+  "'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,'Courier New',monospace";
+
+const CREAM = "#eae8e1";
+const INK = "#1b1b1b";
+const YELLOW = "#f6be00";
+const BODY_TEXT = "#1f1f1d";
 
 /**
  * One paste per email: body, ask, signature and button, ready for MailerLite's
@@ -70,22 +87,43 @@ function toEmailHtml(email, ctaUrl) {
     .split("\n")
     .map((line) => line.replace(/^\s*<p[^>]*>/, "").replace(/<\/p>\s*$/, "").trim())
     .filter(Boolean)
-    .concat([email.ask, "Max"])
+    .concat([email.ask])
     .map(
       (text) =>
-        `<p style="margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:1.65;color:#1f1f1d;">${text}</p>`
+        `        <p style="margin:0 0 17px;font-family:${SERIF};font-size:17px;line-height:1.62;color:${BODY_TEXT};">${text}</p>`
     )
     .join("\n");
 
-  const button = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;">
+  // Table with bgcolor rather than a padded anchor: Outlook ignores padding on
+  // an <a> and collapses the button into bare underlined text.
+  const button = `        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 6px;">
+          <tr>
+            <td align="center" bgcolor="${INK}" style="border-radius:8px;">
+              <a href="${ctaUrl}" style="display:inline-block;padding:14px 30px;font-family:${SANS};font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;">${email.cta} &rarr;</a>
+            </td>
+          </tr>
+        </table>`;
+
+  // Layout is tables and bgcolor throughout, because Outlook does not render
+  // background colour on a div.
+  return toMailerLite(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${CREAM};">
   <tr>
-    <td align="center" bgcolor="#1b1b1b" style="border-radius:8px;">
-      <a href="${ctaUrl}" style="display:inline-block;padding:14px 28px;font-family:${FONT};font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;">${email.cta} &rarr;</a>
+    <td bgcolor="${INK}" style="padding:22px 30px 20px;">
+      <p style="margin:0;font-family:${MONO};font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${YELLOW};">Foothold Systems</p>
+      <h1 style="margin:11px 0 0;font-family:${SANS};font-size:25px;line-height:1.15;font-weight:800;letter-spacing:-0.01em;color:#f2efe6;">${email.subject}</h1>
     </td>
   </tr>
-</table>`;
-
-  return toMailerLite(`${paras}\n${button}`);
+  <tr>
+    <td bgcolor="${YELLOW}" style="height:5px;line-height:5px;font-size:0;">&nbsp;</td>
+  </tr>
+  <tr>
+    <td bgcolor="${CREAM}" style="padding:28px 30px 30px;">
+${paras}
+${button}
+        <p style="margin:20px 0 0;font-family:${SERIF};font-size:17px;line-height:1.62;color:${BODY_TEXT};">Max</p>
+    </td>
+  </tr>
+</table>`);
 }
 
 let day = 0;
