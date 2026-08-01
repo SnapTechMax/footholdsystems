@@ -90,5 +90,33 @@ export async function subscribeToSequence(
     notes.push(`event: ${error instanceof Error ? error.message : String(error)}`);
   }
 
+  // 3. Guarantee the contact has a name.
+  //
+  // Two ways it otherwise ends up blank, and both are the normal path rather
+  // than edge cases:
+  //
+  //   - With no audience configured, step 1 is skipped entirely and the contact
+  //     is created by the event above, which carries no name.
+  //   - A contact that already exists makes step 1 return 409 without updating
+  //     anything, so a repeat downloader keeps whatever it had, which is
+  //     usually nothing.
+  //
+  // Every email opens "Hi {{{FIRST_NAME}}}," and FIRST_NAME is reserved in
+  // Resend, so no template-level fallback is possible. This is the only place
+  // it can be fixed. Runs after the event so the contact is certain to exist,
+  // which is safe because the first email is a day away.
+  //
+  // `contacts.update` takes an email and does not require an audience, which is
+  // what makes this work where `contacts.create` cannot.
+  try {
+    const { error } = await resend.contacts.update({
+      email,
+      firstName: firstName?.trim() || "there",
+    });
+    if (error) notes.push(`name: ${error.message}`);
+  } catch (error) {
+    notes.push(`name: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   return { addedToAudience, eventSent, notes };
 }
