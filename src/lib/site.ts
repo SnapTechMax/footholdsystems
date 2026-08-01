@@ -6,6 +6,17 @@ export const CALENDLY_URL =
 // Where the lead-magnet form sends people once the guide is actually delivered.
 export const THANKS_PATH = "/guide/thanks";
 
+/**
+ * Wording beside the marketing opt-in checkbox.
+ *
+ * Lives here rather than in lib/consent.ts because that module is server-only
+ * and the form is a client component. Both import this one, so the wording shown
+ * to someone and the wording stored against their consent cannot drift apart —
+ * which is the only thing that makes the stored record worth anything.
+ */
+export const CONSENT_TEXT =
+  "Email me occasional AI tips for small businesses. Unsubscribe any time.";
+
 // Direct line. Published to people who have opted in — the delivery email and the
 // guide PDF — but deliberately NOT on the public website, so it stays off the
 // pages anonymous visitors and scrapers hit. Keep those two surfaces in mind

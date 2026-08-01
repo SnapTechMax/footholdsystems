@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { THANKS_PATH } from "@/lib/site";
+import { CONSENT_TEXT, THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
@@ -19,6 +19,9 @@ export function LeadMagnetForm({
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  // Unticked. A pre-ticked box is not consent, and the whole point of asking is
+  // to be able to show it was a deliberate choice.
+  const [optIn, setOptIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "error">("idle");
 
@@ -42,6 +45,8 @@ export function LeadMagnetForm({
           source: "Foothold Systems - 5 Levels of AI",
           experimentId,
           variant,
+          optIn,
+          consentText: CONSENT_TEXT,
         }),
       });
 
@@ -119,6 +124,19 @@ export function LeadMagnetForm({
           className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00]"
         />
       </div>
+
+      <label className="mt-4 flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          name="optIn"
+          checked={optIn}
+          onChange={(e) => setOptIn(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#f6be00]"
+        />
+        <span className="font-serif text-[14px] leading-relaxed text-[#cfccc2]">
+          {CONSENT_TEXT}
+        </span>
+      </label>
 
       <button
         type="submit"

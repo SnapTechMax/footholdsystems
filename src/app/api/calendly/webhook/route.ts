@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { MAILERLITE_CONFIGURED, upsertSubscriber } from "@/lib/mailerlite";
+import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Calendly webhook. Sets a `booked` field on the MailerLite subscriber so the
+ * Calendly webhook. Sets a `booked` property on the Resend contact so the
  * nurture sequence can stop asking someone to book something they have booked.
  *
- * The suppression itself is built in MailerLite: add a condition or an exit rule
- * on `booked` equals `yes` to the automation. This endpoint only supplies the
- * fact.
+ * A condition step in the automation reads that property before every send and
+ * ends the run for anyone marked booked, so this endpoint only supplies the fact.
  *
  * Signature verification follows the scheme Calendly shares with Stripe and
  * others: a `Calendly-Webhook-Signature` header of the form
@@ -120,21 +119,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: eventName || "unknown" });
   }
 
-  if (!MAILERLITE_CONFIGURED()) {
-    console.error("Calendly webhook verified but MAILERLITE_API_KEY is unset");
-    return NextResponse.json({ ok: false, error: "MailerLite not configured." });
-  }
-
-  // Upsert rather than update: someone can book a call without ever having
-  // downloaded the guide, and that person should still be marked booked.
-  const result = await upsertSubscriber({ email, fields: { booked } });
-  if (!result.ok) {
-    console.error(
-      `Calendly webhook: MailerLite update failed for ${email}: ${result.note ?? "unknown"}`
-    );
-    // Still 200. The booking is real and already recorded in Calendly, and a
-    // retry would not fix a bad field name or a revoked key.
-    return NextResponse.json({ ok: false, error: "Subscriber update failed." });
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.contacts.update({
+      email,
+      properties: { booked },
+    });
+    if (error) {
+      console.error(`Calendly webhook: contact update failed for ${email}:`, error.message);
+      // Still 200. The booking is real and already recorded in Calendly, and a
+      // retry would not fix a contact Resend has never seen, which is what
+      // happens when someone books without ever downloading the guide.
+      return NextResponse.json({ ok: false, error: "Contact update failed." });
+    }
+  } catch (error) {
+    console.error("Calendly webhook: contact update threw:", error);
+    return NextResponse.json({ ok: false, error: "Contact update failed." });
   }
 
   console.log(`Calendly ${eventName}: marked ${email} booked=${booked}`);

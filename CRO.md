@@ -1,58 +1,69 @@
 # Foothold automation
 
-Two systems: MailerLite owns the nurture sequence, and the CRO engine optimises
-the page that feeds it.
+Two systems: the nurture sequence, and the CRO engine that optimises the page
+feeding it.
 
-## Lead capture and nurture
+## Lead capture
 
-When someone downloads the guide, `/api/lead-magnet` does three things:
+When someone downloads the guide, `/api/lead-magnet`:
 
-1. **Resend** emails them the guide. Transactional and immediate, so it does not
-   wait on an automation platform to fire.
-2. **MailerLite** gets the subscriber, added to the group in
-   `MAILERLITE_GROUP_ID`. Joining that group is what triggers the automation, so
-   there is no separate event to send.
-3. **Resend** emails Max that a lead came in.
+1. **Sends the guide.** Transactional. They asked for it, so it goes regardless
+   of anything below.
+2. **Records their consent decision**, yes or no, in `marketing_consent`.
+3. **Enrols them in the sequence, only if they ticked the box.**
+4. **Emails Max** that a lead came in.
 
-The nurture emails themselves live in MailerLite and are edited there. Nothing
-about the sequence is in this repo.
+Steps 2 to 4 run only after the guide has actually sent, and are best-effort: a
+failure there must not turn a successful download into an error for the person
+who asked.
 
-All three steps run only after the guide has actually been sent, and the last two
-are best-effort: a MailerLite outage must not turn a successful download into an
-error for the person who asked for the guide.
+## Consent
 
-| Variable | Purpose |
-| --- | --- |
-| `MAILERLITE_API_KEY` | API token. Without it the subscriber step is skipped and logged. |
-| `MAILERLITE_GROUP_ID` | Group that triggers the nurture automation. |
+The checkbox is unticked by default, because a pre-ticked box is not consent and
+the point of asking is to show the choice was deliberate.
 
-The subscriber endpoint upserts, so a repeat downloader is updated rather than
-rejected, and omitted fields are left alone.
+`marketing_consent` stores the **exact wording shown**, not just a boolean, plus
+IP, user agent and timestamp. Wording changes over time, and "they ticked a box"
+is worth little if nobody can say what the box said at the time. The table is
+append-only, so a later withdrawal is a new row and the history stays intact.
+
+`CONSENT_TEXT` lives in `src/lib/site.ts` because `lib/consent.ts` is server-only
+and the form is a client component. Both import the same constant, so what is
+shown and what is stored cannot drift.
+
+Declines are recorded too. Being able to prove someone said no matters as much as
+proving they said yes.
+
+## The sequence
+
+22 emails over 38 days. Copy in `content/nurture-sequence.mjs`;
+`scripts/create-email-sequence.mjs` pushes it to Resend as templates plus an
+automation.
+
+```bash
+RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs --dry-run
+RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs
+```
+
+Created **disabled**. Resend does not allow an enabled automation's steps to be
+edited, so changes mean duplicating 67 steps and switching over.
+
+Triggered by the `guide.downloaded` event, which is only sent for people who
+opted in.
 
 ### Booked contacts
 
-`/api/calendly/webhook` receives `invitee.created` and sets the subscriber's
-`booked` field to `"yes"`; `invitee.canceled` sets it back to `"no"`. It upserts,
-because someone can book a call without ever downloading the guide.
+`/api/calendly/webhook` sets a `booked` contact property on `invitee.created` and
+clears it on `invitee.canceled`. A condition before every send ends the run for
+anyone marked booked, so a booking on any of the 38 days stops the rest.
+`SUPPRESS_AFTER_BOOKING=0` drops those checks, which is the fallback if the
+automation is rejected for size.
 
-**The suppression is built in MailerLite, not here.** Add a condition or exit rule
-on `booked` equals `yes` to the automation. This endpoint only supplies the fact.
-Create a `booked` text field in MailerLite first, or the value has nowhere to land.
-Note that `source` is a reserved name there, which is why the download source is
-sent as `lead_source`.
-
-Subscribe the webhook at
-`https://www.footholdsystems.com/api/calendly/webhook` for `invitee.created` and
-`invitee.canceled`, then put Calendly's signing key in
-`CALENDLY_WEBHOOK_SECRET`.
-
-The endpoint fails closed. With no secret set it returns 503, and a request whose
-signature does not verify is rejected rather than trusted, because this decides
-who stops receiving email. Verification expects `Calendly-Webhook-Signature` as
-`t=<unix seconds>,v1=<hex hmac>` with the HMAC over `<t>.<raw body>`, and rejects
-anything older than five minutes so a captured payload cannot be replayed.
-**Confirm this with one real test booking**: a scheme mismatch appears in the logs
-as `Calendly webhook rejected: signature did not match`.
+The endpoint fails closed: 503 with no `CALENDLY_WEBHOOK_SECRET`, 401 on anything
+that does not verify. Signatures are checked over the raw body, compared in
+constant time, and rejected beyond five minutes so a captured payload cannot be
+replayed. **Confirm the scheme with one real test booking**: a mismatch appears in
+the logs as `Calendly webhook rejected: signature did not match`.
 
 ---
 
