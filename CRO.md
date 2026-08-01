@@ -1,3 +1,55 @@
+# Foothold automation
+
+Two systems: the CRO engine, and the lead-magnet nurture sequence.
+
+## Nurture sequence
+
+22 emails over 38 days, triggered by the `guide.downloaded` event that
+`/api/lead-magnet` sends when someone downloads the guide. Copy lives in
+`scripts/email-sequence.mjs`; `scripts/create-email-sequence.mjs` pushes it to
+Resend as templates plus an automation.
+
+```bash
+RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs --dry-run   # inspect
+RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs             # create
+```
+
+The automation is created **disabled**. Note that Resend does not allow an
+enabled automation's steps to be edited, so changes mean duplicating all 67
+steps and switching over. Get the copy right before pressing Start.
+
+### Booked contacts stop hearing the pitch
+
+`/api/calendly/webhook` receives `invitee.created` and sets the `booked` contact
+property to `"yes"`; `invitee.canceled` sets it back to `"no"`. A condition step
+sits before every send and ends the run for anyone marked booked, so a booking on
+any of the 38 days stops the rest.
+
+The check is before *every* email rather than at a few checkpoints because a
+booking can land at any point, and every remaining email asks for something the
+reader has already done.
+
+Set `SUPPRESS_AFTER_BOOKING=0` to drop the checks. That removes a third of the
+steps and is the fallback if the automation is ever rejected for size.
+
+### Calendly setup
+
+Create the webhook subscription against
+`https://www.footholdsystems.com/api/calendly/webhook` for the `invitee.created`
+and `invitee.canceled` events, then put the signing key Calendly issues into
+`CALENDLY_WEBHOOK_SECRET`.
+
+The endpoint fails closed. With no secret set it returns 503, and a request whose
+signature does not verify is rejected rather than trusted, because this endpoint
+decides who stops receiving email. Verification expects the
+`Calendly-Webhook-Signature` header as `t=<unix seconds>,v1=<hex hmac>` with the
+HMAC taken over `<t>.<raw body>`, and rejects anything more than five minutes old
+so a captured payload cannot be replayed. **Confirm this against Calendly's own
+docs with one real test booking**, and check the logs: a scheme mismatch shows up
+as `Calendly webhook rejected: signature did not match`.
+
+---
+
 # The CRO engine
 
 Pulls Microsoft Clarity data for a sales page, forms a hypothesis about why
