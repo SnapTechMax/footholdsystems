@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AdminNav } from "@/components/AdminNav";
 import { CAMPAIGN_CONFIGURED, getCampaignStats } from "@/lib/campaign";
 
 export const dynamic = "force-dynamic";
@@ -34,14 +34,10 @@ export default async function CampaignDashboard() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-3xl font-black uppercase tracking-tight text-[#f2efe6]">
-          Campaign
-        </h1>
-        <Link href="/admin/cro" className={`${mono} text-[#f6be00] hover:underline`}>
-          CRO dashboard →
-        </Link>
-      </div>
+      <h1 className="mb-6 text-3xl font-black uppercase tracking-tight text-[#f2efe6]">
+        Campaign
+      </h1>
+      <AdminNav current="/admin/campaign" />
 
       {stats.automation ? (
         <p className={`${mono} mt-2 text-[#8a887f]`}>

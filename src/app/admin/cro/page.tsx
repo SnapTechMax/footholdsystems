@@ -16,6 +16,7 @@ import { CLARITY_CONFIGURED } from "@/lib/cro/clarity";
 import { META_CONFIGURED } from "@/lib/cro/meta";
 import { compare, requiredSamplePerArm, verdict } from "@/lib/cro/stats";
 import type { Experiment, ExperimentTotals } from "@/lib/cro/types";
+import { AdminNav } from "@/components/AdminNav";
 import { SettingsPanel } from "./SettingsPanel";
 
 export const dynamic = "force-dynamic";
@@ -223,7 +224,9 @@ export default async function CroDashboard() {
         </p>
       </div>
 
-      <div className="mt-6 space-y-6">
+      <AdminNav current="/admin/cro" />
+
+      <div className="space-y-6">
         <Missing items={missing} />
 
         {/* Live counts, updated on every visit rather than on a run */}
