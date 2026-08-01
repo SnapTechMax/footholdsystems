@@ -12,7 +12,7 @@
  */
 
 import { writeFileSync, mkdirSync } from "node:fs";
-import { SEQUENCE, BOOKING_URL } from "../content/nurture-sequence.mjs";
+import { SEQUENCE, BOOKING_URL, BRAND_ADDRESS } from "../content/nurture-sequence.mjs";
 
 /**
  * Rewrite Resend's template syntax to MailerLite's.
@@ -23,7 +23,11 @@ import { SEQUENCE, BOOKING_URL } from "../content/nurture-sequence.mjs";
  * every subscriber.
  */
 function toMailerLite(text) {
-  return text.replace(/\{\{\{FIRST_NAME\}\}\}/g, "{$name}");
+  // The default() form matters: the name field on the form is optional, so a
+  // real share of subscribers have none, and a bare {$name} opens the email
+  // with "Hi ,". Baking the fallback in beats relying on it being set correctly
+  // twenty-two times in the editor.
+  return text.replace(/\{\{\{FIRST_NAME\}\}\}/g, "{$name|default('there')}");
 }
 
 /** Strip the HTML paragraph wrappers back to readable lines. */
@@ -73,9 +77,9 @@ const BODY_TEXT = "#1f1f1d";
  * One paste per email: body, ask, signature and button, ready for MailerLite's
  * HTML block.
  *
- * Body only, with no page wrapper, footer or unsubscribe link, because
- * MailerLite's template supplies all of that and a second footer is both ugly
- * and confusing.
+ * No page wrapper, since MailerLite's template supplies that, but the block does
+ * carry its own address line and unsubscribe link. MailerLite's default footer
+ * must be turned off or every email ships with two of each.
  *
  * Styles are inline and the button is a table rather than a padded anchor.
  * Outlook ignores padding on an <a>, which collapses the button to bare text
@@ -117,10 +121,23 @@ function toEmailHtml(email, ctaUrl) {
     <td bgcolor="${YELLOW}" style="height:5px;line-height:5px;font-size:0;">&nbsp;</td>
   </tr>
   <tr>
-    <td bgcolor="${CREAM}" style="padding:28px 30px 30px;">
+    <td bgcolor="${CREAM}" style="padding:28px 30px 24px;">
 ${paras}
 ${button}
         <p style="margin:20px 0 0;font-family:${SERIF};font-size:17px;line-height:1.62;color:${BODY_TEXT};">Max</p>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor="${CREAM}" style="padding:0 30px 28px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="border-top:1px solid #d4d1c6;font-size:0;line-height:0;padding:0 0 15px;">&nbsp;</td></tr>
+        <tr>
+          <td style="font-family:${MONO};font-size:11px;line-height:1.7;color:#7a786f;">
+            Foothold Systems &middot; ${BRAND_ADDRESS}<br>
+            <a href="{$unsubscribe}" style="color:#7a786f;text-decoration:underline;">Unsubscribe</a>. One click, no hard feelings.
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>`);
@@ -191,15 +208,16 @@ const html = `<title>MailerLite build sheet</title>
     <h2>Before you start</h2>
     1. Automations → Create automation.<br>
     2. Trigger: <b>When subscriber joins a group</b> → <b>FootHold Systems Campaign 1</b>.<br>
-    3. Add a <b>Condition</b> as the first step: field <code>booked</code> is <b>not</b> equal to <code>yes</code>. Route the "no" side out of the automation, so anyone who books stops receiving it.<br>
+    3. Set the template background to <code>#eae8e1</code> so the blocks blend into one surface rather than sitting as a card on white.<br>
     4. Then for each card: add a <b>Delay</b> with the stated duration, followed by an <b>Email</b>. In the email, drop in an <b>HTML block</b> and paste the block given. Copy the subject line across too.<br>
-    5. Repeat the condition before the later emails if you want tighter suppression. Once per few steps is usually enough.
+    5. Once the chain works, add a <b>Condition</b> on <code>booked</code> equals <code>yes</code>, ending the Yes path so anyone who books stops receiving the rest. Build it after the emails, not before: an empty field compared the wrong way round routes everyone out and the automation silently sends nothing.
   </div>
 
   <div class="steps warn">
-    <h2>Two things that will bite otherwise</h2>
-    <b>Set a fallback on {$name}.</b> The name field on the form is optional, so a good share of subscribers have none, and with no fallback they open to "Hi ,". When you insert the variable through MailerLite's picker it offers a fallback value: use <b>there</b>. The text below already uses MailerLite's syntax rather than the Resend form the copy was written in.<br><br>
-    <b>The HTML is body only, on purpose.</b> No page wrapper, no footer, no unsubscribe link, because MailerLite's template supplies all of that. Pasting a second footer would be both ugly and confusing.
+    <h2>Three things that will bite otherwise</h2>
+    <b>Turn off MailerLite's own footer.</b> Each block below now ends with its own address line and unsubscribe link. If MailerLite's default footer is also switched on, every email goes out with two of each, which looks broken and muddies which unsubscribe is real. Remove or empty the footer block in the template.<br><br>
+    <b>The name fallback is already handled.</b> The copy uses <code>{$name|default('there')}</code>, so a subscriber with no name reads "Hi there," rather than "Hi ,". Nothing to configure.<br><br>
+    <b>Variables do not resolve in test sends.</b> MailerLite only substitutes <code>{$email}</code>, <code>{$name}</code> and <code>{$last_name}</code> in tests, so <code>{$unsubscribe}</code> will look dead when you preview. That is expected. Check it on a real send to yourself through the automation.
   </div>
 ${cards}
 </div>
