@@ -1,8 +1,7 @@
 /**
  * Pushes the nurture sequence in email-sequence.mjs to Resend.
  *
- *   RESEND_API_KEY=re_xxx SEQUENCE_FROM='Max <max@footholdsystems.com>' \
- *     node scripts/create-email-sequence.mjs
+ *   RESEND_API_KEY=re_xxx node scripts/create-email-sequence.mjs
  *
  * Creates and publishes one template per email — unpublished templates can't be
  * used in an Automation — then creates the Automation wiring them together with
@@ -23,10 +22,12 @@ import { SEQUENCE } from "./email-sequence.mjs";
 const DRY = process.argv.includes("--dry-run");
 const TRIGGER_EVENT = "guide.downloaded";
 
-// Must be on a Resend-verified domain. Until footholdsystems.com is verified,
-// this has to be the snaptechrepair.com sender the rest of the site uses.
+// A person, not a brand. These emails are signed by Max and several of them ask
+// for a reply, so a noreply@ sender would be working against the copy. The
+// domain is verified in Resend and publishes DMARC p=reject, which Resend
+// satisfies through DKIM alignment.
 const FROM =
-  process.env.SEQUENCE_FROM || "Foothold Systems <noreply@snaptechrepair.com>";
+  process.env.SEQUENCE_FROM || "Max at Foothold Systems <max@footholdsystems.com>";
 const REPLY_TO = process.env.SEQUENCE_REPLY_TO || "max@footholdsystems.com";
 
 if (!process.env.RESEND_API_KEY && !DRY) {

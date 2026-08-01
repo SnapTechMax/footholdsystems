@@ -28,15 +28,20 @@ const BRAND_NAME = "Foothold Systems";
 const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO: confirm Foothold mailing address (required on marketing email footers)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Where lead notifications go (defaults to a monitored inbox; override via env)
+// Where lead notifications land. A destination rather than a sender, so the
+// domain has no bearing on deliverability; override via env to move it.
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "max@snaptechrepair.com";
 
 // Which address the delivery email comes from. Must be on a Resend-verified domain.
-// The free Resend plan only allows one verified domain, so we reuse the already-
-// verified snaptechrepair.com (no second domain / paid plan needed). The email still
-// shows the "Foothold Systems" display name and replies go to max@footholdsystems.com.
-// To send from footholdsystems.com later, verify it in Resend and set CONTACT_FROM_EMAIL.
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "noreply@snaptechrepair.com";
+// footholdsystems.com is verified in Resend, so mail now goes out under the brand
+// it belongs to rather than borrowing SnapTech's domain.
+//
+// The domain publishes DMARC p=reject, which leaves no margin for a sender that
+// isn't set up properly: anything failing alignment is rejected outright rather
+// than landing in spam. Resend passes it through DKIM alignment on
+// resend._domainkey.footholdsystems.com. If this address is ever changed to a
+// domain without that in place, delivery stops dead.
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "max@footholdsystems.com";
 
 // Public base URL used to build the download link
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://footholdsystems.com").replace(/\/$/, "");
