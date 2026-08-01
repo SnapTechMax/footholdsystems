@@ -17,6 +17,9 @@
   details { margin-top:14px; }
   summary { cursor:pointer; font-size:12px; color:#7a786f; }
   details pre { margin-top:8px; }
+  button.cp { margin-top:7px; background:#1b1b1b; color:#f6be00; border:0; border-radius:5px; padding:6px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+  button.cp:hover { background:#2c2c29; }
+  button.cp.done { background:#2f6f4f; color:#fff; }
 </style>
 <div class="wrap">
   <h1>MailerLite build sheet</h1>
@@ -27,27 +30,46 @@
     1. Automations → Create automation.<br>
     2. Trigger: <b>When subscriber joins a group</b> → <b>FootHold Systems Campaign 1</b>.<br>
     3. Add a <b>Condition</b> as the first step: field <code>booked</code> is <b>not</b> equal to <code>yes</code>. Route the "no" side out of the automation, so anyone who books stops receiving it.<br>
-    4. Then for each card: add a <b>Delay</b> with the stated duration, followed by an <b>Email</b> with the subject and body given.<br>
+    4. Then for each card: add a <b>Delay</b> with the stated duration, followed by an <b>Email</b>. In the email, drop in an <b>HTML block</b> and paste the block given. Copy the subject line across too.<br>
     5. Repeat the condition before the later emails if you want tighter suppression. Once per few steps is usually enough.
   </div>
 
   <div class="steps warn">
     <h2>Two things that will bite otherwise</h2>
     <b>Set a fallback on {$name}.</b> The name field on the form is optional, so a good share of subscribers have none, and with no fallback they open to "Hi ,". When you insert the variable through MailerLite's picker it offers a fallback value: use <b>there</b>. The text below already uses MailerLite's syntax rather than the Resend form the copy was written in.<br><br>
-    <b>Do not paste a footer or unsubscribe link.</b> MailerLite appends its own, and a second one is both ugly and confusing. The bodies below deliberately stop after the signature.
+    <b>The HTML is body only, on purpose.</b> No page wrapper, no footer, no unsubscribe link, because MailerLite's template supplies all of that. Pasting a second footer would be both ugly and confusing.
   </div>
 
 <section class="card">
   <header>
     <span class="num">01</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 1</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 1</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">The habit that fixes most bad AI answers</pre>
+  <pre class="copy" id="s01">The habit that fixes most bad AI answers</pre>
+  <button class="cp" data-target="s01">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h01">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Most people get poor answers because they open with the question. Try opening with the context instead.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Not: &lt;em&gt;write me a follow up email&lt;/em&gt;. Instead: &lt;em&gt;I run a 12 person HVAC company. This customer got a quote three weeks ago for $4,200 and has gone quiet. We have worked with them twice before. Write the follow up.&lt;/em&gt;&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Same tool, completely different output. The model is not short of ability. It is short of facts about your business.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Try it once today on something real and see the difference.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The guide walks through where this stops being enough. If you would rather just talk it through, my calendar is open.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-01-context" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h01">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Most people get poor answers because they open with the question. Try opening with the context instead.
 
@@ -60,33 +82,41 @@ Try it once today on something real and see the difference.
 The guide walks through where this stops being enough. If you would rather just talk it through, my calendar is open.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-01-context</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Most people get poor answers because they open with the question. Try opening with the context instead.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Not: &lt;em&gt;write me a follow up email&lt;/em&gt;. Instead: &lt;em&gt;I run a 12 person HVAC company. This customer got a quote three weeks ago for $4,200 and has gone quiet. We have worked with them twice before. Write the follow up.&lt;/em&gt;&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Same tool, completely different output. The model is not short of ability. It is short of facts about your business.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Try it once today on something real and see the difference.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-01-context</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">02</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 2</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 2</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Stop asking it to write things</pre>
+  <pre class="copy" id="s02">Stop asking it to write things</pre>
+  <button class="cp" data-target="s02">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h02">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Asking AI to write from nothing gets you something generic that sounds like everyone else.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Give it your raw material instead. Paste in your rough notes, your last three emails to that customer, the messy voice note you dictated in the van. Then ask it to shape that.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The difference is that the second version is yours. It already has your pricing, your tone, your history with that client. It just did not have punctuation.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Writing from nothing is a party trick. Shaping your own material is the useful bit.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;That distinction is most of Level 2 in the guide. Calendar link is below if it is easier to ask me directly.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-02-draft" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h02">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Asking AI to write from nothing gets you something generic that sounds like everyone else.
 
@@ -99,33 +129,41 @@ Writing from nothing is a party trick. Shaping your own material is the useful b
 That distinction is most of Level 2 in the guide. Calendar link is below if it is easier to ask me directly.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-02-draft</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Asking AI to write from nothing gets you something generic that sounds like everyone else.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Give it your raw material instead. Paste in your rough notes, your last three emails to that customer, the messy voice note you dictated in the van. Then ask it to shape that.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The difference is that the second version is yours. It already has your pricing, your tone, your history with that client. It just did not have punctuation.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Writing from nothing is a party trick. Shaping your own material is the useful bit.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-02-draft</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">03</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 3</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 3</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">How to catch it making things up</pre>
+  <pre class="copy" id="s03">How to catch it making things up</pre>
+  <button class="cp" data-target="s03">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h03">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;AI will state something wrong with total confidence. This is the single biggest risk for a small business using it on real work.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The cheapest defence: ask it to explain how it got there.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;After any answer that matters, send back: &lt;em&gt;walk me through how you worked that out, and tell me which parts you are unsure about.&lt;/em&gt;&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;A model working from real information will show its reasoning. A model that invented something tends to get vague, or quietly corrects itself. Ten seconds, and it catches most of the damage.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Worth knowing before you trust it with anything that touches money. Happy to talk through where the real risks sit.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-03-explain" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h03">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 AI will state something wrong with total confidence. This is the single biggest risk for a small business using it on real work.
 
@@ -138,33 +176,41 @@ A model working from real information will show its reasoning. A model that inve
 Worth knowing before you trust it with anything that touches money. Happy to talk through where the real risks sit.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-03-explain</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;AI will state something wrong with total confidence. This is the single biggest risk for a small business using it on real work.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The cheapest defence: ask it to explain how it got there.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;After any answer that matters, send back: &lt;em&gt;walk me through how you worked that out, and tell me which parts you are unsure about.&lt;/em&gt;&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;A model working from real information will show its reasoning. A model that invented something tends to get vague, or quietly corrects itself. Ten seconds, and it catches most of the damage.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-03-explain</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">04</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 4</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 4</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Feed it your actual paperwork</pre>
+  <pre class="copy" id="s04">Feed it your actual paperwork</pre>
+  <button class="cp" data-target="s04">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h04">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Most owners are still typing questions into a chat box. Meanwhile the tools will happily read a file.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Upload the 40 page supplier contract and ask what your termination notice period is. Upload last quarter's numbers and ask what changed. Upload the manual and ask where the fault code is listed.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is where it stops being a novelty. You are not asking it what it knows. You are asking it about your business, using your documents.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Pick the longest document on your desk right now and ask it one question about it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is the doorway to Level 2. If you want to know which of your paperwork is worth pointing it at, ask me.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-04-documents" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h04">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Most owners are still typing questions into a chat box. Meanwhile the tools will happily read a file.
 
@@ -177,33 +223,41 @@ Pick the longest document on your desk right now and ask it one question about i
 This is the doorway to Level 2. If you want to know which of your paperwork is worth pointing it at, ask me.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-04-documents</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Most owners are still typing questions into a chat box. Meanwhile the tools will happily read a file.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Upload the 40 page supplier contract and ask what your termination notice period is. Upload last quarter's numbers and ask what changed. Upload the manual and ask where the fault code is listed.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;This is where it stops being a novelty. You are not asking it what it knows. You are asking it about your business, using your documents.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Pick the longest document on your desk right now and ask it one question about it.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-04-documents</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">05</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 5</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 5</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Make it ask you questions</pre>
+  <pre class="copy" id="s05">Make it ask you questions</pre>
+  <button class="cp" data-target="s05">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h05">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;A trick almost nobody uses. Before it answers, make it interview you.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Add this to any request: &lt;em&gt;before you answer, ask me up to five questions you need answered to do this well.&lt;/em&gt;&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;It will ask about things you forgot to mention. Your margins. Your usual turnaround. Whether this customer is price sensitive. Answer those, then let it run.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;You get a far better result, and you often notice you had not thought it through properly either.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If you would rather have that conversation with a person who knows small businesses, that is what the call is.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-05-questions" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h05">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 A trick almost nobody uses. Before it answers, make it interview you.
 
@@ -216,33 +270,41 @@ You get a far better result, and you often notice you had not thought it through
 If you would rather have that conversation with a person who knows small businesses, that is what the call is.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-05-questions</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;A trick almost nobody uses. Before it answers, make it interview you.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Add this to any request: &lt;em&gt;before you answer, ask me up to five questions you need answered to do this well.&lt;/em&gt;&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;It will ask about things you forgot to mention. Your margins. Your usual turnaround. Whether this customer is price sensitive. Answer those, then let it run.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;You get a far better result, and you often notice you had not thought it through properly either.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-05-questions</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">06</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 6</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 6</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Say make it shorter three times</pre>
+  <pre class="copy" id="s06">Say make it shorter three times</pre>
+  <button class="cp" data-target="s06">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h06">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;First drafts out of an AI are almost always too long and too polished. Padded, corporate, faintly desperate.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Reply with: &lt;em&gt;make it shorter.&lt;/em&gt; Then do it again. Then once more.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;By the third pass it usually sounds like a person. The filler burns off and what is left is the actual point. Most customers read the short version and ignore the long one anyway.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Works on emails, quotes, proposals, and your website copy.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Small habit, real difference. There is a bigger conversation about what to automate rather than shorten, whenever you want it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-06-shorter" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h06">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 First drafts out of an AI are almost always too long and too polished. Padded, corporate, faintly desperate.
 
@@ -255,33 +317,41 @@ Works on emails, quotes, proposals, and your website copy.
 Small habit, real difference. There is a bigger conversation about what to automate rather than shorten, whenever you want it.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-06-shorter</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;First drafts out of an AI are almost always too long and too polished. Padded, corporate, faintly desperate.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Reply with: &lt;em&gt;make it shorter.&lt;/em&gt; Then do it again. Then once more.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;By the third pass it usually sounds like a person. The filler burns off and what is left is the actual point. Most customers read the short version and ignore the long one anyway.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Works on emails, quotes, proposals, and your website copy.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-06-shorter</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">07</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 7</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 7</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Talk instead of typing</pre>
+  <pre class="copy" id="s07">Talk instead of typing</pre>
+  <button class="cp" data-target="s07">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h07">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If you are typing your notes, you are doing the slow version.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Dictate instead. Ramble into your phone for two minutes after a site visit, then hand the transcript over and ask for a structured job note, a customer summary, and the three follow up actions.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Owners talk faster than they type and think better out loud. The mess is the point. Cleaning up mess is exactly what these tools are good at.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Try it after your next call, before you have forgotten half of it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Most of the time saved in a small business hides in jobs like this. Worth twenty minutes to find yours.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-07-voice" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h07">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 If you are typing your notes, you are doing the slow version.
 
@@ -294,33 +364,41 @@ Try it after your next call, before you have forgotten half of it.
 Most of the time saved in a small business hides in jobs like this. Worth twenty minutes to find yours.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-07-voice</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If you are typing your notes, you are doing the slow version.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Dictate instead. Ramble into your phone for two minutes after a site visit, then hand the transcript over and ask for a structured job note, a customer summary, and the three follow up actions.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Owners talk faster than they type and think better out loud. The mess is the point. Cleaning up mess is exactly what these tools are good at.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Try it after your next call, before you have forgotten half of it.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-07-voice</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">08</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 8</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 8</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Use it on your inbox, but not to write</pre>
+  <pre class="copy" id="s08">Use it on your inbox, but not to write</pre>
+  <button class="cp" data-target="s08">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h08">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Everyone points AI at their inbox to write replies. That is the wrong end of the problem.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Point it at triage instead. Paste in the morning's unread subject lines and senders and ask which three actually need you today and why.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Writing the email was never the hard part. Deciding what deserves your attention is. That decision is where the day gets lost.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The reply you can write yourself in ninety seconds, and it will sound like you.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If your inbox is the bottleneck, say so on a call and I will tell you what I would do about it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-08-inbox" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h08">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Everyone points AI at their inbox to write replies. That is the wrong end of the problem.
 
@@ -333,33 +411,41 @@ The reply you can write yourself in ninety seconds, and it will sound like you.
 If your inbox is the bottleneck, say so on a call and I will tell you what I would do about it.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-08-inbox</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Everyone points AI at their inbox to write replies. That is the wrong end of the problem.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Point it at triage instead. Paste in the morning's unread subject lines and senders and ask which three actually need you today and why.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Writing the email was never the hard part. Deciding what deserves your attention is. That decision is where the day gets lost.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The reply you can write yourself in ninety seconds, and it will sound like you.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-08-inbox</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">09</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 9</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 9</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">The one page that pays for itself</pre>
+  <pre class="copy" id="s09">The one page that pays for itself</pre>
+  <button class="cp" data-target="s09">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h09">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Pick the job your business does most often. Write down how it gets done, start to finish, on one page. What you would hand a new hire.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;It is on the last page of the guide as homework, and it is the single most valuable hour you will spend this month.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Two things happen. You find steps nobody can justify, which you then delete. And you end up holding the exact document that makes automating that job possible later.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;You cannot automate a process that only exists in someone's head. Everything upstream of Level 3 starts here.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Write it, then book twenty minutes and I will tell you what I would build from it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-09-onepage" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h09">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Pick the job your business does most often. Write down how it gets done, start to finish, on one page. What you would hand a new hire.
 
@@ -372,33 +458,41 @@ You cannot automate a process that only exists in someone's head. Everything ups
 Write it, then book twenty minutes and I will tell you what I would build from it.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-09-onepage</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Pick the job your business does most often. Write down how it gets done, start to finish, on one page. What you would hand a new hire.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;It is on the last page of the guide as homework, and it is the single most valuable hour you will spend this month.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Two things happen. You find steps nobody can justify, which you then delete. And you end up holding the exact document that makes automating that job possible later.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;You cannot automate a process that only exists in someone's head. Everything upstream of Level 3 starts here.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-09-onepage</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">10</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 10</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 10</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Quotes take longer than they should</pre>
+  <pre class="copy" id="s10">Quotes take longer than they should</pre>
+  <button class="cp" data-target="s10">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h10">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Quoting is where small businesses quietly lose hours. Same shapes, different numbers, every single time.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Start here. Take your last ten quotes, paste them in, and ask what structure they share and where you tend to be inconsistent.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;It usually finds something uncomfortable. Wildly different margins on similar jobs. Line items you forget half the time. Wording that is vague enough to cost you an argument later.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Fixing the inconsistency is worth money before you automate anything.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Quoting is the most common first build I do for people. Ask me what that looks like for your trade.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-10-quotes" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h10">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Quoting is where small businesses quietly lose hours. Same shapes, different numbers, every single time.
 
@@ -411,33 +505,41 @@ Fixing the inconsistency is worth money before you automate anything.
 Quoting is the most common first build I do for people. Ask me what that looks like for your trade.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-10-quotes</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Quoting is where small businesses quietly lose hours. Same shapes, different numbers, every single time.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Start here. Take your last ten quotes, paste them in, and ask what structure they share and where you tend to be inconsistent.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;It usually finds something uncomfortable. Wildly different margins on similar jobs. Line items you forget half the time. Wording that is vague enough to cost you an argument later.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Fixing the inconsistency is worth money before you automate anything.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-10-quotes</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">11</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 11</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 11</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">The email you have written 200 times</pre>
+  <pre class="copy" id="s11">The email you have written 200 times</pre>
+  <button class="cp" data-target="s11">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h11">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;There is an email you write most weeks. The chase. The booking confirmation. The one explaining your terms again.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Find your last five versions of it. Hand them over and ask for one template with the variable bits marked out.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;You will get something better than any of the five, because it is drawing from the versions where you explained it well, not the one you rushed on a Friday.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Then it stops being a writing job and becomes filling in three blanks.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is Level 2 done properly. Level 3 is when the blanks fill themselves in. Book a call and I will show you the difference.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-11-repeat" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h11">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 There is an email you write most weeks. The chase. The booking confirmation. The one explaining your terms again.
 
@@ -450,33 +552,41 @@ Then it stops being a writing job and becomes filling in three blanks.
 This is Level 2 done properly. Level 3 is when the blanks fill themselves in. Book a call and I will show you the difference.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-11-repeat</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;There is an email you write most weeks. The chase. The booking confirmation. The one explaining your terms again.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Find your last five versions of it. Hand them over and ask for one template with the variable bits marked out.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;You will get something better than any of the five, because it is drawing from the versions where you explained it well, not the one you rushed on a Friday.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Then it stops being a writing job and becomes filling in three blanks.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-11-repeat</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">12</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 12</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 12</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">What would you need to know</pre>
+  <pre class="copy" id="s12">What would you need to know</pre>
+  <button class="cp" data-target="s12">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h12">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;When an answer comes back thin, most people give up and decide the tool is overrated.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Ask this instead: &lt;em&gt;what would you need to know about my business to answer that properly?&lt;/em&gt;&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;It will tell you. Your pricing model, your customer type, your capacity, whatever is missing. Now you know exactly what context to give it, rather than guessing.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Most bad AI output is a missing information problem wearing a costume.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Same is true of advice generally. The call is twenty minutes because that is how long it takes to get the context.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-12-needtoknow" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h12">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 When an answer comes back thin, most people give up and decide the tool is overrated.
 
@@ -489,33 +599,41 @@ Most bad AI output is a missing information problem wearing a costume.
 Same is true of advice generally. The call is twenty minutes because that is how long it takes to get the context.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-12-needtoknow</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;When an answer comes back thin, most people give up and decide the tool is overrated.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Ask this instead: &lt;em&gt;what would you need to know about my business to answer that properly?&lt;/em&gt;&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;It will tell you. Your pricing model, your customer type, your capacity, whatever is missing. Now you know exactly what context to give it, rather than guessing.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Most bad AI output is a missing information problem wearing a costume.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-12-needtoknow</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">13</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 13</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 13</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Where I would not let it near</pre>
+  <pre class="copy" id="s13">Where I would not let it near</pre>
+  <button class="cp" data-target="s13">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h13">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Worth being straight about the limits, since most of what you read is selling you something.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;I would not hand it final pricing decisions. I would not let it send anything to a customer unread. I would not use it for anything involving an employee's performance or personal circumstances. And I would not put customer data into a free consumer account, which is the one that catches people out.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;None of that is because it cannot produce an answer. It is because those decisions carry consequences that land on you, not on a model.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Judgment stays with you. Everything upstream of the judgment is fair game.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If you are not sure which side of that line something sits on, that is a good question for a call.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-13-notouch" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h13">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Worth being straight about the limits, since most of what you read is selling you something.
 
@@ -528,33 +646,41 @@ Judgment stays with you. Everything upstream of the judgment is fair game.
 If you are not sure which side of that line something sits on, that is a good question for a call.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-13-notouch</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Worth being straight about the limits, since most of what you read is selling you something.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;I would not hand it final pricing decisions. I would not let it send anything to a customer unread. I would not use it for anything involving an employee's performance or personal circumstances. And I would not put customer data into a free consumer account, which is the one that catches people out.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;None of that is because it cannot produce an answer. It is because those decisions carry consequences that land on you, not on a model.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Judgment stays with you. Everything upstream of the judgment is fair game.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-13-notouch</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">14</span>
-    <span class="meta">Delay after previous step: <b>1 day</b> &nbsp;·&nbsp; lands day 14</span>
+    <span class="meta">Delay before this email: <b>1 day</b> &nbsp;·&nbsp; lands day 14</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Two weeks in. Where are you?</pre>
+  <pre class="copy" id="s14">Two weeks in. Where are you?</pre>
+  <button class="cp" data-target="s14">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h14">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;That is a fortnight of tips. Honest question: has anything actually changed in how you work?&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If yes, you are on Level 2 or moving there. You hand it real work, with your material, and use what comes back.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If nothing has changed, that is worth knowing too, and it is the normal outcome. Reading about it and doing it are different activities, and you are busy running a business.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Either way you now know your level, which is more than most owners can say.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The next part is the bit a guide cannot do: which move is yours, and what it is worth. That is the call.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-14-checkpoint" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h14">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 That is a fortnight of tips. Honest question: has anything actually changed in how you work?
 
@@ -567,33 +693,41 @@ Either way you now know your level, which is more than most owners can say.
 The next part is the bit a guide cannot do: which move is yours, and what it is worth. That is the call.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-14-checkpoint</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;That is a fortnight of tips. Honest question: has anything actually changed in how you work?&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If yes, you are on Level 2 or moving there. You hand it real work, with your material, and use what comes back.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If nothing has changed, that is worth knowing too, and it is the normal outcome. Reading about it and doing it are different activities, and you are busy running a business.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Either way you now know your level, which is more than most owners can say.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-14-checkpoint</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">15</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 16</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 16</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">What a Level 3 tool actually looks like</pre>
+  <pre class="copy" id="s15">What a Level 3 tool actually looks like</pre>
+  <button class="cp" data-target="s15">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h15">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Level 3 sounds abstract until you see one. They are always smaller than people expect.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;A form your team fills in on site that writes the customer report itself. A sheet that reads your supplier's price list and reprices your quotes. Something that watches an inbox and files what arrives against the right job.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Not a product. Not a platform. A small, ugly, specific thing that does one job your business does constantly, built around how you actually work.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;That is the level almost nobody reaches, and it is the one that pays.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Twenty minutes and I will tell you which one I would build for you first. Free, whether or not you hire me.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-15-leveltool" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h15">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Level 3 sounds abstract until you see one. They are always smaller than people expect.
 
@@ -606,33 +740,41 @@ That is the level almost nobody reaches, and it is the one that pays.
 Twenty minutes and I will tell you which one I would build for you first. Free, whether or not you hire me.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-15-leveltool</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Level 3 sounds abstract until you see one. They are always smaller than people expect.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;A form your team fills in on site that writes the customer report itself. A sheet that reads your supplier's price list and reprices your quotes. Something that watches an inbox and files what arrives against the right job.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Not a product. Not a platform. A small, ugly, specific thing that does one job your business does constantly, built around how you actually work.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;That is the level almost nobody reaches, and it is the one that pays.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-15-leveltool</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">16</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 18</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 18</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">How to pick the first thing to build</pre>
+  <pre class="copy" id="s16">How to pick the first thing to build</pre>
+  <button class="cp" data-target="s16">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h16">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Owners pick the biggest problem. That is the wrong instinct.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Pick the thing that annoys you every single week. Not the crisis. The small recurring irritation you have stopped noticing because you have always done it that way.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Big problems are big because they are tangled up in people, money and judgment. Weekly irritations are small, well understood, and repetitive, which is exactly what a tool is good at.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Fix one of those and you get the time back every week, forever. Then you do the next one.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Bring me your weekly irritation and I will tell you if it is buildable. That is a twenty minute conversation.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-16-firstbuild" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h16">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Owners pick the biggest problem. That is the wrong instinct.
 
@@ -645,33 +787,41 @@ Fix one of those and you get the time back every week, forever. Then you do the 
 Bring me your weekly irritation and I will tell you if it is buildable. That is a twenty minute conversation.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-16-firstbuild</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Owners pick the biggest problem. That is the wrong instinct.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Pick the thing that annoys you every single week. Not the crisis. The small recurring irritation you have stopped noticing because you have always done it that way.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Big problems are big because they are tangled up in people, money and judgment. Weekly irritations are small, well understood, and repetitive, which is exactly what a tool is good at.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Fix one of those and you get the time back every week, forever. Then you do the next one.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-16-firstbuild</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">17</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 20</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 20</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Why most of these projects die</pre>
+  <pre class="copy" id="s17">Why most of these projects die</pre>
+  <button class="cp" data-target="s17">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h17">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Skipped levels. Almost every time.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Someone reads about autonomous agents, jumps from Level 1 to Level 4, and tries to automate an entire job nobody had written down. It half works, produces something wrong at a bad moment, and everyone quietly stops using it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The failure gets blamed on the technology. The actual cause was building on a process that was never documented and a team that had never used the tools on anything small.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;One level at a time is not caution. It is the fastest route that actually arrives.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If you have already had one of these die on you, tell me what happened. I can usually spot which level got skipped.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-17-whyfail" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h17">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Skipped levels. Almost every time.
 
@@ -684,33 +834,42 @@ One level at a time is not caution. It is the fastest route that actually arrive
 If you have already had one of these die on you, tell me what happened. I can usually spot which level got skipped.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-17-whyfail</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Skipped levels. Almost every time.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Someone reads about autonomous agents, jumps from Level 1 to Level 4, and tries to automate an entire job nobody had written down. It half works, produces something wrong at a bad moment, and everyone quietly stops using it.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The failure gets blamed on the technology. The actual cause was building on a process that was never documented and a team that had never used the tools on anything small.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;One level at a time is not caution. It is the fastest route that actually arrives.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-17-whyfail</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">18</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 22</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 22</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">What you actually get for the money</pre>
+  <pre class="copy" id="s18">What you actually get for the money</pre>
+  <button class="cp" data-target="s18">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h18">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;People ask what this costs before they ask what it does, which is fair, but it is the wrong order. The price only means something once you know what you are getting.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;So here is what you get. A written plan you keep whether or not you work with me. Every job in your business ranked by hours saved, with a go or no-go on each. Tool picks with real pricing. A map of where your customer data is going today. And the payback math, so you can see what the first build returns before you commit to it.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Then the tools themselves get built, documented, and handed over. Yours to keep. If you stop working with me you keep everything, and someone else can pick it up.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;I will not put a figure in an email, because a figure without your context is a number I made up. What it costs depends on how many jobs are worth building and how tangled your setup is, and I cannot know that from here.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Twenty minutes on the phone and I can tell you exactly. No pressure to buy anything on that call.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Book the call and ask me the price directly. You will get a straight answer, and the call itself is free either way.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-18-cost" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Get your price &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h18">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 People ask what this costs before they ask what it does, which is fair, but it is the wrong order. The price only means something once you know what you are getting.
 
@@ -725,34 +884,41 @@ Twenty minutes on the phone and I can tell you exactly. No pressure to buy anyth
 Book the call and ask me the price directly. You will get a straight answer, and the call itself is free either way.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Get your price</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-18-cost</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;People ask what this costs before they ask what it does, which is fair, but it is the wrong order. The price only means something once you know what you are getting.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;So here is what you get. A written plan you keep whether or not you work with me. Every job in your business ranked by hours saved, with a go or no-go on each. Tool picks with real pricing. A map of where your customer data is going today. And the payback math, so you can see what the first build returns before you commit to it.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Then the tools themselves get built, documented, and handed over. Yours to keep. If you stop working with me you keep everything, and someone else can pick it up.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;I will not put a figure in an email, because a figure without your context is a number I made up. What it costs depends on how many jobs are worth building and how tangled your setup is, and I cannot know that from here.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Twenty minutes on the phone and I can tell you exactly. No pressure to buy anything on that call.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-18-cost</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">19</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 24</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 24</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Where your customer data is actually going</pre>
+  <pre class="copy" id="s19">Where your customer data is actually going</pre>
+  <button class="cp" data-target="s19">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h19">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Ask your team which AI tools they use and on what accounts. Most owners are surprised by the answer.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Personal accounts. Free tiers. Customer names and addresses pasted into a chat box that trains on the input. Nobody did anything malicious, they were just trying to get through the day faster.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is on the audit list for a reason. I have never looked at a business and found nothing.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The fix is usually simple and cheap. Finding out is the part people avoid.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is one of the four things I check on a call. Twenty minutes, and you would know.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-19-data" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h19">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Ask your team which AI tools they use and on what accounts. Most owners are surprised by the answer.
 
@@ -765,33 +931,41 @@ The fix is usually simple and cheap. Finding out is the part people avoid.
 This is one of the four things I check on a call. Twenty minutes, and you would know.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-19-data</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Ask your team which AI tools they use and on what accounts. Most owners are surprised by the answer.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Personal accounts. Free tiers. Customer names and addresses pasted into a chat box that trains on the input. Nobody did anything malicious, they were just trying to get through the day faster.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;This is on the audit list for a reason. I have never looked at a business and found nothing.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The fix is usually simple and cheap. Finding out is the part people avoid.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-19-data</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">20</span>
-    <span class="meta">Delay after previous step: <b>2 days</b> &nbsp;·&nbsp; lands day 26</span>
+    <span class="meta">Delay before this email: <b>2 days</b> &nbsp;·&nbsp; lands day 26</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">The question to ask anyone who builds for you</pre>
+  <pre class="copy" id="s20">The question to ask anyone who builds for you</pre>
+  <button class="cp" data-target="s20">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h20">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Ask them this: if you disappear tomorrow, what do I still have?&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If the answer is a login to their platform, you are renting. When they raise the price or fold, your process leaves with them.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;My answer is that you get the tool and the written documentation of how it works. No black boxes. If you sack me, you keep everything, and someone else can pick it up.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Ask me that question, and ask it of anyone else you talk to.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Book the call and ask it to my face. The answer is the same either way.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-20-handover" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book a call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h20">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 Ask them this: if you disappear tomorrow, what do I still have?
 
@@ -804,33 +978,41 @@ Ask me that question, and ask it of anyone else you talk to.
 Book the call and ask it to my face. The answer is the same either way.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book a call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-20-handover</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Ask them this: if you disappear tomorrow, what do I still have?&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If the answer is a login to their platform, you are renting. When they raise the price or fold, your process leaves with them.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;My answer is that you get the tool and the written documentation of how it works. No black boxes. If you sack me, you keep everything, and someone else can pick it up.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Ask me that question, and ask it of anyone else you talk to.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-20-handover</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">21</span>
-    <span class="meta">Delay after previous step: <b>5 days</b> &nbsp;·&nbsp; lands day 31</span>
+    <span class="meta">Delay before this email: <b>5 days</b> &nbsp;·&nbsp; lands day 31</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">The cost of leaving this alone</pre>
+  <pre class="copy" id="s21">The cost of leaving this alone</pre>
+  <button class="cp" data-target="s21">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h21">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;For a business of five to fifty people, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Your number will not be that number. It depends on your jobs and your people. But the shape holds, and the hours are not dramatic ones. They are the same small tasks, done by hand, every week, indefinitely.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;The quieter cost is that what lives in someone's head stays there. If that person leaves, the process leaves. If you sell, you are selling a business that depends on people rather than systems, and it is priced accordingly.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Doing nothing is a decision with a price. Most owners have just never seen the figure.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Twenty minutes and you would have your figure. That is the entire purpose of the call, and it costs you nothing.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-21-standingstill" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Get your number &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h21">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 For a business of five to fifty people, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team.
 
@@ -843,33 +1025,41 @@ Doing nothing is a decision with a price. Most owners have just never seen the f
 Twenty minutes and you would have your figure. That is the entire purpose of the call, and it costs you nothing.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Get your number</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-21-standingstill</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;For a business of five to fifty people, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Your number will not be that number. It depends on your jobs and your people. But the shape holds, and the hours are not dramatic ones. They are the same small tasks, done by hand, every week, indefinitely.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;The quieter cost is that what lives in someone's head stays there. If that person leaves, the process leaves. If you sell, you are selling a business that depends on people rather than systems, and it is priced accordingly.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;Doing nothing is a decision with a price. Most owners have just never seen the figure.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-21-standingstill</pre>
   </details>
 </section>
 
 <section class="card">
   <header>
     <span class="num">22</span>
-    <span class="meta">Delay after previous step: <b>7 days</b> &nbsp;·&nbsp; lands day 38</span>
+    <span class="meta">Delay before this email: <b>7 days</b> &nbsp;·&nbsp; lands day 38</span>
   </header>
 
   <label>Subject line</label>
-  <pre class="copy">Last one from me</pre>
+  <pre class="copy" id="s22">Last one from me</pre>
+  <button class="cp" data-target="s22">Copy subject</button>
 
-  <label>Body: plain text, paste into MailerLite's text block</label>
-  <pre class="copy">Hi {$name},
+  <label>HTML: paste into MailerLite's HTML block</label>
+  <pre class="copy small" id="h22">&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Hi {$name},&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;This is the last email in this sequence. No more from me after today unless you ask.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If the timing is wrong, that is genuinely fine. The three tasks on the last page of the guide are free, they work, and you do not need me to do them.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;If it is not timing but something else, reply and tell me. Wrong fit, wrong size, wrong problem, too expensive. I would rather know, and I will take the answer without arguing.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;And if you have been meaning to book this for five weeks and it keeps sliding down the list, this is the nudge. It is twenty minutes and it is free.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Last chance to take me up on it without having to remember I exist. The link stays open.&lt;/p&gt;
+&lt;p style="margin:0 0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#1f1f1d;"&gt;Max&lt;/p&gt;
+&lt;table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;"&gt;
+  &lt;tr&gt;
+    &lt;td align="center" bgcolor="#1b1b1b" style="border-radius:8px;"&gt;
+      &lt;a href="https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-22-last" style="display:inline-block;padding:14px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;color:#f2efe6;text-decoration:none;border-radius:8px;"&gt;Book the call &amp;rarr;&lt;/a&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</pre>
+  <button class="cp" data-target="h22">Copy HTML</button>
+
+  <details>
+    <summary>Plain text version, if you would rather type it into a text block</summary>
+    <pre class="copy">Hi {$name},
 
 This is the last email in this sequence. No more from me after today unless you ask.
 
@@ -882,19 +1072,21 @@ And if you have been meaning to book this for five weeks and it keeps sliding do
 Last chance to take me up on it without having to remember I exist. The link stays open.
 
 Max</pre>
-
-  <label>Button</label>
-  <pre class="copy">Book the call</pre>
-  <label>Button link</label>
-  <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-22-last</pre>
-
-  <details>
-    <summary>Body as HTML, if you prefer pasting into an HTML block</summary>
-    <pre class="copy small">&lt;p style="margin:0 0 16px;"&gt;Hi {$name},&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;This is the last email in this sequence. No more from me after today unless you ask.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If the timing is wrong, that is genuinely fine. The three tasks on the last page of the guide are free, they work, and you do not need me to do them.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;If it is not timing but something else, reply and tell me. Wrong fit, wrong size, wrong problem, too expensive. I would rather know, and I will take the answer without arguing.&lt;/p&gt;
-&lt;p style="margin:0 0 16px;"&gt;And if you have been meaning to book this for five weeks and it keeps sliding down the list, this is the nudge. It is twenty minutes and it is free.&lt;/p&gt;</pre>
+    <label>Button link</label>
+    <pre class="copy small">https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call?utm_source=footholdsystems&amp;utm_medium=email&amp;utm_campaign=nurture-22-last</pre>
   </details>
 </section>
 </div>
+<script>
+document.querySelectorAll('button.cp').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var el = document.getElementById(b.dataset.target);
+    navigator.clipboard.writeText(el.innerText).then(function () {
+      var was = b.textContent;
+      b.textContent = 'Copied';
+      b.classList.add('done');
+      setTimeout(function () { b.textContent = was; b.classList.remove('done'); }, 1200);
+    });
+  });
+});
+</script>
