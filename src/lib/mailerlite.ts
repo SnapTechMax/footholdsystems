@@ -93,7 +93,10 @@ export async function subscribeToNurture(input: {
     fields: {
       // MailerLite ships with `name` as a standard field.
       ...(input.firstName ? { name: input.firstName } : {}),
-      source: input.source,
+      // Not `source`: MailerLite reserves that name, refuses to let you create a
+      // field called it, and drops the value without erroring. This was going
+      // nowhere on every download until the field was created under this name.
+      lead_source: input.source,
     },
     groups: groupId ? [groupId] : undefined,
   });

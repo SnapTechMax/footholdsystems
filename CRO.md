@@ -38,6 +38,8 @@ because someone can book a call without ever downloading the guide.
 **The suppression is built in MailerLite, not here.** Add a condition or exit rule
 on `booked` equals `yes` to the automation. This endpoint only supplies the fact.
 Create a `booked` text field in MailerLite first, or the value has nowhere to land.
+Note that `source` is a reserved name there, which is why the download source is
+sent as `lead_source`.
 
 Subscribe the webhook at
 `https://www.footholdsystems.com/api/calendly/webhook` for `invitee.created` and
