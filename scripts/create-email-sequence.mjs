@@ -99,12 +99,12 @@ async function main() {
           from: FROM,
           replyTo: REPLY_TO,
           html: email.html,
-          variables: [
-            // The name field on the form is optional, so plenty of contacts
-            // have none. "Hi ," as a first line is exactly the tell that makes
-            // an email feel automated.
-            { key: "FIRST_NAME", type: "string", fallbackValue: "there" },
-          ],
+          // No `variables` array. FIRST_NAME is reserved in Resend and comes
+          // from the contact automatically, so declaring it is rejected with a
+          // 422. That also means there is nowhere to set a fallback on it, so
+          // the default lives at enrolment instead: lib/subscribe.ts stores
+          // "there" when someone leaves the name field blank, which keeps the
+          // greeting from opening "Hi ,".
         })
         .publish()
     );

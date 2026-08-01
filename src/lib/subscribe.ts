@@ -50,7 +50,11 @@ export async function subscribeToSequence(
       const { error } = await resend.contacts.create({
         audienceId,
         email,
-        ...(firstName ? { firstName } : {}),
+        // Always set, never omitted. FIRST_NAME is a reserved variable in
+        // Resend, so a template cannot declare a fallback for it, which makes
+        // this the only place a missing name can be handled. Leaving it empty
+        // opens every email with "Hi ,".
+        firstName: firstName?.trim() || "there",
       });
       // An already-present contact is a success for our purposes.
       if (error && !/already exists/i.test(error.message ?? "")) {
