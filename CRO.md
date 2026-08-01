@@ -242,6 +242,12 @@ each has got.
 Needs `RESEND_AUTOMATION_ID`, printed when `scripts/create-email-sequence.mjs`
 runs. Without it the top half still works and the sequence half stays at zero.
 
+Currently `019fbf7a-37a8-746a-9447-7af4fd32452b`, created 1 August 2026. Recorded
+here because re-running the script builds a *new* automation rather than updating
+this one, so the two can drift apart without anything complaining. If the
+dashboard ever reports numbers that do not match what Resend shows, check this
+first.
+
 Resend's list endpoint returns run status but not steps, so the per-email funnel
 fetches runs individually and is capped at 50. Past that the dashboard says it is
 showing a sample rather than quietly reporting a fraction as the total.
