@@ -89,6 +89,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
+    // The guide is only sent to people who agreed to the emails. The checkbox is
+    // `required`, so this is unreachable from the form itself, but the route is
+    // a public endpoint and the gate has to hold here or it does not hold.
+    if (body.optIn !== true) {
+      return NextResponse.json(
+        { error: "Please tick the box to confirm you'd like the guide and the emails." },
+        { status: 400 }
+      );
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.error("RESEND_API_KEY is not set");
@@ -158,22 +168,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to send the guide" }, { status: 500 });
     }
 
-    // 2) Record what they agreed to, then enrol them only if they agreed.
+    // 2) Record what they agreed to, then enrol them.
     //
-    // The guide is transactional: they asked for it, so it goes either way. The
-    // sequence is marketing and only runs for people who ticked the box. The
-    // consent row is written whichever way they chose, because "they declined"
-    // is as worth being able to prove as "they agreed".
+    // Everyone reaching this point ticked the box, since the request is rejected
+    // above otherwise. The record still stores the wording rather than a bare
+    // true, because the wording is the thing that has to be produced if a
+    // provider ever asks what these people actually agreed to.
     //
     // Best-effort: the guide is already delivered by this point, and neither
     // step may turn a successful download into an error for the person who
     // asked for it.
-    const optedIn = body.optIn === true;
-
     try {
       await recordConsent({
         email,
-        granted: optedIn,
+        granted: true,
         text: body.consentText ?? CONSENT_TEXT,
         source,
         // Both are evidence of when and from where consent was given, which is
@@ -186,19 +194,17 @@ export async function POST(request: NextRequest) {
       console.error("Consent record failed (guide still delivered):", consentErr);
     }
 
-    if (optedIn) {
-      try {
-        const result = await subscribeToSequence(resend, {
-          email,
-          firstName,
-          source,
-        });
-        if (result.notes.length > 0) {
-          console.error("Subscribe issues (guide still delivered):", result.notes);
-        }
-      } catch (subErr) {
-        console.error("Subscribe failed (guide still delivered):", subErr);
+    try {
+      const result = await subscribeToSequence(resend, {
+        email,
+        firstName,
+        source,
+      });
+      if (result.notes.length > 0) {
+        console.error("Subscribe issues (guide still delivered):", result.notes);
       }
+    } catch (subErr) {
+      console.error("Subscribe failed (guide still delivered):", subErr);
     }
 
     // 3) Attribute the conversion to its experiment arm. Recorded server-side,

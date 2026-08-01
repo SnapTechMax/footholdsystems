@@ -7,20 +7,39 @@ feeding it.
 
 When someone downloads the guide, `/api/lead-magnet`:
 
-1. **Sends the guide.** Transactional. They asked for it, so it goes regardless
-   of anything below.
-2. **Records their consent decision**, yes or no, in `marketing_consent`.
-3. **Enrols them in the sequence, only if they ticked the box.**
-4. **Emails Max** that a lead came in.
+1. **Rejects the request** if the consent box was not ticked. The guide is gated
+   behind it.
+2. **Sends the guide.**
+3. **Records the consent** in `marketing_consent`.
+4. **Enrols them in the sequence.**
+5. **Emails Max** that a lead came in.
 
-Steps 2 to 4 run only after the guide has actually sent, and are best-effort: a
+Steps 3 to 5 run only after the guide has actually sent, and are best-effort: a
 failure there must not turn a successful download into an error for the person
 who asked.
 
 ## Consent
 
-The checkbox is unticked by default, because a pre-ticked box is not consent and
-the point of asking is to show the choice was deliberate.
+The checkbox is **required and unticked by default**. Required because the guide
+is only sent to people who agree to the emails; unticked because pre-ticking it
+would remove the affirmative action that makes the record worth anything.
+
+The gate is enforced server-side as well as with the `required` attribute. The
+route is a public endpoint, so a browser attribute alone would not be a gate.
+
+Two things worth knowing about this arrangement:
+
+- **US law permits it.** CAN-SPAM requires accurate headers, a postal address and
+  a working unsubscribe; it does not require prior consent at all.
+- **GDPR does not.** Article 7(4) says consent is not freely given where a service
+  is conditional on consenting to processing that is not necessary for it. For an
+  EU or UK visitor this consent is not valid however it is worded. The ads are
+  US-targeted but the site is reachable everywhere, so this is a live exposure
+  rather than a theoretical one.
+
+Separately from the law, an email provider's own terms are stricter and are what
+actually ended the MailerLite account. Whether a required tick counts as
+agreement is the provider's call.
 
 `marketing_consent` stores the **exact wording shown**, not just a boolean, plus
 IP, user agent and timestamp. Wording changes over time, and "they ticked a box"

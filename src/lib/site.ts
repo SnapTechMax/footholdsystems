@@ -7,15 +7,19 @@ export const CALENDLY_URL =
 export const THANKS_PATH = "/guide/thanks";
 
 /**
- * Wording beside the marketing opt-in checkbox.
+ * Wording beside the marketing consent checkbox.
  *
  * Lives here rather than in lib/consent.ts because that module is server-only
  * and the form is a client component. Both import this one, so the wording shown
  * to someone and the wording stored against their consent cannot drift apart —
  * which is the only thing that makes the stored record worth anything.
+ *
+ * Required, not optional: the guide is only sent to people who agree to the
+ * emails. Worded so the exchange is stated plainly rather than dressed up as a
+ * choice that isn't one.
  */
 export const CONSENT_TEXT =
-  "Email me occasional AI tips for small businesses. Unsubscribe any time.";
+  "Yes, send me the guide and occasional AI tips for small businesses. Unsubscribe any time.";
 
 // Direct line. Published to people who have opted in — the delivery email and the
 // guide PDF — but deliberately NOT on the public website, so it stays off the

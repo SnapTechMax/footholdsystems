@@ -19,8 +19,8 @@ export function LeadMagnetForm({
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  // Unticked. A pre-ticked box is not consent, and the whole point of asking is
-  // to be able to show it was a deliberate choice.
+  // Unticked, and required to submit. Pre-ticking it would remove the
+  // affirmative action that makes the stored consent record worth anything.
   const [optIn, setOptIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "error">("idle");
@@ -129,6 +129,7 @@ export function LeadMagnetForm({
         <input
           type="checkbox"
           name="optIn"
+          required
           checked={optIn}
           onChange={(e) => setOptIn(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#f6be00]"
