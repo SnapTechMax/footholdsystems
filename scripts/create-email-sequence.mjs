@@ -175,7 +175,7 @@ async function main() {
   });
 
   const automation = {
-    name: "5 Levels of AI — nurture",
+    name: "5 Levels of AI nurture",
     // Disabled on purpose: an automation is easy to create and awkward to unsend.
     status: "disabled",
     steps,
