@@ -294,11 +294,24 @@ each has got.
 Needs `RESEND_AUTOMATION_ID`, printed when `scripts/create-email-sequence.mjs`
 runs. Without it the top half still works and the sequence half stays at zero.
 
-Currently `019fbf7a-37a8-746a-9447-7af4fd32452b`, created 1 August 2026. Recorded
-here because re-running the script builds a *new* automation rather than updating
-this one, so the two can drift apart without anything complaining. If the
-dashboard ever reports numbers that do not match what Resend shows, check this
-first.
+Currently `019fc1a5-87a6-739b-9cdf-0c7e4b3396dc`, created 2 August 2026 — the
+rebuild that routes booking links through `/api/go/book`. It replaced
+`019fbf7a-37a8-746a-9447-7af4fd32452b`, which is now disabled and kept only for
+its history.
+
+Recorded here because re-running the script builds a *new* automation rather
+than updating this one, so the two can drift apart without anything complaining.
+If the dashboard ever reports numbers that do not match what Resend shows, check
+this first.
+
+The value is a bare UUID. `re_` is the prefix on Resend *API keys*, not on
+object ids, and a prefixed value 404s silently: the sequence half of the
+dashboard sits at zero with no error, which looks identical to nobody being
+enrolled.
+
+Set in Vercel for Production only. The preview scope was lost when the value was
+rotated and the CLI would not re-add it without prompting, so preview
+deployments report the sequence half as unconfigured. Production is unaffected.
 
 Resend's list endpoint returns run status but not steps, so the per-email funnel
 fetches runs individually and is capped at 50. Past that the dashboard says it is
