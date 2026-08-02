@@ -80,6 +80,19 @@ function sql() {
   return neon(url);
 }
 
+/**
+ * Defaults for an install that has never saved settings.
+ *
+ * **Editing these does not change a running install.** `getSettings` spreads the
+ * stored row over these, and every tick calls `saveSettings({ lastRunAt })`,
+ * which merges and writes the *whole* object back — so the values in the row
+ * are re-persisted on every run and a changed default here is never reached
+ * again. Changing behaviour on a live install means changing it in `/admin/cro`.
+ *
+ * This bit once already: `intervalHours` was moved from 24 to 3 here, the cron
+ * was set to fire every three hours, and every run past the first went on
+ * skipping with "interval is 24h" because that was what the row said.
+ */
 export const DEFAULT_SETTINGS: Settings = {
   // Three hours, which is the floor the dashboard allows and the fastest
   // cadence Clarity's quota affords: 24 / 3 = 8 runs a day, each claiming one

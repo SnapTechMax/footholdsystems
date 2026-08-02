@@ -200,6 +200,19 @@ Rules fire in priority order — scroll depth, rage clicks, dead clicks,
 quickbacks, engagement time, then incremental copy. One test at a time, because
 splitting traffic further means nothing ever concludes.
 
+### The interval lives in the database, not in the code
+
+`intervalHours` is a **stored setting**, and the stored value wins. Every run
+writes the whole settings object back with its new `lastRunAt`, so whatever the
+row says is re-persisted each time and the default in `DEFAULT_SETTINGS` is
+never consulted again after the first save.
+
+Change the cadence in **`/admin/cro` → "Run every (hours)"**. Editing the code
+default only affects an install that has never saved settings. Symptom when this
+is missed: the tick returns
+`{"status":"skipped","actions":["Only 22.5h since the last run; interval is 24h. Skipping."]}`
+while the cron is firing every three hours.
+
 ### Why 3 hours
 
 Clarity allows **10 API calls per project per day** and each run spends exactly
