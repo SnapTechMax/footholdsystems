@@ -229,10 +229,13 @@ export default async function CroDashboard() {
       <div className="space-y-6">
         <Missing items={missing} />
 
-        {/* Live counts, updated on every visit rather than on a run */}
+        {/* The control condition. Written only while no experiment is running,
+            so it stands still for the length of a test — see the note below. */}
         <div className="rounded-lg border border-[#33332f] bg-[#232320] p-5">
           <h2 className={`${mono} text-[#f6be00]`}>
-            Baseline · live, no experiment running
+            {running
+              ? `Baseline · paused while experiment #${running.id} runs`
+              : "Baseline · live, counting now"}
           </h2>
           <div className="mt-3 grid grid-cols-3 gap-3">
             {[
@@ -251,11 +254,25 @@ export default async function CroDashboard() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-[#7a786f]">
-            Counted on our own server, so unaffected by ad blockers. Unique
-            visitors, deduplicated — a reload doesn&apos;t count twice. This
-            updates on every visit, unlike the Clarity figures below.
+          <p className="mt-3 text-xs leading-relaxed text-[#7a786f]">
+            The control these experiments are judged against: the shipped page,
+            measured while nothing is being tested. Counted on our own server, so
+            unaffected by ad blockers, and deduplicated per visitor, so a reload
+            doesn&apos;t count twice.
           </p>
+          {running ? (
+            <p className="mt-2 text-xs leading-relaxed text-[#cfccc2]">
+              <span className="text-[#f6be00]">These figures are standing still.</span>{" "}
+              Visits during an experiment are recorded against its arms instead,
+              so nothing lands here until #{running.id} concludes. Today&apos;s
+              traffic is in the per-arm totals below. This is also why the number
+              here can sit below the funnel on the overview, which counts both.
+            </p>
+          ) : (
+            <p className="mt-2 text-xs leading-relaxed text-[#7a786f]">
+              Updating on every visit, unlike the Clarity figures below.
+            </p>
+          )}
         </div>
 
         {/* Clarity snapshot */}
