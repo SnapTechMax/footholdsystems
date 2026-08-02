@@ -19,7 +19,7 @@ export const THANKS_PATH = "/guide/thanks";
  * choice that isn't one.
  */
 export const CONSENT_TEXT =
-  "Yes, send me the guide and occasional AI tips for small businesses. Unsubscribe any time.";
+  "Yes, send me the guide and occasional AI tips for businesses. Unsubscribe any time.";
 
 /**
  * Shown where consent has to be a free choice, so the guide cannot be presented
@@ -27,7 +27,7 @@ export const CONSENT_TEXT =
  * record, which is how the difference stays provable later.
  */
 export const CONSENT_TEXT_OPTIONAL =
-  "Also email me occasional AI tips for small businesses. Unsubscribe any time. The guide is yours either way.";
+  "Also email me occasional AI tips for businesses. Unsubscribe any time. The guide is yours either way.";
 
 // Direct line. Published to people who have opted in — the delivery email and the
 // guide PDF — but deliberately NOT on the public website, so it stays off the

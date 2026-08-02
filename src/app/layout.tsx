@@ -58,11 +58,11 @@ export const metadata: Metadata = {
   // clicks land on the redirect rather than the page.
   metadataBase: new URL("https://www.footholdsystems.com"),
   title: {
-    default: "AI Integration for Small Business | Foothold Systems",
+    default: "AI Integration for Business | Foothold Systems",
     template: "%s | Foothold Systems",
   },
   description:
-    "Foothold Systems sets up AI for small businesses, in plain English. The right tool, built for how your shop really runs, and looked after once it's live. Start with our free guide, The 5 Levels of AI.",
+    "Foothold Systems sets up AI for businesses, in plain English. The right tool, built for how your shop really runs, and looked after once it's live. Start with our free guide, The 5 Levels of AI.",
   openGraph: {
     type: "website",
     locale: "en_US",

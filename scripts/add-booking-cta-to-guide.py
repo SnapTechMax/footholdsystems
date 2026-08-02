@@ -336,9 +336,9 @@ def main() -> int:
 
     writer.add_metadata(
         {
-            "/Title": "The Five Levels of AI for Small Business",
+            "/Title": "The Five Levels of AI for Business",
             "/Author": "Foothold Systems",
-            "/Subject": "A plain-English guide to the five levels of AI for small business owners.",
+            "/Subject": "A plain-English guide to the five levels of AI for business owners.",
         }
     )
 

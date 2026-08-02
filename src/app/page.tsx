@@ -30,7 +30,7 @@ export default function HomePage() {
       <section className="bg-[#1b1b1b] text-[#f2efe6]">
         <div className="mx-auto max-w-4xl px-6 py-24 sm:py-32">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-            Foothold Systems &nbsp;&middot;&nbsp; AI for Small Business
+            Foothold Systems &nbsp;&middot;&nbsp; AI for Business
           </p>
 
           <h1 className={`${display} mt-8 text-6xl font-black uppercase leading-[0.92] tracking-tight sm:text-8xl`}>
@@ -41,7 +41,7 @@ export default function HomePage() {
 
           <p className="mt-8 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2] sm:text-xl">
             Everybody says you should use AI. We&apos;re the ones who actually set
-            it up for a small business: the right tool, built for how your shop
+            it up for a business: the right tool, built for how your shop
             really runs, and looked after once it&apos;s live. No twenty apps. No
             black boxes.
           </p>
@@ -153,7 +153,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
               Tell us the level you landed on and we&apos;ll tell you what we
-              usually find there, and what it costs small businesses like yours.
+              usually find there, and what it costs businesses like yours.
               Free, whether or not you hire us.
             </p>
             <BookCallButton

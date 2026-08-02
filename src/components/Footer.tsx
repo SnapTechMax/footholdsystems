@@ -20,7 +20,7 @@ export function Footer() {
             </span>
           </Link>
           <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#7a786f]">
-            AI for Small Business
+            AI for Business
           </p>
         </div>
 

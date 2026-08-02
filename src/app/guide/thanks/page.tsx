@@ -188,7 +188,7 @@ export default function GuideThanksPage() {
           </h3>
           <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
             Tell me the level you landed on. I&apos;ll tell you what I usually
-            find there, and what it costs small businesses like yours. Free,
+            find there, and what it costs businesses like yours. Free,
             whether or not you hire me.
           </p>
 
@@ -203,7 +203,7 @@ export default function GuideThanksPage() {
         </div>
 
         <p className="mt-8 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
-          Foothold Systems &middot; AI for Small Business
+          Foothold Systems &middot; AI for Business
         </p>
       </section>
     </div>

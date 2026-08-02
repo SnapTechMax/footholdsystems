@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "The 5 Levels of AI",
   description:
-    "The plain-English guide for small business owners: five levels of AI, find yours in ten minutes, then find out what staying there is costing you. Free from Foothold Systems.",
+    "The plain-English guide for business owners: five levels of AI, find yours in ten minutes, then find out what staying there is costing you. Free from Foothold Systems.",
   alternates: { canonical: "/guide" },
 };
 
@@ -116,10 +116,10 @@ export default async function GuidePage() {
       <section className="bg-[#1b1b1b] text-[#f2efe6]">
         <div className="mx-auto max-w-4xl px-6 py-20 sm:py-24">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-            Foothold Systems &nbsp;&middot;&nbsp; AI for Small Business
+            Foothold Systems &nbsp;&middot;&nbsp; AI for Business
           </p>
           <p className="mt-3 font-mono text-xs uppercase tracking-[0.22em] text-[#8a887f]">
-            A plain-English guide for small business owners
+            A plain-English guide for business owners
           </p>
 
           <h1
@@ -131,7 +131,7 @@ export default async function GuidePage() {
           </h1>
 
           <p className="mt-8 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2] sm:text-xl">
-            You run a small business. Everybody says you should use AI. Nobody
+            You run a business. Everybody says you should use AI. Nobody
             says what that actually means for a shop like yours.{" "}
             <span className="font-semibold text-[#f2efe6]">
               This is the plain English version.
@@ -208,7 +208,7 @@ export default async function GuidePage() {
 
         <div className="mt-8 max-w-2xl space-y-4 font-serif text-lg leading-relaxed">
           <p>
-            Most AI guides hand a small business owner twenty apps. The app was
+            Most AI guides hand a business owner twenty apps. The app was
             never the hard part.
           </p>
           <p>
@@ -251,7 +251,7 @@ export default async function GuidePage() {
             The short version
           </p>
           <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-[#e6e3d9]">
-            Most small businesses are on Level 1. Almost nobody is on Level 3, the
+            Most businesses are on Level 1. Almost nobody is on Level 3, the
             one that pays. Read the guide and you know your level. Call us and you
             know your number.
           </p>
@@ -391,7 +391,7 @@ export default async function GuidePage() {
             </h3>
             <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
               Tell us the level you landed on. We&apos;ll tell you what we usually
-              find there, and what it costs small businesses like yours. Free,
+              find there, and what it costs businesses like yours. Free,
               whether or not you hire us.
             </p>
             <BookCallButton
@@ -401,7 +401,7 @@ export default async function GuidePage() {
           </div>
 
           <p className="mt-8 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
-            Foothold Systems &middot; AI for Small Business
+            Foothold Systems &middot; AI for Business
           </p>
         </div>
       </section>

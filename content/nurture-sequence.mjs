@@ -126,7 +126,7 @@ const emails = [
     cta: "Book a call",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("AI will state something wrong with total confidence. This is the single biggest risk for a small business using it on real work."),
+      p("AI will state something wrong with total confidence. This is the single biggest risk for a business using it on real work."),
       p("The cheapest defence: ask it to explain how it got there."),
       p('After any answer that matters, send back: <em>walk me through how you worked that out, and tell me which parts you are unsure about.</em>'),
       p("A model working from real information will show its reasoning. A model that invented something tends to get vague, or quietly corrects itself. Ten seconds, and it catches most of the damage."),
@@ -159,7 +159,7 @@ const emails = [
       p("It will ask about things you forgot to mention. Your margins. Your usual turnaround. Whether this customer is price sensitive. Answer those, then let it run."),
       p("You get a far better result, and you often notice you had not thought it through properly either."),
     ],
-    ask: "If you would rather have that conversation with a person who knows small businesses, that is what the call is.",
+    ask: "If you would rather have that conversation with a person who knows businesses, that is what the call is.",
   },
   {
     key: "shorter",
@@ -187,7 +187,7 @@ const emails = [
       p("Owners talk faster than they type and think better out loud. The mess is the point. Cleaning up mess is exactly what these tools are good at."),
       p("Try it after your next call, before you have forgotten half of it."),
     ],
-    ask: "Most of the time saved in a small business hides in jobs like this. Worth twenty minutes to find yours.",
+    ask: "Most of the time saved in a business hides in jobs like this. Worth twenty minutes to find yours.",
   },
   {
     key: "inbox",
@@ -224,7 +224,7 @@ const emails = [
     cta: "Book a call",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Quoting is where small businesses quietly lose hours. Same shapes, different numbers, every single time."),
+      p("Quoting is where businesses quietly lose hours. Same shapes, different numbers, every single time."),
       p("Start here. Take your last ten quotes, paste them in, and ask what structure they share and where you tend to be inconsistent."),
       p("It usually finds something uncomfortable. Wildly different margins on similar jobs. Line items you forget half the time. Wording that is vague enough to cost you an argument later."),
       p("Fixing the inconsistency is worth money before you automate anything."),

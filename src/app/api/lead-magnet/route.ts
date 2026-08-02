@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       <div style="background:#1b1b1b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 16px;">
         <div style="max-width:560px;margin:0 auto;background:#eae8e1;border-radius:14px;overflow:hidden;">
           <div style="background:#1b1b1b;padding:28px 32px;">
-            <p style="margin:0;color:#f6be00;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">${BRAND_NAME} &nbsp;&middot;&nbsp; AI for Small Business</p>
+            <p style="margin:0;color:#f6be00;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">${BRAND_NAME} &nbsp;&middot;&nbsp; AI for Business</p>
             <h1 style="margin:12px 0 0;color:#f2efe6;font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-0.01em;">The 5 Levels of AI</h1>
           </div>
           <div style="padding:28px 32px;color:#1f1f1d;">

@@ -13,7 +13,7 @@ import type { VariantContent } from "./types";
 export const BASE_CONTENT: Required<VariantContent> = {
   captureHeading: "Get the 5 Levels of AI",
   captureSubcopy:
-    "Drop your email and we'll send the guide straight over. Find the level your small business is really on, and what the next one up is worth to an owner like you.",
+    "Drop your email and we'll send the guide straight over. Find the level your business is really on, and what the next one up is worth to an owner like you.",
   submitLabel: "Send me the guide →",
   // Says what actually happens: the guide, then the nurture sequence. Anything
   // here that promises a single email contradicts the 22 over 38 days that
