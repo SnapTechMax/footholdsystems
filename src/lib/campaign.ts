@@ -2,6 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 import { neon } from "@neondatabase/serverless";
 import { SEQUENCE_STEPS } from "./sequence-steps";
+import { initConsentSchema } from "./consent";
 
 /**
  * Campaign statistics for the nurture sequence.
@@ -77,19 +78,38 @@ async function consentAndDownloads(): Promise<{
   if (!url) return { granted: 0, declined: 0, downloads: 0 };
   const sql = neon(url);
 
-  const consent = (await sql`
-    SELECT granted, COUNT(DISTINCT email)::int AS n
-    FROM marketing_consent GROUP BY granted`) as { granted: boolean; n: number }[];
+  // marketing_consent only exists once somebody has submitted the form, and
+  // these two queries used to share a failure: an absent table took the
+  // download count down with it.
+  try {
+    await initConsentSchema();
+  } catch (error) {
+    console.error("Campaign: consent schema check failed:", error);
+  }
 
-  const downloads = (await sql`
-    SELECT COUNT(*)::int AS n FROM cro_baseline_events
-    WHERE kind = 'conversion'`) as { n: number }[];
+  let granted = 0;
+  let declined = 0;
+  try {
+    const consent = (await sql`
+      SELECT granted, COUNT(DISTINCT email)::int AS n
+      FROM marketing_consent GROUP BY granted`) as { granted: boolean; n: number }[];
+    granted = consent.find((r) => r.granted)?.n ?? 0;
+    declined = consent.find((r) => !r.granted)?.n ?? 0;
+  } catch (error) {
+    console.error("Campaign: consent counts failed:", error);
+  }
 
-  return {
-    granted: consent.find((r) => r.granted)?.n ?? 0,
-    declined: consent.find((r) => !r.granted)?.n ?? 0,
-    downloads: downloads[0]?.n ?? 0,
-  };
+  let downloads = 0;
+  try {
+    const rows = (await sql`
+      SELECT COUNT(*)::int AS n FROM cro_baseline_events
+      WHERE kind = 'conversion'`) as { n: number }[];
+    downloads = rows[0]?.n ?? 0;
+  } catch (error) {
+    console.error("Campaign: download count failed:", error);
+  }
+
+  return { granted, declined, downloads };
 }
 
 export async function getCampaignStats(): Promise<CampaignStats> {

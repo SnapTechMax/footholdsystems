@@ -2,6 +2,7 @@ import "server-only";
 import { neon } from "@neondatabase/serverless";
 import { CLARITY_CONFIGURED } from "./cro/clarity";
 import { META_CONFIGURED } from "./cro/meta";
+import { initConsentSchema } from "./consent";
 
 /**
  * Numbers for the admin overview, and a read on whether the machinery behind
@@ -47,6 +48,22 @@ export async function getFunnelCounts(): Promise<FunnelCounts | null> {
   if (!url) return null;
   const sql = neon(url);
 
+  // `marketing_consent` is created by recordConsent, which only runs when
+  // somebody actually submits the form. Every reader of it is therefore reading
+  // a table that may not exist yet. Creating it here costs one idempotent
+  // statement and removes the whole class of failure.
+  try {
+    await initConsentSchema();
+  } catch (error) {
+    console.error("Overview: consent schema check failed:", error);
+  }
+
+  // Each query gets its own catch. They used to share one, so a missing
+  // marketing_consent threw past the event counts and the funnel reported zero
+  // views and zero downloads while both were sitting in the database — a broken
+  // read that looked exactly like no traffic.
+  let views = 0;
+  let downloads = 0;
   try {
     // Baseline events cover the periods with no experiment running; experiment
     // events cover the rest. Summed, because a visitor counts once either way
@@ -58,25 +75,31 @@ export async function getFunnelCounts(): Promise<FunnelCounts | null> {
         (SELECT COUNT(*)::int FROM cro_baseline_events WHERE kind = 'conversion')
         + (SELECT COUNT(*)::int FROM cro_events WHERE kind = 'conversion') AS downloads
     `) as { views: number; downloads: number }[];
+    views = rows[0]?.views ?? 0;
+    downloads = rows[0]?.downloads ?? 0;
+  } catch (error) {
+    // Logged rather than swallowed. A zero that means "the query failed" and a
+    // zero that means "nobody visited" are the same number on the dashboard,
+    // and only the log can tell them apart.
+    console.error("Overview: event counts failed:", error);
+  }
 
+  let optedIn = 0;
+  let declined = 0;
+  try {
     const consent = (await sql`
       SELECT granted, COUNT(DISTINCT email)::int AS n
       FROM marketing_consent GROUP BY granted`) as {
       granted: boolean;
       n: number;
     }[];
-
-    return {
-      views: rows[0]?.views ?? 0,
-      downloads: rows[0]?.downloads ?? 0,
-      optedIn: consent.find((r) => r.granted)?.n ?? 0,
-      declined: consent.find((r) => !r.granted)?.n ?? 0,
-    };
-  } catch {
-    // Tables are created on first use, so an empty database is normal rather
-    // than an error worth showing.
-    return { views: 0, downloads: 0, optedIn: 0, declined: 0 };
+    optedIn = consent.find((r) => r.granted)?.n ?? 0;
+    declined = consent.find((r) => !r.granted)?.n ?? 0;
+  } catch (error) {
+    console.error("Overview: consent counts failed:", error);
   }
+
+  return { views, downloads, optedIn, declined };
 }
 
 export function getHealth(): HealthItem[] {

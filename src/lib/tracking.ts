@@ -1,6 +1,7 @@
 import "server-only";
 import { neon } from "@neondatabase/serverless";
 import { SEQUENCE_STEPS } from "./sequence-steps";
+import { initConsentSchema } from "./consent";
 
 /**
  * Per-email attribution for the nurture sequence.
@@ -207,9 +208,11 @@ export async function getEmailAttribution(): Promise<
       else entry.canceled = row.n;
       out.set(row.email_key, entry);
     }
-  } catch {
-    // Tables are created on first write, so an empty database is normal here
-    // rather than an error worth showing on a dashboard.
+  } catch (error) {
+    // An empty database is normal here — these tables are created on first
+    // write — but the failure is still logged. A zero meaning "the query broke"
+    // and a zero meaning "nobody clicked" look identical on a dashboard.
+    console.error("Attribution: read failed:", error);
   }
 
   return out;
@@ -240,6 +243,15 @@ export async function getSubscriberSeries(
   const url = connectionString();
   if (!url) return [];
   const sql = neon(url);
+
+  // Created on first consent, not at deploy, so an untouched database has no
+  // such table and the chart would show its empty state for a reason that has
+  // nothing to do with how many people subscribed.
+  try {
+    await initConsentSchema();
+  } catch (error) {
+    console.error("Subscribers: consent schema check failed:", error);
+  }
 
   try {
     const rows = (await sql`
@@ -283,7 +295,8 @@ export async function getSubscriberSeries(
     }
 
     return series;
-  } catch {
+  } catch (error) {
+    console.error("Subscribers: series read failed:", error);
     return [];
   }
 }
