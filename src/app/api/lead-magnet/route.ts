@@ -23,12 +23,14 @@ import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
 export const dynamic = "force-dynamic";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BRAND / CONTACT — placeholders. Swap these for the real Foothold Systems
-// details (phone is currently reused from SnapTech; address is a placeholder).
+// BRAND / CONTACT
 const BRAND_NAME = "Foothold Systems";
-// Contact details come from src/lib/site.ts. The phone number goes to people who
+// Confirmed as Foothold's mailing address. CAN-SPAM requires a valid physical
+// address on every marketing email, so this is not decoration — if the business
+// ever moves, this line moves with it before the next send.
+const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
+// Phone and email come from src/lib/site.ts. The phone number goes to people who
 // opted in — this email and the guide PDF — but not to the public website.
-const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773"; // TODO: confirm Foothold mailing address (required on marketing email footers)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Where lead notifications land. A destination rather than a sender, so the

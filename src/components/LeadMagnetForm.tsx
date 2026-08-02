@@ -6,7 +6,7 @@ import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
-  footnote = "Free. One email. No spam, no drip sequence you can't escape.",
+  footnote = "Free. The guide now, then short AI tips over the next few weeks. Unsubscribe in one click.",
   experimentId = null,
   variant = null,
   consentRequired = true,

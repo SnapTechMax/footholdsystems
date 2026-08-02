@@ -89,8 +89,10 @@ automation is rejected for size.
 The endpoint fails closed: 503 with no `CALENDLY_WEBHOOK_SECRET`, 401 on anything
 that does not verify. Signatures are checked over the raw body, compared in
 constant time, and rejected beyond five minutes so a captured payload cannot be
-replayed. **Confirm the scheme with one real test booking**: a mismatch appears in
-the logs as `Calendly webhook rejected: signature did not match`.
+replayed. **Confirmed against a real test booking**, so the signature scheme is
+known to match rather than assumed. If it ever stops matching — a rotated secret
+is the likely cause — it appears in the logs as
+`Calendly webhook rejected: signature did not match`.
 
 ---
 
