@@ -1,11 +1,15 @@
 /**
  * The nurture sequence sent after someone downloads The 5 Levels of AI.
  *
- * Content only. MailerLite owns the sequence and its API cannot create
- * automation steps or email content, so the sequence is built by hand in their
- * builder. This file is the source of truth for the copy: edit here, then run
- * `node scripts/build-sequence-sheet.mjs` to regenerate the build sheet used to
- * paste it in.
+ * Content only. Resend owns the sequence, as templates plus an automation. This
+ * file is the source of truth for the copy: edit here, then run
+ * `node scripts/create-email-sequence.mjs` to push it.
+ *
+ * That builds a *new* automation rather than updating the live one, because
+ * Resend does not allow an enabled automation's steps to be edited. Switching
+ * over means enabling the new one, disabling the old, and updating
+ * RESEND_AUTOMATION_ID. Editing this file alone changes nothing that is
+ * currently being sent.
  *
  * Nothing on the website reads this file.
  *

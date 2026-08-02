@@ -45,9 +45,9 @@ Two things worth knowing about this arrangement:
   processing that is not necessary for it, so a forced tick would produce invalid
   consent however it is worded.
 
-Separately from the law, an email provider's own terms are stricter and are what
-actually ended the MailerLite account. Whether a required tick counts as
-agreement is the provider's call.
+Separately from the law, an email provider's own terms are stricter, and have
+already cost this business a sending account once. Whether a required tick
+counts as agreement is the provider's call, not ours and not the statute's.
 
 `marketing_consent` stores the **exact wording shown**, not just a boolean, plus
 IP, user agent and timestamp. Wording changes over time, and "they ticked a box"
