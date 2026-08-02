@@ -31,6 +31,23 @@ import { createSequence } from "./create-email-sequence.mjs";
 
 const CONFIRM = process.argv.includes("--confirm");
 
+/**
+ * Finish a run that built the replacement but fell over before switching.
+ *
+ *   node scripts/switch-sequence.mjs --switch-to <automation id>
+ *
+ * Building creates 22 templates and an automation. If the cutover fails after
+ * that, re-running --confirm would build 22 more rather than use what is
+ * already sitting there correct and disabled, so this takes the id instead.
+ */
+const switchToIndex = process.argv.indexOf("--switch-to");
+const SWITCH_TO = switchToIndex === -1 ? null : process.argv[switchToIndex + 1];
+
+if (switchToIndex !== -1 && !SWITCH_TO) {
+  console.error("--switch-to needs an automation id.");
+  process.exit(1);
+}
+
 if (!process.env.RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not set.");
   process.exit(1);
@@ -85,6 +102,20 @@ async function main() {
   }
 
   const current = live[0];
+
+  // Finishing an interrupted run: the replacement already exists, so verify it
+  // is real and not the one we are about to retire, then just flip the two.
+  if (SWITCH_TO) {
+    if (SWITCH_TO === current.id) {
+      throw new Error("--switch-to names the automation that is already live.");
+    }
+    const target = unwrap("get replacement", await resend.automations.get(SWITCH_TO));
+    console.log(`\nReplacement: ${target.name} (${SWITCH_TO}), status ${target.status}`);
+    console.log(`Retiring:    ${current.name} (${current.id})\n`);
+    await cutOver(current, SWITCH_TO);
+    return;
+  }
+
   const detail = unwrap("get automation", await resend.automations.get(current.id));
 
   /* ── 2. compare it to what this repo would send now ──────────────────── */
@@ -132,13 +163,24 @@ async function main() {
   const newId = await createSequence();
   if (!newId) throw new Error("the build did not return an automation id");
 
-  /* ── 4. cut across ───────────────────────────────────────────────────── */
+  await cutOver(current, newId);
+}
+
+/**
+ * Enable the replacement, then retire the one it replaces.
+ *
+ * `automations.update` takes the id positionally — `update(id, payload)`, not
+ * one merged object. Passing a single object leaves `payload` undefined and
+ * throws "Cannot read properties of undefined (reading 'name')" from inside the
+ * SDK, after the 22 templates have already been created.
+ */
+async function cutOver(current, newId) {
   console.log("Switching over...");
-  unwrap("enable new", await resend.automations.update({ id: newId, status: "enabled" }));
+  unwrap("enable new", await resend.automations.update(newId, { status: "enabled" }));
   console.log(`  enabled  ${newId}`);
   unwrap(
     "disable old",
-    await resend.automations.update({ id: current.id, status: "disabled" })
+    await resend.automations.update(current.id, { status: "disabled" })
   );
   console.log(`  disabled ${current.id}`);
 
