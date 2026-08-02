@@ -24,7 +24,26 @@ export const BASE_CONTENT: Required<VariantContent> = {
   formAboveFold: false,
 };
 
-/** Layer an experiment's overrides over the shipped copy. */
+/**
+ * Layer an experiment's overrides over the shipped copy.
+ *
+ * Anything layered on has to still exist in this file. Experiments store a
+ * *fully resolved* copy of the page — all six fields, not just the one under
+ * test — so an experiment about the headline also freezes a copy of the
+ * footnote as it read the day it started, and the winner of that experiment
+ * becomes the baseline the next one builds on. Left alone, a line of copy
+ * retired here goes on being served indefinitely, from a database row nobody
+ * is looking at.
+ *
+ * That is not hypothetical: it is how a footnote promising a single email
+ * outlived being deleted from the codebase while a 22-email sequence ran
+ * behind it. Discarding unrecognised copy makes this file the last word on
+ * what a visitor can be shown, which is the only version of this the legal
+ * text can be audited against.
+ *
+ * Both arms of a running test are corrected identically, so this cannot bias a
+ * result — it changes what the arms have in common, not what separates them.
+ */
 export function resolveContent(
   ...layers: (VariantContent | null | undefined)[]
 ): Required<VariantContent> {
@@ -32,13 +51,30 @@ export function resolveContent(
   for (const layer of layers) {
     if (!layer) continue;
     for (const [key, value] of Object.entries(layer)) {
-      if (value !== undefined && value !== null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (resolved as any)[key] = value;
-      }
+      if (value === undefined || value === null) continue;
+      if (!isCurrentCopy(key, value)) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (resolved as any)[key] = value;
     }
   }
   return resolved;
+}
+
+/**
+ * Is this value still copy this codebase would choose to serve?
+ *
+ * Non-strings (the layout toggle) pass through — they carry no promises. A
+ * field with no library has nothing to check against, so it passes too rather
+ * than being silently pinned to the shipped default.
+ */
+function isCurrentCopy(field: string, value: unknown): boolean {
+  if (typeof value !== "string") return true;
+  const library = VARIANT_LIBRARY[field as LibraryField] as
+    | readonly string[]
+    | undefined;
+  if (!library) return true;
+  return value === BASE_CONTENT[field as keyof VariantContent] ||
+    library.includes(value);
 }
 
 /** Candidate copy the rules engine may reach for, grouped by the field it changes. */
