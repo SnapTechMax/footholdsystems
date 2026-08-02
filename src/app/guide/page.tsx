@@ -95,7 +95,6 @@ export default async function GuidePage() {
   const captureForm = (
     <LeadMagnetForm
       submitLabel={content.submitLabel}
-      footnote={content.formFootnote}
       experimentId={experimentId}
       variant={variant}
       consentRequired={consentRequired}

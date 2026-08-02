@@ -6,13 +6,11 @@ import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
-  footnote = "Free. The guide now, then short AI tips over the next few weeks. Unsubscribe in one click.",
   experimentId = null,
   variant = null,
   consentRequired = true,
 }: {
   submitLabel?: string;
-  footnote?: string;
   /** Set when a CRO experiment is running, so conversions can be attributed. */
   experimentId?: number | null;
   variant?: "a" | "b" | null;
@@ -169,10 +167,6 @@ export function LeadMagnetForm({
           Something went wrong. Please try again, or email max@footholdsystems.com and we&apos;ll send it over.
         </p>
       )}
-
-      <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[#8a887f]">
-        {footnote}
-      </p>
     </form>
   );
 }

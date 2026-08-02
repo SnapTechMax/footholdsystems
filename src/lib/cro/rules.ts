@@ -141,7 +141,6 @@ export function nextHypothesis(
     "submitLabel",
     "captureHeading",
     "captureSubcopy",
-    "formFootnote",
   ] as LibraryField[]) {
     const result = swap(
       field,
@@ -162,8 +161,6 @@ function labelFor(field: LibraryField): string {
       return "form heading";
     case "captureSubcopy":
       return "supporting copy";
-    case "formFootnote":
-      return "reassurance line";
     default:
       return field;
   }

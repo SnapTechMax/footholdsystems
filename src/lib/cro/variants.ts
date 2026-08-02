@@ -15,11 +15,6 @@ export const BASE_CONTENT: Required<VariantContent> = {
   captureSubcopy:
     "Drop your email and we'll send the guide straight over. Find the level your business is really on, and what the next one up is worth to an owner like you.",
   submitLabel: "Send me the guide →",
-  // Says what actually happens: the guide, then the nurture sequence. Anything
-  // here that promises a single email contradicts the 22 over 38 days that
-  // ticking the box starts — see the note above VARIANT_LIBRARY.formFootnote.
-  formFootnote:
-    "Free. The guide now, then short AI tips over the next few weeks. Unsubscribe in one click.",
   heroCtaLabel: "Get the free guide →",
   formAboveFold: false,
 };
@@ -95,18 +90,6 @@ export const VARIANT_LIBRARY = {
     "Send it to me →",
     "Get my copy →",
     "Show me my level →",
-  ],
-  /**
-   * Every option here has to be true of what ticking the box actually starts:
-   * 22 emails over 38 days, roughly daily for the first fortnight and spacing
-   * out after. Reassurance is fine; a promise of one email and nothing further
-   * is not, and it is the provider's terms rather than the law that punishes it.
-   * Reassure with the unsubscribe and the fact we don't sell details instead.
-   */
-  formFootnote: [
-    BASE_CONTENT.formFootnote,
-    "Free. Unsubscribe in one click, and we never sell your details.",
-    "The guide, then a few weeks of short, practical tips. Stop them any time.",
   ],
   heroCtaLabel: [
     "Get the free guide →",

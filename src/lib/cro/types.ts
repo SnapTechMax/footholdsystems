@@ -8,8 +8,6 @@ export interface VariantContent {
   captureSubcopy?: string;
   /** Submit button label. */
   submitLabel?: string;
-  /** Reassurance line under the form. */
-  formFootnote?: string;
   /** Hero button label. */
   heroCtaLabel?: string;
   /** Put a second capture form high on the page, above the ladder. */
