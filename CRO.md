@@ -181,10 +181,11 @@ engine falls back to server-side counts and says so in the run log.
 
 ## How a run works
 
-Cron hits `/api/cro/tick` daily (`vercel.json`). Each run:
+Cron hits `/api/cro/tick` **every 3 hours** (`vercel.json`). Each run:
 
 1. Skips if disabled, or if less than `intervalHours` has passed. The cron is
-   fixed; the UI interval is enforced in the handler.
+   fixed; the UI interval is enforced in the handler, with 15 minutes of slack
+   so a run stamped at 03:00:04 doesn't cause the 06:00 cron to skip itself.
 2. Claims one Clarity call against the 10/day budget, tracked in Postgres so the
    quota is never blown, and stores the snapshot.
 3. Judges any running experiment against `conversionSource`:
@@ -198,6 +199,26 @@ Cron hits `/api/cro/tick` daily (`vercel.json`). Each run:
 Rules fire in priority order — scroll depth, rage clicks, dead clicks,
 quickbacks, engagement time, then incremental copy. One test at a time, because
 splitting traffic further means nothing ever concludes.
+
+### Why 3 hours
+
+Clarity allows **10 API calls per project per day** and each run spends exactly
+one. Eight scheduled runs (24 ÷ 3) leave two in reserve for manual `force=1`
+runs, which claim from the same pot. Two-hourly would be twelve runs and the
+budget would be gone by late afternoon, leaving the evening runs judging on
+stale signals — so 3 is the floor, and the dashboard won't accept less.
+
+What this buys is **reaction speed, not fresher data**. Clarity's lookback is
+still 1–3 days, so the diagnostics barely move between runs. What does move is
+everything downstream of them: a challenger dropping off a cliff is rolled back
+within hours instead of the next morning, and a concluded test is replaced the
+same afternoon rather than a day later. On this site's traffic that is the whole
+benefit — tests still take as long as the arithmetic demands.
+
+Requires a Vercel plan that permits sub-daily crons. **Hobby only runs cron once
+a day**, and will ignore the `0 */3 * * *` schedule; on Hobby the engine keeps
+working, just at its old daily cadence. Check Vercel → Project → Cron Jobs after
+deploying to confirm the schedule took.
 
 Trigger a run by hand:
 

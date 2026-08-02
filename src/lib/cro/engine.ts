@@ -38,6 +38,18 @@ export interface TickResult {
   error?: string;
 }
 
+/**
+ * Slack allowed on the interval check, in hours.
+ *
+ * `lastRunAt` is stamped when a run *finishes*, so a run started by the 03:00
+ * cron records something like 03:00:04. The 06:00 cron then measures 2.999h
+ * elapsed against a 3h interval and skips — and because that skip doesn't
+ * restamp `lastRunAt`, the pattern repeats and the engine quietly runs half as
+ * often as the cron fires. Fifteen minutes is far below the shortest interval
+ * the dashboard allows, so it can't collapse two intended runs into one.
+ */
+const INTERVAL_GRACE_HOURS = 0.25;
+
 export async function tick(options: { force?: boolean } = {}): Promise<TickResult> {
   const actions: string[] = [];
 
@@ -56,7 +68,7 @@ export async function tick(options: { force?: boolean } = {}): Promise<TickResul
     if (!options.force && settings.lastRunAt) {
       const elapsedHours =
         (Date.now() - new Date(settings.lastRunAt).getTime()) / 3_600_000;
-      if (elapsedHours < settings.intervalHours) {
+      if (elapsedHours < settings.intervalHours - INTERVAL_GRACE_HOURS) {
         actions.push(
           `Only ${elapsedHours.toFixed(1)}h since the last run; interval is ${settings.intervalHours}h. Skipping.`
         );
@@ -70,12 +82,20 @@ export async function tick(options: { force?: boolean } = {}): Promise<TickResul
     /* ── 1. pull Clarity ─────────────────────────────────────────────────── */
     let signals: ClaritySignals | null = null;
     try {
+      // One call per run, claimed against the daily quota before it is spent.
+      // The 3-hourly cron accounts for 8 of the 10; the remaining 2 are the
+      // headroom for manual `force=1` runs, which claim from the same pot.
       const allowed = await claimClarityCall(CLARITY_DAILY_LIMIT);
       if (!allowed) {
         actions.push(
           `Clarity budget for today is spent (${CLARITY_DAILY_LIMIT}/day). Continuing without fresh data.`
         );
       } else {
+        // Still the full 3-day window rather than 1, even polling this often.
+        // Checking more frequently makes the engine *react* sooner — a rolled
+        // back loser is down in hours instead of a day — but it cannot make
+        // Clarity's data fresher, and a single day's slice early in the morning
+        // is thin enough that the sessions floor would reject it anyway.
         const raw = await fetchClarity(3);
         signals = extractSignals(raw, pagePath);
         await saveClaritySnapshot(signals, raw);

@@ -81,7 +81,12 @@ function sql() {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  intervalHours: 24,
+  // Three hours, which is the floor the dashboard allows and the fastest
+  // cadence Clarity's quota affords: 24 / 3 = 8 runs a day, each claiming one
+  // of the 10 daily calls, leaving 2 spare for manual `force=1` runs. Anything
+  // shorter would spend the budget before the day was out and leave the later
+  // runs judging experiments on stale signals.
+  intervalHours: 3,
   enabled: true,
   pagePath: "/guide",
   // Set to Meta as requested; the engine falls back to internal counts and says

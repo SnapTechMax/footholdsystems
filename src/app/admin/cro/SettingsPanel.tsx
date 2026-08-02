@@ -63,7 +63,9 @@ export function SettingsPanel({ initial }: { initial: Settings }) {
             className={`${field} mt-1.5`}
           />
           <p className="mt-1 text-[11px] text-[#7a786f]">
-            Cron fires daily; this is the minimum gap between actions.
+            Cron fires every 3 hours; this is the minimum gap between actions.
+            Each run spends one of Clarity&apos;s 10 daily calls, so 3 is the
+            floor.
           </p>
         </div>
 
