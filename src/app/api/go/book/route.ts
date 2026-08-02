@@ -26,7 +26,15 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const emailKey = knownKey(params.get("e"));
+
+  // Narrowed before it goes anywhere near an outbound URL. It is echoed into
+  // utm_campaign below, so it is capped and restricted to the characters a
+  // campaign name actually uses rather than passed through as given.
+  const rawCampaign = (params.get("e") ?? "")
+    .trim()
+    .slice(0, 80)
+    .replace(/[^a-zA-Z0-9._-]/g, "");
+  const emailKey = knownKey(rawCampaign);
   const link = (params.get("c") || "cta-button").slice(0, 60);
   const recipient = cleanRecipient(params.get("r"));
 
@@ -34,10 +42,12 @@ export async function GET(request: NextRequest) {
   const destination = new URL(CALENDLY_URL);
   destination.searchParams.set("utm_source", "footholdsystems");
   destination.searchParams.set("utm_medium", "email");
-  // Calendly echoes these back in the webhook payload, which is the other half
-  // of the attribution — without utm_campaign the booking has no email to
-  // belong to.
-  destination.searchParams.set("utm_campaign", emailKey ?? "sequence");
+  // The campaign name is forwarded as sent, not as the normalised key, so GA4
+  // and Calendly keep the naming they already report on. Calendly echoes it back
+  // in the webhook payload and the same normalising happens there, which is the
+  // other half of the attribution — without utm_campaign a booking has no email
+  // to belong to.
+  destination.searchParams.set("utm_campaign", rawCampaign || "sequence");
   destination.searchParams.set("utm_content", link);
 
   if (emailKey) {

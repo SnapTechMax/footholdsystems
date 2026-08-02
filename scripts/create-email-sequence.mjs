@@ -40,13 +40,6 @@ const FROM =
   process.env.SEQUENCE_FROM || "Max at Foothold Systems <max@footholdsystems.com>";
 const REPLY_TO = process.env.SEQUENCE_REPLY_TO || "max@footholdsystems.com";
 
-if (!process.env.RESEND_API_KEY && !DRY) {
-  console.error(
-    "RESEND_API_KEY is not set. Re-run with the key, or pass --dry-run."
-  );
-  process.exit(1);
-}
-
 const resend = new Resend(process.env.RESEND_API_KEY ?? "re_dry_run");
 
 /** Surface Resend's structured errors rather than failing silently. */
@@ -56,6 +49,13 @@ function unwrap(label, { data, error }) {
 }
 
 async function main() {
+  // Checked here rather than at module scope. At module scope it fired on
+  // import, so switch-sequence.mjs exited before it could report anything of
+  // its own, which made this file impossible to reuse.
+  if (!process.env.RESEND_API_KEY && !DRY) {
+    throw new Error("RESEND_API_KEY is not set. Re-run with the key, or pass --dry-run.");
+  }
+
   console.log(
     `\n${SEQUENCE.length} emails, from ${FROM}, reply-to ${REPLY_TO}` +
       (DRY ? "  [dry run]" : "") +
@@ -200,9 +200,21 @@ async function main() {
   console.log(
     "\nIt is DISABLED. Open Resend → Automations, read it through, then press Start.\n"
   );
+  return created.id;
 }
 
-main().catch((error) => {
-  console.error(`\nFailed: ${error.message}\n`);
-  process.exit(1);
-});
+// Exported so switch-sequence.mjs can build the replacement without a second
+// copy of this logic drifting away from it.
+export { main as createSequence, TRIGGER_EVENT };
+
+// Only self-run when invoked directly, so importing this does not create 22
+// templates as a side effect.
+const invokedDirectly =
+  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+
+if (invokedDirectly) {
+  main().catch((error) => {
+    console.error(`\nFailed: ${error.message}\n`);
+    process.exit(1);
+  });
+}

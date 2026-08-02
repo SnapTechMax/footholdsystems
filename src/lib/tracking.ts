@@ -60,11 +60,25 @@ export function cleanRecipient(value: string | null | undefined): string | null 
   return trimmed;
 }
 
-/** Is this a real sequence email key? */
+/**
+ * Resolve whatever a link carried back to a sequence step key.
+ *
+ * Links do not carry the bare key. The sequence tags everything with its
+ * campaign name — `nurture-07-quoting` — while `SEQUENCE_STEPS` is keyed on
+ * `quoting`, so a straight set lookup matches nothing and every click and
+ * booking is discarded as junk. Nothing errors when that happens; the redirect
+ * still redirects and the dashboard just reads zero forever, which is the worst
+ * shape a bug like this can take.
+ *
+ * Both forms are accepted and normalised to the step key, so the UTM naming can
+ * change again without breaking the join.
+ */
 export function knownKey(value: string | null | undefined): string | null {
   if (!value) return null;
   const trimmed = value.trim();
-  return KNOWN_KEYS.has(trimmed) ? trimmed : null;
+  if (KNOWN_KEYS.has(trimmed)) return trimmed;
+  const stripped = trimmed.replace(/^(?:foothold-)?nurture-\d+-/, "");
+  return KNOWN_KEYS.has(stripped) ? stripped : null;
 }
 
 export async function initTrackingSchema(): Promise<void> {
