@@ -215,10 +215,26 @@ within hours instead of the next morning, and a concluded test is replaced the
 same afternoon rather than a day later. On this site's traffic that is the whole
 benefit — tests still take as long as the arithmetic demands.
 
-Requires a Vercel plan that permits sub-daily crons. **Hobby only runs cron once
-a day**, and will ignore the `0 */3 * * *` schedule; on Hobby the engine keeps
-working, just at its old daily cadence. Check Vercel → Project → Cron Jobs after
-deploying to confirm the schedule took.
+**Vercel's Hobby plan allows one cron run per day, and does not degrade
+quietly.** A sub-daily schedule in `vercel.json` fails the whole deployment:
+
+```
+Hobby accounts are limited to daily cron jobs. This cron expression
+(0 */3 * * *) would run more than once per day.
+```
+
+So `vercel.json` keeps a daily run and the 3-hourly cadence comes from
+`.github/workflows/cro-tick.yml`, which calls the same endpoint with the same
+authorisation, for free. The two coexist: whichever fires first does the work,
+and the interval check stops the other repeating it.
+
+**That workflow needs `CRON_SECRET` as a GitHub Actions secret** — repo Settings
+→ Secrets and variables → Actions — set to the same value as `CRON_SECRET` in
+Vercel. Until it is set every run exits with a notice rather than failing, so an
+unset secret looks like a run that did nothing.
+
+Moving to a Vercel plan that permits sub-daily crons makes the workflow
+redundant: put `0 */3 * * *` back in `vercel.json` and delete it.
 
 Trigger a run by hand:
 
