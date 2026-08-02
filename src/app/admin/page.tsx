@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminNav } from "@/components/AdminNav";
+import { SubscriberChart } from "@/components/SubscriberChart";
 import { getFunnelCounts, getHealth } from "@/lib/overview";
 import { getCampaignStats } from "@/lib/campaign";
+import { getSubscriberSeries } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -42,9 +44,10 @@ function Stage({
 }
 
 export default async function AdminOverview() {
-  const [funnel, campaign] = await Promise.all([
+  const [funnel, campaign, subscribers] = await Promise.all([
     getFunnelCounts(),
     getCampaignStats(),
+    getSubscriberSeries(),
   ]);
   const health = getHealth();
   const missing = health.filter((h) => !h.ok);
@@ -100,6 +103,10 @@ export default async function AdminOverview() {
           sequence, which is the arrangement working rather than a leak.
         </p>
       )}
+
+      {/* Growth over time */}
+      <h2 className={`${mono} mt-8 mb-3 text-[#f6be00]`}>Growth</h2>
+      <SubscriberChart series={subscribers} />
 
       {/* Where to go next */}
       <h2 className={`${mono} mt-8 mb-3 text-[#f6be00]`}>Detail</h2>

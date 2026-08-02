@@ -47,8 +47,27 @@ export function tagged(url, campaign, content = "cta") {
   return target.toString();
 }
 
-function booking(campaign) {
-  return tagged(BOOKING_URL, campaign, "cta-button");
+export const BOOKING_TRACKER = "https://www.footholdsystems.com/api/go/book";
+
+/**
+ * The booking button, pointed at our own redirect rather than at Calendly.
+ *
+ * That hop is what makes per-email attribution possible: the click is logged
+ * server-side before the visitor is handed on, and the redirect re-applies the
+ * UTM parameters so Calendly still echoes the email's key back through the
+ * webhook when a call is actually booked. Clicks and bookings then join on that
+ * key, which is how "which email did this call come from" gets an answer.
+ *
+ * Built by hand rather than with URL, on purpose. `new URL().toString()`
+ * percent-encodes the braces in the merge tag, and Resend only substitutes a
+ * tag it can still recognise — encoded, `{{{EMAIL}}}` would be delivered
+ * literally to every recipient. The redirect discards any value still carrying
+ * braces, so if this tag is ever wrong the attribution degrades to anonymous
+ * counts instead of inventing a contact.
+ */
+function booking(campaign, content = "cta-button") {
+  const params = new URLSearchParams({ e: campaign, c: content });
+  return `${BOOKING_TRACKER}?${params}&r={{{EMAIL}}}`;
 }
 
 /**
@@ -64,6 +83,12 @@ function tagLinks(html, campaign) {
   let index = 0;
   return html.replace(/href="(https?:\/\/[^"]+)"/g, (_match, url) => {
     index += 1;
+    // A booking link written inline in body copy goes through the tracker too,
+    // otherwise it would be the one Calendly link in the sequence that produces
+    // no click record and no attribution.
+    if (url.includes("calendly.com")) {
+      return `href="${booking(campaign, `body-link-${index}`)}"`;
+    }
     return `href="${tagged(url, campaign, `body-link-${index}`)}"`;
   });
 }

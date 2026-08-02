@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { Resend } from "resend";
+import { knownKey, recordBooking } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,17 @@ interface CalendlyPayload {
     email?: string;
     name?: string;
     scheduled_event?: { start_time?: string; name?: string };
+    /**
+     * The UTM parameters the booking page was opened with, echoed back by
+     * Calendly. This is the only thing tying a call to the email that caused
+     * it: /api/go/book sets utm_campaign to the sequence email's key, and it
+     * survives the round trip through Calendly to arrive here.
+     */
+    tracking?: {
+      utm_campaign?: string | null;
+      utm_medium?: string | null;
+      utm_content?: string | null;
+    };
   };
 }
 
@@ -117,6 +129,23 @@ export async function POST(request: NextRequest) {
   if (!email || booked === null) {
     // Acknowledge anything else so Calendly doesn't retry a payload we ignore.
     return NextResponse.json({ ok: true, ignored: eventName || "unknown" });
+  }
+
+  // Recorded before the Resend call and independently of it. Someone can book
+  // without ever having downloaded the guide, in which case the contact update
+  // below fails and the booking is still a booking worth counting.
+  const tracking = body.payload?.tracking;
+  const attributedTo = knownKey(tracking?.utm_campaign);
+  try {
+    await recordBooking({
+      email,
+      emailKey: attributedTo,
+      medium: tracking?.utm_medium ?? null,
+      link: tracking?.utm_content ?? null,
+      status: booked === "yes" ? "booked" : "canceled",
+    });
+  } catch (error) {
+    console.error("Calendly webhook: booking not recorded:", error);
   }
 
   try {

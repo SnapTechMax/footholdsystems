@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/AdminNav";
 import { CAMPAIGN_CONFIGURED, getCampaignStats } from "@/lib/campaign";
+import { getEmailAttribution } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -21,8 +22,20 @@ function Stat({ label, value, note }: { label: string; value: string | number; n
 }
 
 export default async function CampaignDashboard() {
-  const stats = await getCampaignStats();
+  const [stats, attribution] = await Promise.all([
+    getCampaignStats(),
+    getEmailAttribution(),
+  ]);
   const { runs, funnel, consent } = stats;
+
+  const totalClicks = funnel.reduce(
+    (sum, step) => sum + (attribution.get(step.key)?.clicks ?? 0),
+    0
+  );
+  const totalBooked = funnel.reduce(
+    (sum, step) => sum + (attribution.get(step.key)?.booked ?? 0),
+    0
+  );
 
   const optInRate =
     consent.granted + consent.declined > 0
@@ -117,52 +130,94 @@ export default async function CampaignDashboard() {
               <th className="px-4 py-3 font-normal">Day</th>
               <th className="px-4 py-3 font-normal">Subject</th>
               <th className="px-4 py-3 text-right font-normal">Sent</th>
+              <th className="px-4 py-3 text-right font-normal">Clicked</th>
+              <th className="px-4 py-3 text-right font-normal">Booked</th>
               <th className="px-4 py-3 font-normal">Reach</th>
             </tr>
           </thead>
           <tbody>
             {funnel.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-[#8a887f]">
+                <td colSpan={7} className="px-4 py-6 text-center text-[#8a887f]">
                   No runs yet. Numbers appear once someone opts in and the
                   sequence starts.
                 </td>
               </tr>
             )}
-            {funnel.map((step) => (
-              <tr key={step.key} className="border-t border-[#33332f]">
-                <td className="px-4 py-2.5 font-mono text-xs text-[#7a786f]">
-                  {String(step.position).padStart(2, "0")}
-                </td>
-                <td className="px-4 py-2.5 font-mono text-xs text-[#7a786f]">
-                  {step.day}
-                </td>
-                <td className="px-4 py-2.5 text-[#e6e3d9]">{step.subject}</td>
-                <td className="px-4 py-2.5 text-right font-bold text-[#f2efe6]">
-                  {step.sent}
-                </td>
-                <td className="px-4 py-2.5">
-                  <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-sm bg-[#2c2c29]">
-                    <div
-                      className="h-full rounded-sm bg-[#f6be00]"
-                      style={{ width: `${(step.sent / peak) * 100}%` }}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {funnel.map((step) => {
+              const seen = attribution.get(step.key);
+              const clicks = seen?.clicks ?? 0;
+              const booked = seen?.booked ?? 0;
+              // Against sent, not against the list: an email nobody has reached
+              // yet has no denominator and a rate would read as 0% rather than
+              // "not asked yet".
+              const ctr = step.sent > 0 ? (clicks / step.sent) * 100 : null;
+              return (
+                <tr key={step.key} className="border-t border-[#33332f]">
+                  <td className="px-4 py-2.5 font-mono text-xs text-[#7a786f]">
+                    {String(step.position).padStart(2, "0")}
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-[#7a786f]">
+                    {step.day}
+                  </td>
+                  <td className="px-4 py-2.5 text-[#e6e3d9]">{step.subject}</td>
+                  <td className="px-4 py-2.5 text-right font-bold text-[#f2efe6]">
+                    {step.sent}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className={clicks > 0 ? "font-bold text-[#f6be00]" : "text-[#57564f]"}>
+                      {clicks}
+                    </span>
+                    {ctr !== null && clicks > 0 && (
+                      <span className="ml-1.5 font-mono text-[10px] text-[#7a786f]">
+                        {ctr.toFixed(0)}%
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className={booked > 0 ? "font-bold text-[#7fbf9f]" : "text-[#57564f]"}>
+                      {booked}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-sm bg-[#2c2c29]">
+                      <div
+                        className="h-full rounded-sm bg-[#f6be00]"
+                        style={{ width: `${(step.sent / peak) * 100}%` }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <p className="mt-6 text-xs leading-relaxed text-[#7a786f]">
-        Opens and clicks are absent because Resend&apos;s API exposes neither for
-        automations. Every link in every email carries{" "}
-        <code className="text-[#8a887f]">utm_campaign</code> and{" "}
-        <code className="text-[#8a887f]">utm_content</code>, so click-through is
-        in GA4 under Acquisition, broken down by which email and which link.
+        <strong className="text-[#8a887f]">Clicked</strong> is booking-link
+        clicks, counted on our own server by{" "}
+        <code className="text-[#8a887f]">/api/go/book</code> before the visitor
+        reaches Calendly, so ad blockers do not touch it. The percentage is
+        against that email&apos;s sends, not the whole list.{" "}
+        <strong className="text-[#8a887f]">Booked</strong> is calls Calendly
+        confirmed, attributed to the email whose link opened the booking page.
+        {totalClicks > 0 && (
+          <>
+            {" "}
+            {totalClicks} click{totalClicks === 1 ? "" : "s"} and {totalBooked}{" "}
+            booking{totalBooked === 1 ? "" : "s"} attributed so far.
+          </>
+        )}
+        {" "}Opens are still absent — Resend exposes none for automations.
         {!CAMPAIGN_CONFIGURED() &&
           " Sequence numbers stay at zero until RESEND_AUTOMATION_ID is set."}
+      </p>
+      <p className="mt-2 text-xs leading-relaxed text-[#7a786f]">
+        A click with no booking beside it is the drop-off: the email did its job
+        and the booking page did not. Clicks stay at zero for every email until
+        the sequence is rebuilt and switched over, since the automation now
+        running still links straight to Calendly.
       </p>
     </main>
   );
