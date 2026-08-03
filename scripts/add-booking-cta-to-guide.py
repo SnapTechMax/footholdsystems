@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Stamp a "Book a call" button onto the guide PDF and strip the phone number.
+"""Reconcile the exported guide PDF with the website.
 
-The guide is designed and exported elsewhere; this script adds the booking
-call-to-action afterwards so the PDF in public/downloads always carries it. Rerun
-it whenever the guide is re-exported:
+The guide is designed and exported elsewhere. This script applies afterwards
+everything the export cannot know about, so the PDF in public/downloads always
+agrees with the site. Rerun it whenever the guide is re-exported:
 
     python3 scripts/add-booking-cta-to-guide.py <exported.pdf>
 
 It writes public/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf.
+
+Three things happen: a "Book a call" button is stamped on the last page, the
+phone number is replaced with the current one from src/lib/site.ts, and the copy
+edits in COPY_REPLACEMENTS below are applied to the body text.
 
 The button lands in the empty right-hand side of the yellow CTA block on the last
 page, mirroring the dark-on-yellow button the website uses.
@@ -37,6 +41,7 @@ import io
 import logging
 import re
 import sys
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import pdfplumber
@@ -107,6 +112,43 @@ INK = Color(0.0824, 0.0941, 0.102)
 
 # Text runs matching this are deleted from the last page before redrawing.
 PHONE_RE = re.compile(r"\(?\d{3}\)?[\s.–-]*\d{3}[\s.–-]*\d{4}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COPY EDITS
+#
+# Applied to the body text of every page, as (old, new) pairs. Each `old` must
+# appear exactly once across the document, and the pair is re-typeset in the
+# guide's own font — see retypeset_page below.
+#
+# These exist so a copy decision made on the website does not have to wait for
+# the design source to be reopened and re-exported. Keep the list short: it is a
+# reconciliation step, not a place to write the guide. When the design source is
+# next edited, fold these in there and delete them from here.
+#
+# A replacement has to fit the line it lands on. The text is re-typeset, not
+# re-flowed — the lines after it keep their own break points, so a `new` much
+# longer than its `old` will run into the right margin rather than wrap.
+COPY_REPLACEMENTS = [
+    # The site dropped headcount qualifying in favour of describing the state of
+    # the business, because the audience is defined by what it can carry, not by
+    # how many people it employs. Page 8 was the only place the guide disagreed.
+    # Chosen to match the length of the line it replaces, so the two lines below
+    # it are untouched.
+    (
+        "For a business with 5 to 50 people, going from Level 1 to Level 3 usually",
+        "In a business that already works, going from Level 1 to Level 3 usually",
+    ),
+]
+
+# Operators a text object may contain for this script to consider re-typesetting
+# it. Anything else and the object is left alone rather than guessed at.
+GLYPH_TOKEN_RE = re.compile(
+    rb"/(?P<font>F\d+)\s+(?P<size>[\d.]+)\s+Tf"
+    rb"|(?P<tx>-?[\d.]+)\s+(?P<ty>-?[\d.]+)\s+Td"
+    rb"|<(?P<code>[0-9A-Fa-f]+)>\s*Tj"
+    rb"|(?P<tm>(?:[-\d.]+\s+){6}Tm)"
+    rb"|(?P<delim>\bBT\b|\bET\b)"
+)
 
 
 Matrix = tuple[float, float, float, float, float, float]
@@ -235,6 +277,227 @@ def strip_phone(reader: PdfReader, page_index: int, source: Path) -> int:
     return removed
 
 
+def unicode_map(font) -> dict[int, str]:
+    """Glyph code to character, read from a font's /ToUnicode CMap."""
+    cmap = font.get("/ToUnicode")
+    if not cmap:
+        return {}
+    text = cmap.get_object().get_data().decode("latin-1")
+    mapping: dict[int, str] = {}
+
+    for block in re.findall(r"beginbfchar(.*?)endbfchar", text, re.S):
+        for src, dst in re.findall(r"<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>", block):
+            # Destinations are UTF-16BE and may be multi-character (ligatures).
+            # Only single characters are usable for matching and re-typesetting.
+            raw = dst if len(dst) % 2 == 0 else "0" + dst
+            char = bytes.fromhex(raw).decode("utf-16-be", "ignore")
+            if len(char) == 1:
+                mapping[int(src, 16)] = char
+
+    for block in re.findall(r"beginbfrange(.*?)endbfrange", text, re.S):
+        for lo, hi, dst in re.findall(
+            r"<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>", block
+        ):
+            lo, hi, dst = int(lo, 16), int(hi, 16), int(dst, 16)
+            for code in range(lo, hi + 1):
+                mapping[code] = chr(dst + code - lo)
+
+    return mapping
+
+
+def observed_advances(data: bytes) -> dict[tuple[str, float, int], float]:
+    """Harvest the advance the export itself used for each glyph on a page.
+
+    The export writes every glyph with an explicit `Td`, and those advances are
+    whole numbers that do not follow from the /Widths array by any rounding rule
+    — the design tool used its own metrics, and /Widths is a rounded record of
+    them. Deriving advances instead of reusing them produces a line that is
+    visibly tighter than the text around it.
+
+    So rather than guess the rule, this reads the answer off the page: for each
+    (font, size, glyph) it records what the export actually advanced by. Keyed by
+    size because the same glyph is set at several sizes in the guide.
+
+    Where the same glyph shows more than one advance — a kerned pair, say — the
+    most common one wins.
+    """
+    counts: dict[tuple[str, float, int], Counter] = defaultdict(Counter)
+    for start, end, _px, _py in text_objects(data):
+        parsed = parse_glyph_run(data[start:end])
+        if parsed is None:
+            continue
+        _prologue, glyphs = parsed
+        advances = [
+            float(m.group(1))
+            for m in re.finditer(rb"(-?[\d.]+)\s+0\s+Td", data[start:end])
+        ]
+        # The advance printed before glyph i+1 is glyph i's, so the last glyph on
+        # a line contributes nothing.
+        for i, advance in enumerate(advances):
+            if i >= len(glyphs):
+                break
+            font_key, size, code = glyphs[i]
+            counts[(font_key, round(size, 2), code)][advance] += 1
+
+    return {key: c.most_common(1)[0][0] for key, c in counts.items()}
+
+
+def glyph_width(font, code: int, size: float) -> float | None:
+    """Advance width of one glyph, in text space at the given font size."""
+    widths = font.get("/Widths")
+    if widths is None:
+        return None
+    index = code - int(font.get("/FirstChar", 0))
+    if not 0 <= index < len(widths):
+        return None
+    matrix = font.get("/FontMatrix") or [0.001, 0, 0, 0.001, 0, 0]
+    return float(widths[index]) * float(matrix[0]) * size
+
+
+def parse_glyph_run(block: bytes):
+    """Split a text object into its glyph operations.
+
+    Returns (prologue, glyphs) where prologue is everything up to and including
+    the text matrix, and glyphs is a list of (font_key, size, code). Returns None
+    if the object uses any operator this script does not model — better to leave
+    a text object alone than to rewrite one that was doing something else.
+    """
+    consumed = 0
+    prologue_end = None
+    glyphs: list[tuple[str, float, int]] = []
+    font: str | None = None
+    size: float | None = None
+
+    for token in GLYPH_TOKEN_RE.finditer(block):
+        # Every byte between tokens must be whitespace, or there is an operator
+        # here that this parser cannot see.
+        if block[consumed : token.start()].strip():
+            return None
+        consumed = token.end()
+
+        if token.group("font"):
+            font = token.group("font").decode()
+            size = float(token.group("size"))
+        elif token.group("tm"):
+            prologue_end = token.end()
+        elif token.group("code"):
+            if font is None or size is None:
+                return None
+            glyphs.append((font, size, int(token.group("code"), 16)))
+
+    if block[consumed:].strip() or prologue_end is None or not glyphs:
+        return None
+    return block[:prologue_end], glyphs
+
+
+def retypeset_page(reader: PdfReader, page_index: int, replacements) -> list[str]:
+    """Apply copy replacements to one page's content stream.
+
+    The export positions every glyph individually, so a line can be rebuilt by
+    emitting new glyph codes with advances derived from the font's own /Widths.
+    That keeps the guide's real typeface — the fonts are Type3 subsets, which
+    cannot be handed to a drawing library, so redrawing in a substitute face was
+    never an option.
+
+    Only the matched line is rebuilt. The lines after it keep their own break
+    points, which is why the replacements are chosen to be about as long as what
+    they replace.
+    """
+    page = reader.pages[page_index]
+    fonts = page["/Resources"]["/Font"]
+
+    decode: dict[str, dict[int, str]] = {
+        key.lstrip("/"): unicode_map(fonts[key].get_object()) for key in fonts
+    }
+
+    data = page.get_contents().get_data()
+    advances = observed_advances(data)
+
+    def encoder(preferred: list[str], size: float) -> dict[str, tuple[str, int]]:
+        """Character to (font key, glyph code) for writing a replacement.
+
+        Fonts already used on the line being rebuilt come first, so the new text
+        is set in the same face as the text around it rather than in whichever
+        font happens to be listed first in the page resources.
+
+        A character only qualifies if the export has already set it in that font
+        at that size, because that observation is also where its advance comes
+        from. In practice this is not much of a restriction: a replacement is a
+        sentence of English in the guide's own body face, and the guide is nine
+        pages of the same.
+        """
+        table: dict[str, tuple[str, int]] = {}
+        ordered = preferred + [k for k in decode if k not in preferred]
+        for key in ordered:
+            for code, char in decode[key].items():
+                if char in table:
+                    continue
+                if (key, round(size, 2), code) not in advances:
+                    continue
+                table[char] = (key, code)
+        return table
+    applied: list[str] = []
+    out = bytearray()
+    cursor = 0
+
+    for start, end, _px, _py in text_objects(data):
+        if start < cursor:
+            continue
+        parsed = parse_glyph_run(data[start:end])
+        if parsed is None:
+            continue
+        prologue, glyphs = parsed
+
+        line = "".join(decode[f].get(c, "�") for f, _s, c in glyphs)
+        match = next((r for r in replacements if r[0] in line), None)
+        if match is None:
+            continue
+        old, new = match
+
+        size = glyphs[0][1]
+        replacement = line.replace(old, new)
+
+        seen: list[str] = []
+        for font_key, _s, _c in glyphs:
+            if font_key not in seen:
+                seen.append(font_key)
+        encode = encoder(seen, size)
+
+        missing = sorted({c for c in replacement if c not in encode})
+        if missing:
+            raise RuntimeError(
+                f"page {page_index + 1}: {missing} is not set anywhere on this "
+                f"page in a usable font at {size}pt, so it has no glyph and no "
+                f"measured advance. Cannot re-typeset {replacement!r}"
+            )
+
+        body = bytearray()
+        pending: float | None = None
+        current_font: str | None = None
+        for char in replacement:
+            font_key, code = encode[char]
+            if font_key != current_font:
+                body += f"\n/{font_key} {size} Tf".encode()
+                current_font = font_key
+            if pending is not None:
+                body += f"\n{pending:g} 0 Td".encode()
+            body += f"\n<{code:02X}> Tj".encode()
+            pending = advances[(font_key, round(size, 2), code)]
+
+        out += data[cursor:start] + prologue + bytes(body) + b"\nET"
+        cursor = end
+        applied.append(f"{old!r} -> {new!r}")
+        replacements = [r for r in replacements if r is not match]
+
+    if applied:
+        out += data[cursor:]
+        stream = DecodedStreamObject()
+        stream.set_data(bytes(out))
+        page[NameObject("/Contents")] = stream
+
+    return applied
+
+
 def build_overlay(width: float, height: float) -> PdfReader:
     """Draw the button onto a transparent single-page overlay."""
     buf = io.BytesIO()
@@ -318,6 +581,25 @@ def main() -> int:
     # Delete the phone number before the pages are copied into the writer.
     stripped = strip_phone(reader, last_index, source)
 
+    # Apply the copy edits, likewise before the pages are copied.
+    pending = list(COPY_REPLACEMENTS)
+    edits: list[str] = []
+    for index in range(len(reader.pages)):
+        if not pending:
+            break
+        done = retypeset_page(reader, index, pending)
+        edits += [f"page {index + 1}: {d}" for d in done]
+        pending = [r for r in pending if not any(repr(r[0]) in d for d in done)]
+
+    if pending:
+        print(
+            "error: copy replacement text not found in the PDF:\n"
+            + "\n".join(f"  {old!r}" for old, _ in pending)
+            + "\n       The export's wording has changed. Update COPY_REPLACEMENTS.",
+            file=sys.stderr,
+        )
+        return 1
+
     writer = PdfWriter()
     for page in reader.pages:
         writer.add_page(page)
@@ -333,6 +615,12 @@ def main() -> int:
             Link(rect=(BTN_X0, BTN_Y0, BTN_X1, BTN_Y1), url=BOOKING_URL)
         ),
     )
+
+    # Rewriting a content stream stores it decoded, which on the two edited pages
+    # costs more than the edits themselves. This is the file the ads are paying to
+    # deliver, so put the compression back.
+    for page in writer.pages:
+        page.compress_content_streams()
 
     writer.add_metadata(
         {
@@ -352,6 +640,22 @@ def main() -> int:
     # position matching above.
     with pdfplumber.open(str(tmp)) as doc:
         text = "\n".join((pg.extract_text() or "") for pg in doc.pages)
+
+    # Likewise, every replaced phrase must be gone and its replacement readable.
+    # Re-typesetting writes glyph codes directly, so this is what proves the new
+    # line renders as intended rather than as a row of wrong glyphs.
+    for old, new in COPY_REPLACEMENTS:
+        wrong = old in text
+        if wrong or new not in text:
+            tmp.unlink()
+            print(
+                f"error: copy replacement did not take: {old!r} -> {new!r}\n"
+                f"       old text still present: {wrong}\n"
+                f"       new text readable: {new in text}",
+                file=sys.stderr,
+            )
+            return 1
+
     expected = re.sub(r"\D", "", CONTACT_PHONE)
     stale = [
         found.group(0)
@@ -371,7 +675,9 @@ def main() -> int:
 
     print(f"wrote {OUTPUT.relative_to(REPO)} ({OUTPUT.stat().st_size:,} bytes)")
     print(f"  booking CTA stamped on page {last_index + 1} of {len(reader.pages)}")
-    print(f"  phone number text runs removed: {stripped}")
+    print(f"  phone number text runs removed: {stripped}, redrawn as {CONTACT_PHONE}")
+    for edit in edits:
+        print(f"  {edit}")
     return 0
 
 

@@ -90,6 +90,9 @@ Renaming the Calendly link to something Foothold-branded is done in Calendly und
 
 1. Update `CALENDLY_URL` in [`src/lib/site.ts`](src/lib/site.ts)
 2. Rerun `python3 scripts/add-booking-cta-to-guide.py <clean-export.pdf>` to restamp
-   the PDF button with the new URL
+   the PDF button with the new URL. That script is the one place the exported PDF
+   is reconciled with the site — it also replaces the phone number with
+   `CONTACT_PHONE` and applies the copy edits in its `COPY_REPLACEMENTS` list, so
+   always run it against a fresh export rather than editing the published file
 3. Consider printing the URL under the PDF button at that point — worth doing once
    it is brand-safe, since a printed page has no clickable button
