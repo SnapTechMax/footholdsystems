@@ -118,6 +118,60 @@ ${p("Max")}
 </div>`;
 }
 
+/**
+ * The same email as plain text, for the `text/plain` part.
+ *
+ * Not optional. An HTML-only message is one of the oldest spam heuristics there
+ * is, and this domain publishes DMARC p=reject, so there is no margin for
+ * anything that costs reputation. It also covers the readers who never see the
+ * HTML at all: text-only clients, screen readers, and the preview pane of a
+ * client that has images and styling switched off.
+ *
+ * Derived from the already-tagged HTML rather than written twice, so the two
+ * parts cannot drift and the tracked booking link is identical in both. Only the
+ * tags this file's own `p()` and `shell()` produce are handled — `<p>`, `<em>`
+ * and `<a>`, plus the two entities used — because that is the whole vocabulary.
+ *
+ * Merge tags pass through untouched: `{{{FIRST_NAME}}}` and
+ * `{{{RESEND_UNSUBSCRIBE_URL}}}` are substituted by Resend in the text part
+ * exactly as they are in the HTML one.
+ */
+function textify(html) {
+  return html
+    // Links become "label: url", so the destination is readable rather than lost.
+    .replace(/<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, "$2: $1")
+    .replace(/<\/p>/g, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&rarr;/g, "")
+    .replace(/&middot;/g, "·")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    // Collapse the indentation the HTML template carries, then trim each line.
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n")
+    // No more than one blank line anywhere.
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Plain-text counterpart to `shell()`, built from the same pieces. */
+function plainShell({ body, ask, cta, campaign }) {
+  return [
+    textify(body),
+    "",
+    textify(ask),
+    "",
+    "Max",
+    "",
+    `${cta}: ${booking(campaign)}`,
+    "",
+    "--",
+    `Foothold Systems · ${BRAND_ADDRESS}`,
+    "Unsubscribe (one click, no hard feelings): {{{RESEND_UNSUBSCRIBE_URL}}}",
+  ].join("\n");
+}
+
 const emails = [
   /* ── Days 1-14: daily. Almost all value, the ask barely present. ────────── */
   {
@@ -444,5 +498,6 @@ export const SEQUENCE = emails.map((email, index) => {
     name: `foothold-nurture-${String(index + 1).padStart(2, "0")}-${email.key}`,
     body,
     html: shell({ body, ask: email.ask, cta: email.cta, campaign }),
+    text: plainShell({ body, ask: email.ask, cta: email.cta, campaign }),
   };
 });

@@ -120,6 +120,12 @@ export function getHealth(): HealthItem[] {
       detail: "Without the automation id, campaign figures stay at zero.",
     },
     {
+      label: "Mailing list",
+      ok: Boolean(process.env.RESEND_AUDIENCE_ID),
+      detail:
+        "The audience subscribers are added to. Unset, the sequence still runs but there is no list to send a broadcast to.",
+    },
+    {
       label: "Calendly webhook",
       ok: Boolean(process.env.CALENDLY_WEBHOOK_SECRET),
       detail:

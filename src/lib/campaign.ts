@@ -101,9 +101,18 @@ async function consentAndDownloads(): Promise<{
 
   let downloads = 0;
   try {
+    // Both tables, because a download lands in whichever one was active at the
+    // time: `cro_baseline_events` between experiments, `cro_events` during one.
+    // Counting only the baseline table meant every conversion recorded while a
+    // test was running went missing here, so this figure drifted below the same
+    // count on the overview page for as long as any experiment lasted, and never
+    // caught back up.
     const rows = (await sql`
-      SELECT COUNT(*)::int AS n FROM cro_baseline_events
-      WHERE kind = 'conversion'`) as { n: number }[];
+      SELECT
+        (SELECT COUNT(*)::int FROM cro_baseline_events WHERE kind = 'conversion')
+        + (SELECT COUNT(*)::int FROM cro_events WHERE kind = 'conversion') AS n`) as {
+      n: number;
+    }[];
     downloads = rows[0]?.n ?? 0;
   } catch (error) {
     console.error("Campaign: download count failed:", error);

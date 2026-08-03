@@ -66,12 +66,6 @@ export function LeadMagnetForm({
 
       if (!response.ok) throw new Error("Submission failed");
 
-      // Microsoft UET conversion event (no-op if UET isn't loaded)
-      window.uetq = window.uetq || [];
-      window.uetq.push("event", "other", {
-        event_category: "lead-magnet",
-        event_label: "5 Levels of AI",
-      });
       // GA4 recommended lead event — powers GA4's built-in lead-gen reports.
       // Fires only on a successful submission (guide actually delivered).
       window.gtag?.("event", "generate_lead", {
@@ -102,11 +96,6 @@ export function LeadMagnetForm({
   // separate from the conversion events that fire once delivery succeeds.
   const trackGuideClick = () => {
     window.gtag?.("event", "send_guide_click", {
-      event_category: "lead-magnet",
-      event_label: "5 Levels of AI",
-    });
-    window.uetq = window.uetq || [];
-    window.uetq.push("event", "send_guide_click", {
       event_category: "lead-magnet",
       event_label: "5 Levels of AI",
     });

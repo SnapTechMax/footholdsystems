@@ -23,11 +23,6 @@ export function BookCallButton({
       event_category: "booking",
       event_label: entryPoint,
     });
-    window.uetq = window.uetq || [];
-    window.uetq.push("event", "book_call_click", {
-      event_category: "booking",
-      event_label: entryPoint,
-    });
     window.fbq?.("trackCustom", "BookCallClick", { content_name: entryPoint });
   };
 

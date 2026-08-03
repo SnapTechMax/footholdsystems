@@ -90,7 +90,8 @@ async function main() {
       console.log(`  would create  ${email.name}`);
       console.log(`      after     ${email.delay}`);
       console.log(`      subject   ${email.subject}`);
-      console.log(`      html      ${email.html.length} chars\n`);
+      console.log(`      html      ${email.html.length} chars`);
+      console.log(`      text      ${email.text.length} chars\n`);
       templateIds.push(`dry-${email.key}`);
       continue;
     }
@@ -105,6 +106,11 @@ async function main() {
           from: FROM,
           replyTo: REPLY_TO,
           html: email.html,
+          // The text/plain part, generated from the same source as the HTML.
+          // Sending HTML alone is a long-standing spam signal, and this domain
+          // publishes DMARC p=reject, so there is no room to spend on
+          // reputation. Both parts carry the same tracked booking link.
+          text: email.text,
           // No `variables` array. FIRST_NAME is reserved in Resend and comes
           // from the contact automatically, so declaring it is rejected with a
           // 422. That also means there is nowhere to set a fallback on it, so

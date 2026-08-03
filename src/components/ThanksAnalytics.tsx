@@ -24,11 +24,6 @@ export function ThanksAnalytics() {
       event_category: "lead-magnet",
       event_label: "5 Levels of AI",
     });
-    window.uetq = window.uetq || [];
-    window.uetq.push("event", "guide_thanks_view", {
-      event_category: "lead-magnet",
-      event_label: "5 Levels of AI",
-    });
   }, []);
 
   return null;

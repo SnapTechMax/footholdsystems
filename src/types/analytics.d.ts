@@ -1,9 +1,12 @@
 // Analytics globals injected by the tag snippets in app/layout.tsx.
-// All three are optional — they are no-ops when a tag is blocked or not yet loaded.
+// All are optional — they are no-ops when a tag is blocked or not yet loaded.
+//
+// Microsoft UET (Bing Ads) used to be declared here, and four components pushed
+// conversions onto `window.uetq`. No UET tag was ever added to layout.tsx, so
+// every one of those events went into an array nothing read. The pushes are
+// gone; adding UET means adding the tag first, then the events.
 declare global {
   interface Window {
-    /** Microsoft UET (Bing Ads) event queue. */
-    uetq?: unknown[];
     /** Meta (Facebook) Pixel. */
     fbq?: (...args: unknown[]) => void;
     /** Google Analytics 4. */
