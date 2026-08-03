@@ -88,6 +88,28 @@ export interface ClaritySignals {
   excessiveScroll: number;
 }
 
+/**
+ * What a reset removed, so the dashboard can report it rather than just claim it.
+ */
+export interface ResetCounts {
+  experiments: number;
+  events: number;
+  baselineEvents: number;
+  claritySnapshots: number;
+  runs: number;
+  settingsCleared: boolean;
+}
+
+/**
+ * Typed into the dashboard to confirm a reset.
+ *
+ * Lives here because both sides need it: the browser to arm the button, and the
+ * Server Action to decide whether to act. A `"use server"` module may only
+ * export async functions, so it cannot be the home for a shared constant, and
+ * duplicating it would let the two checks drift apart.
+ */
+export const RESET_CONFIRMATION = "RESET";
+
 export interface RunLog {
   id: number;
   startedAt: string;

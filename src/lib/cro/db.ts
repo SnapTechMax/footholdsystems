@@ -5,6 +5,7 @@ import type {
   ConversionSource,
   Experiment,
   ExperimentTotals,
+  ResetCounts,
   RunLog,
   Settings,
   VariantContent,
@@ -422,6 +423,91 @@ export async function claimClarityCall(dailyLimit: number): Promise<boolean> {
       WHERE cro_clarity_budget.calls < ${dailyLimit}
     RETURNING calls`) as { calls: number }[];
   return rows.length > 0;
+}
+
+/* ── reset ────────────────────────────────────────────────────────────────── */
+
+/**
+ * Wipe the engine's accumulated state and return it to a clean slate.
+ *
+ * The case for this is not tidiness. Every number the engine holds is a
+ * measurement *of a particular page*, and when the page changes materially the
+ * measurements do not carry over:
+ *
+ * - `cro_baseline_events` is the conversion rate a new experiment gets judged
+ *   against. Collected when the capture form sat 4,298px down the page, it is a
+ *   rate nobody could realistically have converted at, and leaving it in place
+ *   would flatter any later change.
+ * - `cro_clarity_snapshots` is what picks the next hypothesis. Scroll depth and
+ *   rage clicks recorded against the old layout would generate hypotheses about
+ *   a page that no longer exists.
+ *
+ * So this is the honest thing to do after a rebuild, not a convenience.
+ *
+ * Two things are deliberately left alone:
+ *
+ * - `cro_clarity_budget`, the record of how many Clarity API calls today has
+ *   already spent. Clearing it would let the engine spend the 10-a-day quota
+ *   twice over and start getting errors back instead of data. It is a quota
+ *   ledger, not a measurement.
+ * - The schema itself. Tables are emptied, never dropped.
+ *
+ * Clearing `cro_experiments` also resets the copy the site serves: with no
+ * concluded experiment to read a winner from, `getBaselineContent` returns {} and
+ * `/guide` falls back to BASE_CONTENT in variants.ts.
+ *
+ * The id sequences are **not** reset, and must not be. Each experiment's arm is
+ * remembered in a cookie named `fh_exp_<id>` that lives for 90 days. Restarting
+ * ids at 1 would hand the next experiment a name that visitors are still
+ * carrying an old value for, and they would be silently bucketed by an
+ * assignment made for a deleted test. Letting ids run on is what guarantees a
+ * new experiment gets a cookie nobody already has.
+ *
+ * Irreversible. There is no undo and nothing is archived first.
+ */
+export async function resetEngine(
+  options: { clearSettings: boolean } = { clearSettings: false }
+): Promise<ResetCounts> {
+  const db = sql();
+
+  // Counted before deleting: afterwards there is nothing left to count, and a
+  // reset that cannot say what it removed is indistinguishable from one that
+  // silently did nothing.
+  const counts = (await db`
+    SELECT
+      (SELECT COUNT(*) FROM cro_experiments)::int       AS experiments,
+      (SELECT COUNT(*) FROM cro_events)::int            AS events,
+      (SELECT COUNT(*) FROM cro_baseline_events)::int   AS baseline_events,
+      (SELECT COUNT(*) FROM cro_clarity_snapshots)::int AS clarity_snapshots,
+      (SELECT COUNT(*) FROM cro_runs)::int              AS runs`) as {
+    experiments: number;
+    events: number;
+    baseline_events: number;
+    clarity_snapshots: number;
+    runs: number;
+  }[];
+
+  // cro_events has ON DELETE CASCADE against cro_experiments, so it would go
+  // anyway; deleted explicitly so the intent does not rest on a foreign key.
+  await db`DELETE FROM cro_events`;
+  await db`DELETE FROM cro_experiments`;
+  await db`DELETE FROM cro_baseline_events`;
+  await db`DELETE FROM cro_clarity_snapshots`;
+  await db`DELETE FROM cro_runs`;
+
+  if (options.clearSettings) {
+    await db`DELETE FROM cro_settings WHERE key = 'settings'`;
+  }
+
+  const row = counts[0];
+  return {
+    experiments: row?.experiments ?? 0,
+    events: row?.events ?? 0,
+    baselineEvents: row?.baseline_events ?? 0,
+    claritySnapshots: row?.clarity_snapshots ?? 0,
+    runs: row?.runs ?? 0,
+    settingsCleared: options.clearSettings,
+  };
 }
 
 /* ── runs ─────────────────────────────────────────────────────────────────── */

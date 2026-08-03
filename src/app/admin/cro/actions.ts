@@ -1,8 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DATABASE_CONFIGURED, initSchema, saveSettings } from "@/lib/cro/db";
-import type { Settings } from "@/lib/cro/types";
+import {
+  DATABASE_CONFIGURED,
+  initSchema,
+  resetEngine,
+  saveSettings,
+} from "@/lib/cro/db";
+import { RESET_CONFIRMATION } from "@/lib/cro/types";
+import type { ResetCounts, Settings } from "@/lib/cro/types";
 
 /**
  * Saves engine settings.
@@ -49,6 +55,42 @@ function sanitise(input: Partial<Settings>): Partial<Settings> {
   }
 
   return out;
+}
+
+/**
+ * Wipe the engine's accumulated state.
+ *
+ * Behind the same gate as the settings form — it posts back to /admin/cro, which
+ * the proxy guards — because this destroys production data with no undo.
+ *
+ * The typed confirmation is checked here rather than only in the browser. The
+ * client check is a speed bump for the operator; this one is the actual
+ * condition, since a Server Action is callable without going through the UI.
+ */
+export async function resetCroEngine(
+  confirmation: string,
+  options: { clearSettings: boolean }
+): Promise<{ ok: true; counts: ResetCounts } | { ok: false; error: string }> {
+  if (!DATABASE_CONFIGURED) {
+    return { ok: false, error: "No database configured." };
+  }
+  if (confirmation !== RESET_CONFIRMATION) {
+    return {
+      ok: false,
+      error: `Type ${RESET_CONFIRMATION} to confirm. Nothing was deleted.`,
+    };
+  }
+  try {
+    await initSchema();
+    const counts = await resetEngine(options);
+    revalidatePath("/admin/cro");
+    return { ok: true, counts };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 export async function updateSettings(

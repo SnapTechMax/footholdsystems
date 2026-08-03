@@ -18,6 +18,7 @@ import { compare, requiredSamplePerArm, verdict } from "@/lib/cro/stats";
 import type { Experiment, ExperimentTotals } from "@/lib/cro/types";
 import { AdminNav } from "@/components/AdminNav";
 import { SettingsPanel } from "./SettingsPanel";
+import { ResetPanel } from "./ResetPanel";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -396,6 +397,11 @@ export default async function CroDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Last on the page on purpose: it destroys production data, so it
+            should be somewhere you arrive at deliberately rather than land on
+            while reaching for the settings form. */}
+        <ResetPanel />
       </div>
     </main>
   );
