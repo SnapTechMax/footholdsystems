@@ -16,7 +16,6 @@ export const BASE_CONTENT: Required<VariantContent> = {
     "Drop your email and we'll send the guide straight over. Find the level your business is really on, and what the next one up is worth to an owner like you.",
   submitLabel: "Send me the guide →",
   heroCtaLabel: "Get the free guide →",
-  formAboveFold: false,
 };
 
 /**

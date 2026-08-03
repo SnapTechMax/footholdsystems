@@ -196,9 +196,22 @@ Cron hits `/api/cro/tick` **every 3 hours** (`vercel.json`). Each run:
    - **otherwise** → left running.
 4. If nothing is running, picks the next hypothesis and starts a test.
 
-Rules fire in priority order — scroll depth, rage clicks, dead clicks,
-quickbacks, engagement time, then incremental copy. One test at a time, because
-splitting traffic further means nothing ever concludes.
+Rules fire in priority order — rage clicks, dead clicks, quickbacks, engagement
+time, then incremental copy. One test at a time, because splitting traffic
+further means nothing ever concludes.
+
+The engine only ever changes copy. It used to have one structural rule ahead of
+the others: when Clarity reported that average scroll depth was under 55%, it
+moved a second capture form up the page. That rule is gone, because the fix it
+reached for is now permanent — the form sits in the `/guide` hero at every width,
+so nobody has to scroll to reach one and low scroll depth no longer implies the
+form went unseen.
+
+Worth knowing why it was removed rather than left to fire once: reaching a
+verdict on this site's traffic takes roughly 1,774 impressions per arm, which at
+$50/day of ads is months. A layout problem measurable with a ruler should not
+wait on an experiment. Scroll depth is still collected and still shown on the
+dashboard — it is a diagnostic to read, not a trigger.
 
 ### The interval lives in the database, not in the code
 

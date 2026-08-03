@@ -8,10 +8,8 @@ export interface VariantContent {
   captureSubcopy?: string;
   /** Submit button label. */
   submitLabel?: string;
-  /** Hero button label. */
+  /** Label on the hero-adjacent calls to action — sticky bar, header link. */
   heroCtaLabel?: string;
-  /** Put a second capture form high on the page, above the ladder. */
-  formAboveFold?: boolean;
 }
 
 export type ExperimentStatus =

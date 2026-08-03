@@ -24,8 +24,6 @@ export interface Hypothesis {
 
 /** Thresholds at which a signal is considered a problem worth acting on. */
 export const THRESHOLDS = {
-  /** Average scroll depth below this suggests the form is never seen. */
-  scrollDepthPct: 55,
   /** Rage clicks per 100 sessions. */
   rageClicksPer100: 2,
   /** Dead clicks per 100 sessions. */
@@ -78,22 +76,16 @@ export function nextHypothesis(
     return { trigger, hypothesis, changes: { [field]: candidate } };
   };
 
-  // 1. They never reach the form. Strongest signal available, and the fix is
-  //    structural rather than cosmetic, so it takes priority.
-  if (
-    signals.scrollDepth !== null &&
-    signals.scrollDepth < THRESHOLDS.scrollDepthPct &&
-    !live.formAboveFold
-  ) {
-    return {
-      trigger: `Average scroll depth ${signals.scrollDepth.toFixed(0)}% over ${signals.sessions} sessions`,
-      hypothesis:
-        "Most visitors never scroll far enough to see the capture form. Putting a second form high on the page should let them convert without scrolling.",
-      changes: { formAboveFold: true },
-    };
-  }
+  // There used to be a scroll-depth rule here, which moved the capture form up
+  // the page when Clarity reported that most visitors never reached it. The form
+  // now sits in the hero permanently, so the fix it reached for is already in
+  // place and low scroll depth no longer implies the form went unseen. Scroll
+  // depth is still captured and still shown on the dashboard; nothing acts on it
+  // automatically. Deliberately not replaced with a copy test — the remaining
+  // rules already cover every field, and a second rule competing for the same
+  // fields would just make which test runs depend on rule order.
 
-  // 2. Rage clicks: something reads as interactive and isn't behaving.
+  // 1. Rage clicks: something reads as interactive and isn't behaving.
   if (per100(signals.rageClicks) > THRESHOLDS.rageClicksPer100) {
     const result = swap(
       "submitLabel",
@@ -103,7 +95,7 @@ export function nextHypothesis(
     if (result) return result;
   }
 
-  // 3. Dead clicks: people click things that aren't clickable.
+  // 2. Dead clicks: people click things that aren't clickable.
   if (per100(signals.deadClicks) > THRESHOLDS.deadClicksPer100) {
     const result = swap(
       "captureHeading",
@@ -113,7 +105,7 @@ export function nextHypothesis(
     if (result) return result;
   }
 
-  // 4. Quickbacks: the page didn't match what they expected on arrival.
+  // 3. Quickbacks: the page didn't match what they expected on arrival.
   if (per100(signals.quickbacks) > THRESHOLDS.quickbacksPer100) {
     const result = swap(
       "heroCtaLabel",
@@ -123,7 +115,7 @@ export function nextHypothesis(
     if (result) return result;
   }
 
-  // 5. Low engagement: they stay, but the copy isn't landing.
+  // 4. Low engagement: they stay, but the copy isn't landing.
   if (
     signals.engagementTime !== null &&
     signals.engagementTime < THRESHOLDS.engagementSeconds
@@ -136,7 +128,7 @@ export function nextHypothesis(
     if (result) return result;
   }
 
-  // 6. Nothing is obviously broken — keep improving the highest-leverage copy.
+  // 5. Nothing is obviously broken — keep improving the highest-leverage copy.
   for (const field of [
     "submitLabel",
     "captureHeading",
