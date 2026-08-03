@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BookCallButton } from "@/components/BookCallButton";
+import { BUSINESS_ADDRESS } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -22,6 +23,14 @@ export function Footer() {
           <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#7a786f]">
             AI for Business
           </p>
+          {/* Same address the delivery email carries for CAN-SPAM. Published
+              here because a lead-capture page that names no real business is a
+              trust cost with cold traffic, and Meta's ad review notices. */}
+          {BUSINESS_ADDRESS && (
+            <p className="mt-4 max-w-[16rem] font-mono text-[11px] uppercase leading-relaxed tracking-[0.1em] text-[#57564f]">
+              {BUSINESS_ADDRESS}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-6 sm:flex-row sm:gap-16">
@@ -38,6 +47,11 @@ export function Footer() {
               <li>
                 <Link href="/guide" className="transition-colors hover:text-[#f2efe6]">
                   The 5 Levels of AI
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="transition-colors hover:text-[#f2efe6]">
+                  Privacy policy
                 </Link>
               </li>
             </ul>

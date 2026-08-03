@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
 
 export function LeadMagnetForm({
@@ -9,6 +10,7 @@ export function LeadMagnetForm({
   experimentId = null,
   variant = null,
   consentRequired = true,
+  compact = false,
 }: {
   submitLabel?: string;
   /** Set when a CRO experiment is running, so conversions can be attributed. */
@@ -19,6 +21,14 @@ export function LeadMagnetForm({
    * either way; ticking only decides whether they are enrolled.
    */
   consentRequired?: boolean;
+  /**
+   * Drops the optional name field, for the hero copy of this form. Two stacked
+   * inputs on a phone read as twice the work, and above the fold the only job is
+   * to be answerable without thinking. The name is still asked for lower down the
+   * page, where intent is higher — whichever form is used, the field is optional
+   * and the sequence handles an empty name.
+   */
+  compact?: boolean;
 } = {}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -108,15 +118,17 @@ export function LeadMagnetForm({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-        <input
-          type="text"
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="First name (optional)"
-          autoComplete="given-name"
-          className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00] sm:max-w-[38%]"
-        />
+        {!compact && (
+          <input
+            type="text"
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="First name (optional)"
+            autoComplete="given-name"
+            className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00] sm:max-w-[38%]"
+          />
+        )}
         <input
           type="email"
           name="email"
@@ -167,6 +179,19 @@ export function LeadMagnetForm({
           Something went wrong. Please try again, or email max@footholdsystems.com and we&apos;ll send it over.
         </p>
       )}
+
+      {/* Meta requires an accessible privacy policy from advertisers whose
+          landing page collects personal information, so this link has to be
+          reachable from the form itself, not just the footer. */}
+      <p className="mt-3 font-mono text-[11px] leading-relaxed tracking-[0.04em] text-[#8a887f]">
+        No spam, no selling your details, unsubscribe in one click.{" "}
+        <Link
+          href="/privacy"
+          className="underline underline-offset-2 transition-colors hover:text-[#cfccc2]"
+        >
+          Privacy policy
+        </Link>
+      </p>
     </form>
   );
 }

@@ -5,3 +5,11 @@ node_modules/
 next-env.d.ts
 .DS_Store
 .vercel
+
+# Python bytecode from scripts/
+__pycache__/
+
+# Claude Code: machine-local permissions and scratch worktrees. launch.json is
+# shared on purpose — it is how the dev server gets started.
+.claude/settings.local.json
+.claude/worktrees/

@@ -6,6 +6,23 @@ export const CALENDLY_URL =
 // Where the lead-magnet form sends people once the guide is actually delivered.
 export const THANKS_PATH = "/guide/thanks";
 
+// The capture form low on /guide. The header link and the sticky mobile bar both
+// point here, so it lives in one place rather than being retyped at each site.
+export const GUIDE_CAPTURE_ANCHOR = "#get-the-guide";
+
+/**
+ * Postal address, shown on the privacy policy and in the site footer.
+ *
+ * The same address the delivery email prints for CAN-SPAM, kept here so the two
+ * cannot drift — an address that differs between the emails and the site is
+ * worse than one that appears in only one of them. Meta's ad review also treats a
+ * contactable business address on a lead-capture landing page as a trust signal.
+ * If the business moves, this constant and `BRAND_ADDRESS` in
+ * `src/app/api/lead-magnet/route.ts` move together.
+ */
+export const BUSINESS_ADDRESS =
+  "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
+
 /**
  * Wording beside the marketing consent checkbox.
  *
