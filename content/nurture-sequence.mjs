@@ -119,6 +119,45 @@ ${p("Max")}
 }
 
 /**
+ * The same email with every marketing marker stripped out.
+ *
+ * Gmail's tab classifier is not reading your reputation when it files something
+ * under Promotions — that decision is made on mail it has already accepted into
+ * the inbox, on what the message looks like. `shell()` above, restrained as it
+ * is, still carries five things personal email never has: a coloured canvas, a
+ * fixed-width column, an uppercase letterspaced masthead, a horizontal rule, and
+ * an `inline-block` anchor with padding and a border radius. That last one is
+ * the loudest. A button exists in exactly one kind of email.
+ *
+ * This shell has none of them. One font declaration, paragraphs, and the CTA as
+ * an ordinary inline link left in the client's default styling — deliberately
+ * not brand-coloured, because a restyled link is a designed link. What is left
+ * is close to what the text part already says, which is the point.
+ *
+ * Two things stay, because they are not optional: the postal address, which
+ * CAN-SPAM requires, and the unsubscribe link, which Gmail requires of bulk
+ * senders. `List-Unsubscribe` is itself a Promotions signal and there is no
+ * version of this that removes it. That is the ceiling on how far this can go,
+ * and it is worth being honest that the ceiling is real.
+ *
+ * Not wired up by default. `SEQUENCE_STYLE=plain` selects it at push time, so
+ * the two can be compared before either reaches a recipient — and reverted by
+ * dropping the variable rather than by editing anything.
+ */
+function bareShell({ body, ask, cta, campaign }) {
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#1f1f1d;">
+${body}
+${p(ask)}
+${p(`<a href="${booking(campaign)}">${cta}</a>`)}
+${p("Max")}
+      <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#7a786f;">
+        Foothold Systems &middot; ${BRAND_ADDRESS}<br>
+        <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a786f;">Unsubscribe</a>. One click, no hard feelings.
+      </p>
+</div>`;
+}
+
+/**
  * The same email as plain text, for the `text/plain` part.
  *
  * Not optional. An HTML-only message is one of the oldest spam heuristics there
@@ -498,6 +537,11 @@ export const SEQUENCE = emails.map((email, index) => {
     name: `foothold-nurture-${String(index + 1).padStart(2, "0")}-${email.key}`,
     body,
     html: shell({ body, ask: email.ask, cta: email.cta, campaign }),
+    // The stripped-down alternative. Both are built every time so the two can be
+    // rendered side by side; which one is pushed is decided at push time.
+    plainHtml: bareShell({ body, ask: email.ask, cta: email.cta, campaign }),
+    // One text part, shared. It was already free of every marker the bare shell
+    // removes, which is the clearest illustration of what the difference is.
     text: plainShell({ body, ask: email.ask, cta: email.cta, campaign }),
   };
 });

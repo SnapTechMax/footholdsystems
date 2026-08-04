@@ -22,6 +22,17 @@ import { SEQUENCE } from "../content/nurture-sequence.mjs";
 const DRY = process.argv.includes("--dry-run");
 const TRIGGER_EVENT = "guide.downloaded";
 
+// Which HTML shell to push. `plain` selects the stripped-down one in
+// content/nurture-sequence.mjs — no wrapper, no masthead, no rule, and the CTA
+// as an inline link instead of a button — which is the shape that reads as
+// personal mail rather than as a newsletter. Default is the existing design, so
+// this changes nothing until it is asked for.
+//
+// Reverting is dropping the variable. Both shells are built on every run, so
+// neither can rot while the other is in use.
+const PLAIN_STYLE = process.env.SEQUENCE_STYLE === "plain";
+const bodyHtml = (email) => (PLAIN_STYLE ? email.plainHtml : email.html);
+
 // Contact property set by the Calendly webhook in app/api/calendly/webhook.
 // Resend contact properties are string or number only, so this holds "yes"/"no"
 // rather than a boolean.
@@ -58,6 +69,7 @@ async function main() {
 
   console.log(
     `\n${SEQUENCE.length} emails, from ${FROM}, reply-to ${REPLY_TO}` +
+      `\nstyle: ${PLAIN_STYLE ? "plain (no button, no masthead)" : "designed (current)"}` +
       (DRY ? "  [dry run]" : "") +
       "\n"
   );
@@ -90,7 +102,7 @@ async function main() {
       console.log(`  would create  ${email.name}`);
       console.log(`      after     ${email.delay}`);
       console.log(`      subject   ${email.subject}`);
-      console.log(`      html      ${email.html.length} chars`);
+      console.log(`      html      ${bodyHtml(email).length} chars`);
       console.log(`      text      ${email.text.length} chars\n`);
       templateIds.push(`dry-${email.key}`);
       continue;
@@ -105,7 +117,7 @@ async function main() {
           subject: email.subject,
           from: FROM,
           replyTo: REPLY_TO,
-          html: email.html,
+          html: bodyHtml(email),
           // The text/plain part, generated from the same source as the HTML.
           // Sending HTML alone is a long-standing spam signal, and this domain
           // publishes DMARC p=reject, so there is no room to spend on
