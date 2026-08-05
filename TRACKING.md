@@ -285,7 +285,7 @@ It should redirect through to Calendly as normal — the tracking hop is invisib
 **4. Confirm the event landed with the right step**
 
 ```bash
-psql "$DATABASE_URL" -c "SELECT event_type, email_key, recipient, link, occurred_at FROM email_events ORDER BY id DESC LIMIT 5;"
+STORAGE_DATABASE_URL=postgres://... node scripts/check-events.mjs
 ```
 
 Expect a row with `event_type = clicked`, **`email_key = quotes`**, and your
@@ -294,15 +294,24 @@ attributed to a specific one of the 22.
 
 An `opened` row for the same email should appear too, usually first.
 
+> **On the connection string.** There is no `DATABASE_URL` on this project — the
+> Neon integration provides `STORAGE_DATABASE_URL`, and `lib/tracking.ts` checks
+> five names in order to find it. It is marked Sensitive in Vercel, so
+> `vercel env pull` returns it **empty**; copy it from the Neon console.
+>
+> There is also no `psql` on this machine, which is why the check is a Node
+> script using the `@neondatabase/serverless` driver the project already depends
+> on.
+
 **5. Confirm the join**
 
-```bash
-psql "$DATABASE_URL" -f scripts/step-to-booking.sql
-```
+The same script runs the attribution join and prints it. With a click but no
+booking yet, expect `quotes` with `clickers 1` and `booked_last_touch 0`. Book a
+test call at the same address and re-run: it should move to `1`, with
+`median_hours_to_book` filled in.
 
-With a click but no booking yet, expect `quotes` with `clickers 1` and
-`booked_last_touch 0`. Book a test call at the same address and re-run: it
-should move to `1`, with `median_hours_to_book` filled in.
+The standalone SQL is in [`scripts/step-to-booking.sql`](scripts/step-to-booking.sql)
+for running anywhere with a real psql, including the Neon console's editor.
 
 **6. Confirm it fails closed**
 
@@ -319,8 +328,9 @@ and invalidates every other step if it fails.
 ### Cleaning up after testing
 
 The test click is a real row and will sit in the per-email figures. The campaign
-dashboard's reset control clears `email_clicks`; for the new table:
+dashboard's reset control clears `email_clicks`; for the new table, run this in
+the Neon console:
 
-```bash
-psql "$DATABASE_URL" -c "DELETE FROM email_events WHERE recipient = 'max@snaptechrepair.com';"
+```sql
+DELETE FROM email_events WHERE recipient = 'max@snaptechrepair.com';
 ```
