@@ -16,9 +16,19 @@ import { initConsentSchema } from "./consent";
  *  - **Our database** knows who consented and who downloaded, which Resend never
  *    sees, since people who decline are never enrolled.
  *
- * Not available anywhere: opens and clicks. Resend's API exposes neither for
- * automations, which is why every link in every email carries UTM parameters.
- * Click-through lives in GA4.
+ * Not available from Resend: opens and clicks. Its API exposes neither for
+ * automations, which is why the booking links point at /api/go/book instead of
+ * straight at Calendly — that redirect writes the click server-side.
+ *
+ * Clicks therefore live in `email_clicks`, read by lib/tracking.ts, and nowhere
+ * else. Not in GA4, which an earlier version of this comment claimed: the links
+ * in the emails carry no UTM parameters at all, the redirect adds them to the
+ * *Calendly* URL, and /api/go/book is a 302 with no tag on it. GA4 never sees
+ * one of these clicks. Calendly's own UTM report is the only cross-check, and it
+ * counts arrivals at the booking page rather than clicks.
+ *
+ * Which is the better arrangement anyway — a server-side row is not blocked, is
+ * attributable to one email and one recipient, and can be queried here.
  */
 
 const RUN_SAMPLE_LIMIT = 50;
