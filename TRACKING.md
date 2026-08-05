@@ -112,9 +112,30 @@ RESEND_API_KEY=re_xxx node scripts/register-webhook.mjs --apply   # set
 > downstream would flag it. The script refuses to proceed if it finds more than
 > one webhook on the endpoint.
 
-Updating in place keeps the signing secret, so `RESEND_WEBHOOK_SECRET` does not
-change and nothing needs redeploying for it. If the script does create a webhook
-from scratch, it prints the new secret to set in Vercel.
+Updating in place keeps the signing secret, so the subscription change alone
+needs no redeploy.
+
+> **`RESEND_WEBHOOK_SECRET` must exist in Vercel or none of this works.** Without
+> it the endpoint answers **503** and rejects every event — which is what it was
+> doing when this was written, in every environment, meaning the webhook had
+> never recorded anything and `email_deliveries` was empty. A webhook that is
+> correctly configured on Resend's side looks identical from Resend's side
+> whether or not the secret is set here.
+
+```bash
+RESEND_API_KEY=re_xxx node scripts/register-webhook.mjs --show-secret
+vercel env add RESEND_WEBHOOK_SECRET production
+vercel --prod        # env changes do not reach an existing deployment
+```
+
+Check it took, before trusting anything downstream:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  https://www.footholdsystems.com/api/resend/webhook -d '{}'
+```
+
+`401` is correct — signed requests only. `503` means the secret is still missing.
 
 **Deploy before subscribing.** The endpoint answers `email.clicked` with a 200
 either way, so subscribing while the old handler is live means clicks are
@@ -289,7 +310,11 @@ should move to `1`, with `median_hours_to_book` filled in.
 curl -s -o /dev/null -w '%{http_code}\n' -X POST https://www.footholdsystems.com/api/resend/webhook -d '{"type":"email.clicked"}'
 ```
 
-Expect `401`. Anything else means unsigned events are being accepted.
+Expect `401`. `503` means `RESEND_WEBHOOK_SECRET` is unset and nothing is being
+recorded; anything `2xx` means unsigned events are being accepted.
+
+Worth running this *first*, not last — it is the one check that costs nothing
+and invalidates every other step if it fails.
 
 ### Cleaning up after testing
 

@@ -39,6 +39,11 @@ const WANTED = [
 
 const APPLY = process.argv.includes("--apply");
 
+// Behind a flag rather than printed with everything else. The signing secret is
+// a credential, and a script that shows one on an ordinary read-only run is a
+// script that eventually shows one in a screen share.
+const SHOW_SECRET = process.argv.includes("--show-secret");
+
 if (!process.env.RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not set.");
   process.exit(1);
@@ -88,10 +93,31 @@ async function main() {
 
   const current = existing[0];
 
+  // The endpoint answers 503 and rejects every event until RESEND_WEBHOOK_SECRET
+  // is set, and a webhook that is perfectly configured on Resend's side looks
+  // identical from here whether or not it is. So the secret is offered wherever
+  // an existing webhook is found, not only on the create path.
+  if (current && SHOW_SECRET) {
+    console.log(
+      "\n  Signing secret for this webhook. Set it as RESEND_WEBHOOK_SECRET in\n" +
+        "  Vercel (Production), then redeploy — env changes do not reach a\n" +
+        "  deployment that already exists:\n"
+    );
+    console.log(`    ${current.signing_secret}\n`);
+    console.log("    vercel env add RESEND_WEBHOOK_SECRET production");
+    console.log("    vercel --prod\n");
+  }
+
   if (current && sameEvents(current.events, WANTED)) {
-    console.log(`\n  Already subscribed to all ${WANTED.length} events. Nothing to do.\n`);
+    console.log(`\n  Already subscribed to all ${WANTED.length} events. Nothing to do.`);
     if (current.status !== "enabled") {
-      console.log(`  Note: status is "${current.status}", so nothing is being delivered.\n`);
+      console.log(`\n  Note: status is "${current.status}", so nothing is being delivered.`);
+    }
+    if (!SHOW_SECRET) {
+      console.log(
+        "\n  If the endpoint is answering 503, RESEND_WEBHOOK_SECRET is not set.\n" +
+          "  Re-run with --show-secret to print the one this webhook signs with.\n"
+      );
     }
     return;
   }
