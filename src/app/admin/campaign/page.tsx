@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/AdminNav";
 import { ClickResetPanel } from "./ClickResetPanel";
-import { CAMPAIGN_CONFIGURED, getCampaignStats } from "@/lib/campaign";
+import { RefreshPanel } from "./RefreshPanel";
+import { CAMPAIGN_CONFIGURED, getCampaignStats, snapshotAgeMinutes } from "@/lib/campaign";
 import { getEmailAttribution, getStepToBooking } from "@/lib/tracking";
 import { SEQUENCE_STEPS } from "@/lib/sequence-steps";
 
@@ -86,9 +87,11 @@ export default async function CampaignDashboard() {
       )}
 
       <p className={`${mono} mt-1 text-[11px] text-[#6a6963]`}>
-        {/* Said explicitly because the snapshot is reused for a minute. Without
-            this, two refreshes showing the same numbers looks like nothing is
-            updating rather than like the cache doing its job. */}
+        {/* Said explicitly because these figures are read from storage rather
+            than recomputed per load. Without it, two refreshes showing the same
+            numbers looks like nothing is updating rather than like the snapshot
+            doing its job. The panel at the bottom gives the age and the way to
+            force a recompute. */}
         snapshot {new Date(stats.fetchedAt).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles" })} Pacific
         {stats.unreadableRuns > 0 && ` · ${stats.unreadableRuns} run(s) unread`}
       </p>
@@ -393,6 +396,7 @@ export default async function CampaignDashboard() {
         booking count.
       </p>
 
+      <RefreshPanel ageMinutes={snapshotAgeMinutes(stats)} />
       <ClickResetPanel />
 
 </main>

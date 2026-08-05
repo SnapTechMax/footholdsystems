@@ -464,23 +464,27 @@ export async function getEmailAttribution(): Promise<
     }
   };
 
-  const clicks = await read("redirect clicks", async () =>
-    (await sql`
+  // Issued together, not one after another. These are three independent HTTP
+  // round trips to Neon, and running them in series added the latency of two of
+  // them to every dashboard load for no reason.
+  const [clicks, events, bookings] = await Promise.all([
+    read("redirect clicks", async () =>
+      (await sql`
       SELECT email_key,
              COUNT(*)::int                  AS clicks,
              COUNT(DISTINCT recipient)::int AS clickers
       FROM email_clicks GROUP BY email_key`) as {
-      email_key: string;
-      clicks: number;
-      clickers: number;
-    }[]
-  );
+        email_key: string;
+        clicks: number;
+        clickers: number;
+      }[]
+    ),
 
-  // One pass over email_events covering all five stored types. Counted with
-  // FILTER rather than as five queries, because the row count here grows with
-  // every send and this page is read on every refresh.
-  const events = await read("resend events", async () =>
-    (await sql`
+    // One pass over email_events covering all five stored types. Counted with
+    // FILTER rather than as five queries, because the row count here grows with
+    // every send and this page is read on every refresh.
+    read("resend events", async () =>
+      (await sql`
       SELECT email_key,
              COUNT(*) FILTER (WHERE event_type = 'delivered')::int  AS delivered,
              COUNT(*) FILTER (WHERE event_type = 'bounced')::int    AS bounced,
@@ -496,29 +500,30 @@ export async function getEmailAttribution(): Promise<
       FROM email_events
       WHERE email_key IS NOT NULL
       GROUP BY email_key`) as {
-      email_key: string;
-      delivered: number;
-      bounced: number;
-      complained: number;
-      tracked_clicks: number;
-      tracked_clickers: number;
-      opens: number;
-      openers: number;
-      unsubscribes: number;
-    }[]
-  );
+        email_key: string;
+        delivered: number;
+        bounced: number;
+        complained: number;
+        tracked_clicks: number;
+        tracked_clickers: number;
+        opens: number;
+        openers: number;
+        unsubscribes: number;
+      }[]
+    ),
 
-  const bookings = await read("bookings", async () =>
-    (await sql`
+    read("bookings", async () =>
+      (await sql`
       SELECT email_key, status, COUNT(DISTINCT email)::int AS n
       FROM sequence_bookings
       WHERE email_key IS NOT NULL
       GROUP BY email_key, status`) as {
-      email_key: string;
-      status: string;
-      n: number;
-    }[]
-  );
+        email_key: string;
+        status: string;
+        n: number;
+      }[]
+    ),
+  ]);
 
   for (const row of events) {
     const entry = entryFor(row.email_key);

@@ -47,17 +47,27 @@ const MAX_RETRIES = 4;
 const RETRY_BASE_MS = 400;
 
 /**
- * How long a computed snapshot is reused.
+ * The fan-out does not run on page load any more.
  *
- * The fan-out is slow and rate-limited, so recomputing it on every refresh was
- * both the cause of the flapping and a good way to stay rate-limited. Held in
- * module scope, which means per serverless instance rather than shared — good
- * enough for one operator refreshing a page, and the numbers are correct either
- * way now, so the worst case is a slightly older snapshot rather than a
- * different one.
+ * It costs roughly 53 Resend requests — three, plus one per run, because step
+ * detail is only returned on an individual run — and fifty of those go out four
+ * at a time, so the dashboard sat through about thirteen sequential waves before
+ * it could render. Four concurrent requests can also outrun Resend's 10/second
+ * team limit, at which point the retry ladder adds seconds on top.
+ *
+ * A module-scoped cache used to cover this. It could not: module scope is per
+ * serverless instance, and an admin page gets little enough traffic that most
+ * visits landed on a cold one and paid full price.
+ *
+ * So the snapshot is computed on a schedule and stored in Postgres, and the page
+ * reads one row. Both admin pages are now a single query rather than a minute of
+ * someone else's rate limit, and the snapshot survives instance churn.
+ *
+ * Worth knowing what this half of the dashboard is: sequence *progress* — sent,
+ * waiting, stopped early. Resend's own dashboard already shows that. The part it
+ * cannot show, because it has never heard of Calendly, is which email precedes a
+ * booking, and that half comes from our own tables and was always fast.
  */
-const CACHE_TTL_MS = 60_000;
-let cached: { at: number; stats: CampaignStats } | null = null;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -195,30 +205,92 @@ async function consentAndDownloads(): Promise<{
 }
 
 /**
- * Campaign statistics, reusing a recent snapshot where there is one.
+ * How old a snapshot is, in whole minutes.
  *
- * The wrapper is the other half of the flapping fix. Even with the fan-out
- * paced and retried, recomputing on every refresh means dozens of API calls
- * each time and a fresh chance to be rate-limited. Within the TTL a refresh now
- * returns the same answer because it is literally the same answer.
- *
- * `force: true` is what the reset control uses, so a deliberate action is never
- * answered with a stale snapshot.
+ * Here rather than in the page, because reading the clock inside a component
+ * body is flagged as impure — correctly, since a client component doing this
+ * would hydrate against a different moment than the server rendered. The admin
+ * pages are force-dynamic, so this is evaluated fresh per request.
  */
-export async function getCampaignStats(
-  options: { force?: boolean } = {}
-): Promise<CampaignStats> {
-  if (!options.force && cached && Date.now() - cached.at < CACHE_TTL_MS) {
-    return cached.stats;
-  }
-  const stats = await computeCampaignStats();
-  cached = { at: Date.now(), stats };
-  return stats;
+export function snapshotAgeMinutes(stats: CampaignStats): number {
+  const age = Date.now() - new Date(stats.fetchedAt).getTime();
+  return Number.isFinite(age) ? Math.max(0, Math.floor(age / 60_000)) : 0;
 }
 
-/** Clears the snapshot, so the next read is fresh. */
-export function invalidateCampaignStats(): void {
-  cached = null;
+async function initSnapshotSchema(): Promise<void> {
+  const url = connectionString();
+  if (!url) return;
+  const sql = neon(url);
+  // One row, replaced in place. History would be nice but this is a cache, and
+  // an unbounded table of every snapshot ever taken is a worse problem than not
+  // being able to see last Tuesday's funnel.
+  await sql`
+    CREATE TABLE IF NOT EXISTS campaign_snapshots (
+      key         TEXT PRIMARY KEY,
+      stats       JSONB NOT NULL,
+      captured_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+}
+
+/**
+ * Campaign statistics, read from the stored snapshot.
+ *
+ * This never runs the fan-out, with one exception: if no snapshot exists at all,
+ * it computes one inline so a fresh deployment is not a blank page waiting on a
+ * cron. Every load after that is a single query.
+ *
+ * Staleness is deliberate and visible. `fetchedAt` is the time the snapshot was
+ * computed, not the time it was read, so the page can say how old it is — which
+ * matters more here than freshness, since the funnel moves on a 38-day cadence.
+ */
+export async function getCampaignStats(): Promise<CampaignStats> {
+  const url = connectionString();
+  if (!url) return computeCampaignStats();
+
+  try {
+    await initSnapshotSchema();
+    const sql = neon(url);
+    const rows = (await sql`
+      SELECT stats FROM campaign_snapshots WHERE key = 'latest'`) as {
+      stats: CampaignStats;
+    }[];
+    if (rows[0]?.stats) return rows[0].stats;
+  } catch (error) {
+    // A read failure is not worth blocking the page for — falling through to a
+    // live computation is slow but correct.
+    console.error("Campaign: snapshot read failed:", error);
+  }
+
+  return refreshCampaignSnapshot();
+}
+
+/**
+ * Recompute the snapshot and store it. This is the slow path, on purpose.
+ *
+ * Called by the cron endpoint and by the refresh control on the dashboard —
+ * never by an ordinary page load, except the first one on an empty database.
+ */
+export async function refreshCampaignSnapshot(): Promise<CampaignStats> {
+  const stats = await computeCampaignStats();
+
+  const url = connectionString();
+  if (!url) return stats;
+
+  try {
+    await initSnapshotSchema();
+    const sql = neon(url);
+    await sql`
+      INSERT INTO campaign_snapshots (key, stats, captured_at)
+      VALUES ('latest', ${JSON.stringify(stats)}::jsonb, now())
+      ON CONFLICT (key) DO UPDATE
+        SET stats = EXCLUDED.stats, captured_at = EXCLUDED.captured_at`;
+  } catch (error) {
+    // The figures are still returned to whoever asked for them. A snapshot that
+    // could not be stored costs the next reader a recompute, not correctness.
+    console.error("Campaign: snapshot write failed:", error);
+  }
+
+  return stats;
 }
 
 async function computeCampaignStats(): Promise<CampaignStats> {

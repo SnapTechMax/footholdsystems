@@ -1,0 +1,60 @@
+# Recomputes the campaign dashboard's snapshot.
+#
+# The admin pages read sequence progress from a stored snapshot rather than
+# rebuilding it per request: that rebuild is roughly 53 Resend calls, fifty of
+# them one per run because step detail is only returned on an individual run,
+# and it made both pages take seconds. Something has to fill the snapshot, and
+# this is it.
+#
+# A separate workflow from cro-tick rather than another step in it, so that a
+# failure here cannot stop the optimiser running, and so the two cadences can
+# differ — this one has no external quota to respect, only Resend's rate limit.
+#
+# It lives here rather than in vercel.json for the same reason cro-tick does:
+# Vercel's Hobby plan allows daily cron only, and vercel.json has already spent
+# that allowance on /api/cro/tick.
+#
+# SETUP (one step, and nothing runs until it is done):
+#   GitHub → repo Settings → Secrets and variables → Actions → the existing
+#   CRON_SECRET covers this too. If it is already set for cro-tick, this works.
+#
+# Without it every run skips with a notice rather than failing, so an unset
+# secret shows up as a run that did nothing rather than a red repository.
+name: Campaign refresh
+
+on:
+  schedule:
+    # Every 2 hours. The funnel moves on a 38-day cadence, so this is already
+    # far finer than the data justifies; it is this often only so the dashboard
+    # is never embarrassingly stale when it happens to be opened.
+    - cron: "20 */2 * * *"
+  workflow_dispatch:
+
+# One at a time. Two overlapping runs would each fire the whole fan-out at the
+# same rate limit and both come back slower for it.
+concurrency:
+  group: campaign-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Refresh the campaign snapshot
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::CRON_SECRET is not set, so there is nothing to call yet. See the setup note at the top of this workflow."
+            exit 0
+          fi
+
+          # --fail-with-body so a 401 or 500 fails the step *and* prints what the
+          # endpoint said, rather than a bare exit code with no explanation.
+          # The fan-out is paced and retried, so it is allowed longer than the
+          # optimiser gets.
+          curl --silent --show-error --fail-with-body --location \
+            --max-time 180 \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "https://www.footholdsystems.com/api/campaign/refresh"
