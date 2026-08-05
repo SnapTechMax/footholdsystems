@@ -325,6 +325,24 @@ recorded; anything `2xx` means unsigned events are being accepted.
 Worth running this *first*, not last — it is the one check that costs nothing
 and invalidates every other step if it fails.
 
+### Events sent while it was misconfigured are not lost
+
+Resend delivers through Svix, which retries a webhook that did not return 2xx on
+a backoff schedule over about a day. So events that arrived while the endpoint
+was answering 503 sit in the queue showing **Attempting** rather than failing
+outright.
+
+Resend → Webhooks → the endpoint → pick the event → **Replay** forces an
+immediate redelivery instead of waiting for the next scheduled attempt. Useful
+for exactly one situation: something was wrong, it has been fixed, and waiting
+half an hour to find out whether the fix worked is the slowest possible way to
+learn it.
+
+Replaying is safe. `email_events` deduplicates on the Svix message id, and a
+replay reuses it, so an event that did land cannot be double-counted by
+replaying it again. The response body says which happened — `"recorded":"written"`
+for a new row, `"duplicate"` for one already stored.
+
 ### Cleaning up after testing
 
 The test click is a real row and will sit in the per-email figures. The campaign
