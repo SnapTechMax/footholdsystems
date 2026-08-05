@@ -7,10 +7,15 @@ export const dynamic = "force-dynamic";
 /**
  * Booking links in the nurture sequence point here rather than at Calendly.
  *
- * The redirect exists to log the click server-side. Resend reports no click
- * data for automations and the UTM parameters alone only reach GA4, which
- * cannot be joined to a booking. One row written here, plus the matching
- * Calendly webhook, is what makes "which email produced this call" answerable.
+ * Two jobs, and it is still needed for both even though Resend now reports
+ * clicks of its own through /api/resend/webhook.
+ *
+ * It logs the click server-side, where nothing can block it and it does not
+ * depend on Resend's tracking staying switched on. And — the load-bearing part
+ * — it is what puts utm_campaign on the *Calendly* URL. Calendly echoes those
+ * parameters back in its webhook, which is the only thing tying a booked call
+ * to the email that caused it. Point these links straight at Calendly and the
+ * click survives in email_events while the booking attribution does not.
  *
  * Three rules this endpoint follows, in order of importance:
  *

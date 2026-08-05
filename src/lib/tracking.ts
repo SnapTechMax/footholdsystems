@@ -6,24 +6,33 @@ import { initConsentSchema } from "./consent";
 /**
  * Per-email attribution for the nurture sequence.
  *
- * Resend's API reports neither opens nor clicks for automations, and Calendly
- * knows a booking happened but not what prompted it. Between them sits the
- * question worth answering: which of the 22 emails actually moves someone to
- * book, and which are dead weight.
+ * Calendly knows a booking happened but not what prompted it. Between that and
+ * the sequence sits the question worth answering: which of the 22 emails
+ * actually moves someone to book, and which are dead weight.
  *
- * Two facts are recorded here, both server-side so ad blockers cannot thin them
- * out the way they thin out the Meta pixel:
+ * Three facts are recorded, from two independent sources:
  *
- *  - **Clicks**, by `/api/go/book`. Every booking link in the sequence points at
- *    that redirect rather than straight at Calendly, so the click is logged
- *    before the visitor is handed on.
+ *  - **Redirect clicks**, by `/api/go/book`. Every booking link points at that
+ *    redirect rather than straight at Calendly, so the click is logged
+ *    server-side before the visitor is handed on, where no ad blocker touches
+ *    it. Stored in `email_clicks`.
+ *  - **Resend events**, by `/api/resend/webhook`: clicks, opens and delivery
+ *    outcomes, since click tracking was enabled on a tracking subdomain of our
+ *    own. Stored in `email_events`. This covers every link rather than just the
+ *    button, and reports the recipient reliably, which the merge tag does not.
  *  - **Bookings**, by the Calendly webhook, tagged with the email whose link
  *    started the visit. Calendly passes the UTM parameters it was opened with
  *    back in the webhook payload, which is what makes the join possible.
  *
- * Neither write is allowed to break the thing it measures: a failed click
- * insert still redirects, and a failed booking insert still returns 200 so
- * Calendly stops retrying.
+ * The two click sources are kept apart rather than merged. They measure
+ * different things and disagreeing is informative: the redirect sees only the
+ * button but cannot be blocked, and Resend sees every link but only while its
+ * tracking is on. Either one alone would be a single point of failure for the
+ * question this whole file exists to answer.
+ *
+ * No write is allowed to break the thing it measures: a failed click insert
+ * still redirects, and a failed booking insert still returns 200 so Calendly
+ * stops retrying.
  */
 
 const CONNECTION_ENV_VARS = [
@@ -133,40 +142,22 @@ export async function initTrackingSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS email_clicks_key
       ON email_clicks (email_key, clicked_at DESC)`;
 
-  // Delivery outcomes reported by Resend's webhook: delivered, bounced,
-  // complained. Nothing is embedded in the email to collect these — they come
-  // from the receiving server's SMTP response and from feedback loops, which is
-  // what makes them free of the deliverability cost a tracking pixel carries.
-  await sql`
-    CREATE TABLE IF NOT EXISTS email_deliveries (
-      id         BIGSERIAL PRIMARY KEY,
-      email_key  TEXT,
-      kind       TEXT NOT NULL,
-      recipient  TEXT,
-      email_id   TEXT,
-      detail     TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )`;
-  await sql`
-    CREATE INDEX IF NOT EXISTS email_deliveries_key
-      ON email_deliveries (email_key, kind, created_at DESC)`;
-  // One row per Resend event id, so a webhook retry cannot count twice.
-  await sql`
-    CREATE UNIQUE INDEX IF NOT EXISTS email_deliveries_unique
-      ON email_deliveries (email_id, kind)
-      WHERE email_id IS NOT NULL`;
-
-  // Engagement reported by Resend's own tracking: clicks and opens, plus the
-  // delivery events, all with the detail `email_deliveries` has no columns for.
+  // Everything Resend's webhook reports: clicks, opens and the delivery
+  // outcomes, in one table.
   //
-  // A second table rather than more columns on `email_clicks`, because the two
-  // count different things and merging them would silently double the figures
-  // the dashboard already reports. `email_clicks` holds booking-button clicks
-  // seen by /api/go/book — one link, logged server-side, no rewriting. This
-  // holds every link Resend saw clicked, via the tracking subdomain. A click on
-  // the booking button lands in both, on purpose: they are a cross-check on each
-  // other, and the redirect keeps working if Resend's tracking is ever turned
-  // back off.
+  // This replaced `email_deliveries`, which held the same three delivery kinds
+  // with fewer columns. Both were being written for a while so the dashboard
+  // could keep reading the old one, and that dual write is gone now the
+  // dashboard reads this. Nothing was lost in the switch: the webhook rejected
+  // every event with a 503 until RESEND_WEBHOOK_SECRET was first set, so
+  // `email_deliveries` never held more than a few minutes of overlap.
+  //
+  // Still separate from `email_clicks`, which is a different measurement rather
+  // than an older one. `email_clicks` holds booking-button clicks seen by
+  // /api/go/book — one link, logged server-side, no rewriting. This holds every
+  // link Resend saw clicked, via the tracking subdomain. A click on the booking
+  // button lands in both on purpose: they are a cross-check on each other, and
+  // the redirect keeps working if Resend's tracking is ever turned back off.
   await sql`
     CREATE TABLE IF NOT EXISTS email_events (
       id          BIGSERIAL PRIMARY KEY,
@@ -244,26 +235,6 @@ const SUBJECT_TO_KEY = new Map(
 export function keyFromSubject(subject: string | null | undefined): string | null {
   if (!subject) return null;
   return SUBJECT_TO_KEY.get(subject.trim().toLowerCase()) ?? null;
-}
-
-export async function recordDelivery(input: {
-  kind: "delivered" | "bounced" | "complained";
-  subject: string | null;
-  recipient: string | null;
-  emailId: string | null;
-  detail: string | null;
-}): Promise<void> {
-  const url = connectionString();
-  if (!url) return;
-  const sql = neon(url);
-  await initTrackingSchema();
-  await sql`
-    INSERT INTO email_deliveries (email_key, kind, recipient, email_id, detail)
-    VALUES (
-      ${keyFromSubject(input.subject)}, ${input.kind},
-      ${cleanRecipient(input.recipient)}, ${input.emailId}, ${input.detail}
-    )
-    ON CONFLICT DO NOTHING`;
 }
 
 export type EngagementKind =
@@ -425,9 +396,22 @@ export interface EmailAttribution {
   bounced: number;
   /** Marked as spam. Gmail and Yahoo judge bulk senders at 0.3%. */
   complained: number;
+  /** Booking-link clicks seen by /api/go/book. Not blocked, one link only. */
   clicks: number;
   /** Distinct people, where the merge tag identified them. */
   clickers: number;
+  /**
+   * Clicks reported by Resend's tracking, unsubscribes excluded. Covers every
+   * link rather than just the button, so it should sit at or just above
+   * `clicks` — a large gap either way means one of the two is not firing.
+   */
+  trackedClicks: number;
+  trackedClickers: number;
+  /** Opens. An image loading, not a person reading. Context, not a metric. */
+  opens: number;
+  openers: number;
+  /** Clicks on the unsubscribe footer. The one click that is bad news. */
+  unsubscribes: number;
   booked: number;
   canceled: number;
 }
@@ -441,18 +425,91 @@ export async function getEmailAttribution(): Promise<
   if (!url) return out;
   const sql = neon(url);
 
-  try {
-    const clicks = (await sql`
+  const blank = (key: string): EmailAttribution => ({
+    key,
+    delivered: 0,
+    bounced: 0,
+    complained: 0,
+    clicks: 0,
+    clickers: 0,
+    trackedClicks: 0,
+    trackedClickers: 0,
+    opens: 0,
+    openers: 0,
+    unsubscribes: 0,
+    booked: 0,
+    canceled: 0,
+  });
+  const entryFor = (key: string) => {
+    const existing = out.get(key) ?? blank(key);
+    out.set(key, existing);
+    return existing;
+  };
+
+  /**
+   * Each read is isolated, so one missing table cannot zero the others.
+   *
+   * These are created on first write, so a table that does not exist yet is the
+   * normal state of a fresh database rather than a fault. When all three shared
+   * a try block, `email_events` not existing took the click and booking counts
+   * down with it — and a dashboard cannot tell a zero that means "the query
+   * broke" from a zero that means "nobody clicked".
+   */
+  const read = async <T>(label: string, run: () => Promise<T[]>): Promise<T[]> => {
+    try {
+      return await run();
+    } catch (error) {
+      console.error(`Attribution: ${label} read failed:`, error);
+      return [];
+    }
+  };
+
+  const clicks = await read("redirect clicks", async () =>
+    (await sql`
       SELECT email_key,
-             COUNT(*)::int                      AS clicks,
-             COUNT(DISTINCT recipient)::int     AS clickers
+             COUNT(*)::int                  AS clicks,
+             COUNT(DISTINCT recipient)::int AS clickers
       FROM email_clicks GROUP BY email_key`) as {
       email_key: string;
       clicks: number;
       clickers: number;
-    }[];
+    }[]
+  );
 
-    const bookings = (await sql`
+  // One pass over email_events covering all five stored types. Counted with
+  // FILTER rather than as five queries, because the row count here grows with
+  // every send and this page is read on every refresh.
+  const events = await read("resend events", async () =>
+    (await sql`
+      SELECT email_key,
+             COUNT(*) FILTER (WHERE event_type = 'delivered')::int  AS delivered,
+             COUNT(*) FILTER (WHERE event_type = 'bounced')::int    AS bounced,
+             COUNT(*) FILTER (WHERE event_type = 'complained')::int AS complained,
+             COUNT(*) FILTER (WHERE event_type = 'clicked')::int    AS tracked_clicks,
+             COUNT(DISTINCT recipient)
+               FILTER (WHERE event_type = 'clicked')::int           AS tracked_clickers,
+             COUNT(*) FILTER (WHERE event_type = 'opened')::int     AS opens,
+             COUNT(DISTINCT recipient)
+               FILTER (WHERE event_type = 'opened')::int            AS openers,
+             COUNT(*)
+               FILTER (WHERE event_type = 'unsubscribe_clicked')::int AS unsubscribes
+      FROM email_events
+      WHERE email_key IS NOT NULL
+      GROUP BY email_key`) as {
+      email_key: string;
+      delivered: number;
+      bounced: number;
+      complained: number;
+      tracked_clicks: number;
+      tracked_clickers: number;
+      opens: number;
+      openers: number;
+      unsubscribes: number;
+    }[]
+  );
+
+  const bookings = await read("bookings", async () =>
+    (await sql`
       SELECT email_key, status, COUNT(DISTINCT email)::int AS n
       FROM sequence_bookings
       WHERE email_key IS NOT NULL
@@ -460,53 +517,29 @@ export async function getEmailAttribution(): Promise<
       email_key: string;
       status: string;
       n: number;
-    }[];
+    }[]
+  );
 
-    const deliveries = (await sql`
-      SELECT email_key, kind, COUNT(*)::int AS n
-      FROM email_deliveries
-      WHERE email_key IS NOT NULL
-      GROUP BY email_key, kind`) as {
-      email_key: string;
-      kind: string;
-      n: number;
-    }[];
-
-    const blank = (key: string): EmailAttribution => ({
-      key,
-      delivered: 0,
-      bounced: 0,
-      complained: 0,
-      clicks: 0,
-      clickers: 0,
-      booked: 0,
-      canceled: 0,
-    });
-
-    for (const row of deliveries) {
-      const entry = out.get(row.email_key) ?? blank(row.email_key);
-      if (row.kind === "delivered") entry.delivered = row.n;
-      else if (row.kind === "bounced") entry.bounced = row.n;
-      else if (row.kind === "complained") entry.complained = row.n;
-      out.set(row.email_key, entry);
-    }
-    for (const row of clicks) {
-      const entry = out.get(row.email_key) ?? blank(row.email_key);
-      entry.clicks = row.clicks;
-      entry.clickers = row.clickers;
-      out.set(row.email_key, entry);
-    }
-    for (const row of bookings) {
-      const entry = out.get(row.email_key) ?? blank(row.email_key);
-      if (row.status === "booked") entry.booked = row.n;
-      else entry.canceled = row.n;
-      out.set(row.email_key, entry);
-    }
-  } catch (error) {
-    // An empty database is normal here — these tables are created on first
-    // write — but the failure is still logged. A zero meaning "the query broke"
-    // and a zero meaning "nobody clicked" look identical on a dashboard.
-    console.error("Attribution: read failed:", error);
+  for (const row of events) {
+    const entry = entryFor(row.email_key);
+    entry.delivered = row.delivered;
+    entry.bounced = row.bounced;
+    entry.complained = row.complained;
+    entry.trackedClicks = row.tracked_clicks;
+    entry.trackedClickers = row.tracked_clickers;
+    entry.opens = row.opens;
+    entry.openers = row.openers;
+    entry.unsubscribes = row.unsubscribes;
+  }
+  for (const row of clicks) {
+    const entry = entryFor(row.email_key);
+    entry.clicks = row.clicks;
+    entry.clickers = row.clickers;
+  }
+  for (const row of bookings) {
+    const entry = entryFor(row.email_key);
+    if (row.status === "booked") entry.booked = row.n;
+    else entry.canceled = row.n;
   }
 
   return out;

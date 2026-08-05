@@ -212,18 +212,36 @@ attribution query only counts `clicked`.
 | `email_clicks` | `/api/go/book` | Booking-button clicks, server-side, no rewriting |
 | `email_events` | this webhook | Every event Resend reports, with link and step |
 
-A booking-button click lands in both. They are a cross-check on each other, and
-the redirect keeps working if Resend's tracking is ever turned off again. The
-existing campaign dashboard reads `email_clicks` and `email_deliveries` and is
-untouched by any of this.
+A booking-button click lands in both, and `/admin/campaign` shows them side by
+side as **Clicked** and **Tracked**. They should sit close together; a
+persistent gap means one of them has stopped firing, which is the entire reason
+both are kept. The redirect also keeps working if Resend's tracking is ever
+turned off again — and it is load-bearing for a second reason, since it is what
+puts `utm_campaign` on the Calendly URL, which is what makes a *booking*
+attributable at all.
 
 `email_events` is deduplicated on `svix-id`, so a webhook retry cannot count
 twice — while three genuine clicks on three links stay three rows.
 
+There was a third table, `email_deliveries`, holding delivery outcomes only. It
+is gone: `email_events` stores the same three kinds with more columns, and the
+dashboard now reads that instead. Nothing was lost, because the webhook rejected
+every event with a 503 until `RESEND_WEBHOOK_SECRET` was first set, so it never
+held more than a few minutes of overlap. The table itself is left in place —
+drop it by hand once you are satisfied:
+
+```sql
+DROP TABLE IF EXISTS email_deliveries;
+```
+
 ## 5. Which step precedes a booking
 
+On the site: **`/admin/campaign` → Step before a booking**.
+
+The same figures from the command line, or for a one-off query:
+
 ```bash
-psql "$DATABASE_URL" -f scripts/step-to-booking.sql
+STORAGE_DATABASE_URL=postgres://... node scripts/check-events.mjs
 ```
 
 Also available in code as `getStepToBooking()` in

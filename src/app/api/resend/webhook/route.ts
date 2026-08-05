@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { recordDelivery, recordEngagement, type EngagementKind } from "@/lib/tracking";
+import { recordEngagement, type EngagementKind } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -161,24 +161,6 @@ export async function POST(request: NextRequest) {
       ? [data?.bounce?.type, data?.bounce?.subType].filter(Boolean).join("/") ||
         null
       : null;
-
-  // The delivery tables are still written exactly as before. `email_deliveries`
-  // is what the campaign dashboard reads, and a richer log next to it is not a
-  // reason to change a page that works — so delivery outcomes land in both, and
-  // the dashboard keeps its own source of truth.
-  if (kind === "delivered" || kind === "bounced" || kind === "complained") {
-    try {
-      await recordDelivery({
-        kind,
-        subject: data?.subject ?? null,
-        recipient: data?.to?.[0] ?? null,
-        emailId: data?.email_id ?? null,
-        detail,
-      });
-    } catch (error) {
-      console.error("Resend webhook: delivery not recorded:", error);
-    }
-  }
 
   // `svix-id` is the idempotency key. Resend retries a delivery it did not get a
   // 2xx for, reusing the id, so this is what collapses a retry — while leaving

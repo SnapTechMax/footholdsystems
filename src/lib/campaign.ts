@@ -16,19 +16,17 @@ import { initConsentSchema } from "./consent";
  *  - **Our database** knows who consented and who downloaded, which Resend never
  *    sees, since people who decline are never enrolled.
  *
- * Not available from Resend: opens and clicks. Its API exposes neither for
- * automations, which is why the booking links point at /api/go/book instead of
- * straight at Calendly — that redirect writes the click server-side.
+ * Clicks and opens are not on this endpoint either way. Resend's automation API
+ * returns run status and step state, not engagement, so both come from the
+ * webhook instead and live in `email_events`, read by lib/tracking.ts.
  *
- * Clicks therefore live in `email_clicks`, read by lib/tracking.ts, and nowhere
- * else. Not in GA4, which an earlier version of this comment claimed: the links
- * in the emails carry no UTM parameters at all, the redirect adds them to the
- * *Calendly* URL, and /api/go/book is a 302 with no tag on it. GA4 never sees
- * one of these clicks. Calendly's own UTM report is the only cross-check, and it
- * counts arrivals at the booking page rather than clicks.
- *
- * Which is the better arrangement anyway — a server-side row is not blocked, is
- * attributable to one email and one recipient, and can be queried here.
+ * Clicks are counted twice over, from two sources that fail differently:
+ * `email_clicks`, written by the /api/go/book redirect, and `email_events`,
+ * written from Resend's own click tracking. Neither is in GA4 — the links carry
+ * no UTM parameters until the redirect adds them to the *Calendly* URL, and
+ * /api/go/book is a 302 with no tag on it, so GA4 never sees one of these
+ * clicks. Calendly's UTM report is the third cross-check, counting arrivals at
+ * the booking page rather than clicks.
  */
 
 const RUN_SAMPLE_LIMIT = 50;

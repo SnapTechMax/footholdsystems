@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { AdminNav } from "@/components/AdminNav";
 import { ClickResetPanel } from "./ClickResetPanel";
 import { CAMPAIGN_CONFIGURED, getCampaignStats } from "@/lib/campaign";
-import { getEmailAttribution } from "@/lib/tracking";
+import { getEmailAttribution, getStepToBooking } from "@/lib/tracking";
+import { SEQUENCE_STEPS } from "@/lib/sequence-steps";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -23,9 +24,10 @@ function Stat({ label, value, note }: { label: string; value: string | number; n
 }
 
 export default async function CampaignDashboard() {
-  const [stats, attribution] = await Promise.all([
+  const [stats, attribution, stepToBooking] = await Promise.all([
     getCampaignStats(),
     getEmailAttribution(),
+    getStepToBooking(),
   ]);
   const { runs, funnel, consent } = stats;
 
@@ -37,6 +39,19 @@ export default async function CampaignDashboard() {
     (sum, step) => sum + (attribution.get(step.key)?.booked ?? 0),
     0
   );
+
+  // Subjects for the attribution table, which comes back keyed only.
+  const subjectFor = new Map(SEQUENCE_STEPS.map((s) => [s.key, s.subject]));
+  const positionFor = new Map(SEQUENCE_STEPS.map((s, i) => [s.key, i + 1]));
+
+  // Whether Resend's own tracking has reported anything yet. Until it has, the
+  // opened and unsubscribed columns are structurally zero rather than measured,
+  // and a column of zeroes that means "not switched on" reads exactly like one
+  // that means "nobody opened it".
+  const trackingSeen = funnel.some((step) => {
+    const seen = attribution.get(step.key);
+    return (seen?.opens ?? 0) + (seen?.trackedClicks ?? 0) + (seen?.unsubscribes ?? 0) > 0;
+  });
 
   const optInRate =
     consent.granted + consent.declined > 0
@@ -135,8 +150,10 @@ export default async function CampaignDashboard() {
         )}
       </h2>
 
+      {/* 13 columns now, not 10. The old 560px floor packed them tight enough
+          that the numbers ran together before the container agreed to scroll. */}
       <div className="overflow-x-auto rounded-lg border border-[#33332f] bg-[#232320]">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className={`${mono} text-left text-[#7a786f]`}>
               <th className="px-4 py-3 font-normal">#</th>
@@ -146,7 +163,10 @@ export default async function CampaignDashboard() {
               <th className="px-4 py-3 text-right font-normal">Delivered</th>
               <th className="px-4 py-3 text-right font-normal">Bounced</th>
               <th className="px-4 py-3 text-right font-normal">Spam</th>
+              <th className="px-4 py-3 text-right font-normal">Opened</th>
               <th className="px-4 py-3 text-right font-normal">Clicked</th>
+              <th className="px-4 py-3 text-right font-normal">Tracked</th>
+              <th className="px-4 py-3 text-right font-normal">Unsub</th>
               <th className="px-4 py-3 text-right font-normal">Booked</th>
               <th className="px-4 py-3 font-normal">Reach</th>
             </tr>
@@ -154,7 +174,7 @@ export default async function CampaignDashboard() {
           <tbody>
             {funnel.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-6 text-center text-[#8a887f]">
+                <td colSpan={13} className="px-4 py-6 text-center text-[#8a887f]">
                   No runs yet. Numbers appear once someone opts in and the
                   sequence starts.
                 </td>
@@ -166,6 +186,9 @@ export default async function CampaignDashboard() {
               const bounced = seen?.bounced ?? 0;
               const complained = seen?.complained ?? 0;
               const clicks = seen?.clicks ?? 0;
+              const trackedClicks = seen?.trackedClicks ?? 0;
+              const opens = seen?.opens ?? 0;
+              const unsubscribes = seen?.unsubscribes ?? 0;
               const booked = seen?.booked ?? 0;
               // Against sent, not against the list: an email nobody has reached
               // yet has no denominator and a rate would read as 0% rather than
@@ -199,6 +222,11 @@ export default async function CampaignDashboard() {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
+                    <span className={opens > 0 ? "text-[#cfccc2]" : "text-[#57564f]"}>
+                      {opens}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
                     <span className={clicks > 0 ? "font-bold text-[#f6be00]" : "text-[#57564f]"}>
                       {clicks}
                     </span>
@@ -207,6 +235,22 @@ export default async function CampaignDashboard() {
                         {ctr.toFixed(0)}%
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    {/* Dimmer than Clicked on purpose. The two measure the same
+                        act by different means, and only one of them is the
+                        number to act on; showing them at equal weight would
+                        invite reading whichever is higher. */}
+                    <span className={trackedClicks > 0 ? "text-[#cfccc2]" : "text-[#57564f]"}>
+                      {trackedClicks}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span
+                      className={unsubscribes > 0 ? "font-bold text-[#ff9d7a]" : "text-[#57564f]"}
+                    >
+                      {unsubscribes}
+                    </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <span className={booked > 0 ? "font-bold text-[#7fbf9f]" : "text-[#57564f]"}>
@@ -243,24 +287,110 @@ export default async function CampaignDashboard() {
             booking{totalBooked === 1 ? "" : "s"} attributed so far.
           </>
         )}
-        {" "}Opens are still absent — Resend exposes none for automations.
         {!CAMPAIGN_CONFIGURED() &&
           " Sequence numbers stay at zero until RESEND_AUTOMATION_ID is set."}
       </p>
       <p className="mt-2 text-xs leading-relaxed text-[#7a786f]">
         A click with no booking beside it is the drop-off: the email did its job
-        and the booking page did not. Clicks stay at zero for every email until
-        the sequence is rebuilt and switched over, since the automation now
-        running still links straight to Calendly.
+        and the booking page did not.{" "}
+        <strong className="text-[#8a887f]">Tracked</strong> is the same click
+        counted by Resend instead, across every link rather than just the button.
+        The two should sit close together; a persistent gap means one of them is
+        not firing, which is the entire reason both are kept.
       </p>
-          <p className="mt-3 text-[11px] leading-relaxed text-[#7a786f]">
-        There is no <strong className="text-[#8a887f]">opened</strong> column,
-        and cannot be one without a tracking pixel — no mail protocol reports an
-        open, so every &ldquo;open rate&rdquo; anywhere is an embedded image, and
-        that image is a bulk-mail signal. These three come from the receiving
-        server instead and cost nothing to collect.{" "}
+      <p className="mt-3 text-[11px] leading-relaxed text-[#7a786f]">
         <strong className="text-[#8a887f]">Spam</strong> is the one to watch:
-        Gmail and Yahoo judge bulk senders at 0.3% of delivered.
+        Gmail and Yahoo judge bulk senders at 0.3% of delivered.{" "}
+        <strong className="text-[#8a887f]">Opened</strong> is the one to discount
+        — an open is an image loading, and Apple Mail Privacy Protection loads it
+        whether or not anyone looked, so it is worth reading across emails, where
+        that bias is roughly common, and not on its own.{" "}
+        <strong className="text-[#8a887f]">Unsub</strong> counts clicks on the
+        unsubscribe footer, kept out of the click columns because it is the one
+        click that is bad news.
+        {!trackingSeen && (
+          <>
+            {" "}
+            Opened, Tracked and Unsub read zero everywhere so far, which means
+            Resend has reported no engagement yet rather than that nobody has
+            engaged.
+          </>
+        )}
+      </p>
+
+      {/* Which email precedes a booking */}
+      <h2 className={`${mono} mt-8 mb-3 text-[#f6be00]`}>Step before a booking</h2>
+
+      {stepToBooking.length === 0 ? (
+        <p className="rounded-lg border border-[#33332f] bg-[#232320] px-4 py-6 text-center text-sm text-[#8a887f]">
+          No tracked clicks yet. This fills in once Resend reports a click on a
+          sequence link.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-[#33332f] bg-[#232320]">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className={`${mono} text-left text-[#7a786f]`}>
+                <th className="px-4 py-3 font-normal">#</th>
+                <th className="px-4 py-3 font-normal">Subject</th>
+                <th className="px-4 py-3 text-right font-normal">Clickers</th>
+                <th className="px-4 py-3 text-right font-normal">Last touch</th>
+                <th className="px-4 py-3 text-right font-normal">Assisted</th>
+                <th className="px-4 py-3 text-right font-normal">Hrs to book</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stepToBooking.map((row) => (
+                <tr key={row.key} className="border-t border-[#33332f]">
+                  <td className="px-4 py-2.5 font-mono text-xs text-[#7a786f]">
+                    {String(positionFor.get(row.key) ?? 0).padStart(2, "0")}
+                  </td>
+                  <td className="px-4 py-2.5 text-[#e6e3d9]">
+                    {subjectFor.get(row.key) ?? row.key}
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-[#cfccc2]">
+                    {row.clickers}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span
+                      className={
+                        row.bookedLastTouch > 0
+                          ? "font-bold text-[#7fbf9f]"
+                          : "text-[#57564f]"
+                      }
+                    >
+                      {row.bookedLastTouch}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span
+                      className={row.bookedAssisted > 0 ? "text-[#cfccc2]" : "text-[#57564f]"}
+                    >
+                      {row.bookedAssisted}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-[#7a786f]">
+                    {row.medianHoursToBook ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="mt-3 text-[11px] leading-relaxed text-[#7a786f]">
+        Joined on the recipient&apos;s address, which both sides genuinely carry:
+        Resend reports it on every event and Calendly puts it in the invitee
+        record.{" "}
+        <strong className="text-[#8a887f]">Last touch</strong> is the click
+        immediately before the booking, so these sum to the number of attributed
+        bookings — the column to judge one email on.{" "}
+        <strong className="text-[#8a887f]">Assisted</strong> counts every email
+        clicked at any point beforehand, so these sum to more, and it is the
+        column to judge a <em>cut</em> on: an email with no last touches may
+        still be what makes a later one land. Only clicks at or before the
+        booking count.
       </p>
 
       <ClickResetPanel />
