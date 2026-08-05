@@ -143,6 +143,7 @@ export default async function CampaignDashboard() {
               <th className="px-4 py-3 font-normal">Day</th>
               <th className="px-4 py-3 font-normal">Subject</th>
               <th className="px-4 py-3 text-right font-normal">Sent</th>
+              <th className="px-4 py-3 text-right font-normal">Opened</th>
               <th className="px-4 py-3 text-right font-normal">Clicked</th>
               <th className="px-4 py-3 text-right font-normal">Booked</th>
               <th className="px-4 py-3 font-normal">Reach</th>
@@ -151,7 +152,7 @@ export default async function CampaignDashboard() {
           <tbody>
             {funnel.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-[#8a887f]">
+                <td colSpan={8} className="px-4 py-6 text-center text-[#8a887f]">
                   No runs yet. Numbers appear once someone opts in and the
                   sequence starts.
                 </td>
@@ -159,6 +160,7 @@ export default async function CampaignDashboard() {
             )}
             {funnel.map((step) => {
               const seen = attribution.get(step.key);
+              const opens = seen?.opens ?? 0;
               const clicks = seen?.clicks ?? 0;
               const booked = seen?.booked ?? 0;
               // Against sent, not against the list: an email nobody has reached
@@ -176,6 +178,11 @@ export default async function CampaignDashboard() {
                   <td className="px-4 py-2.5 text-[#e6e3d9]">{step.subject}</td>
                   <td className="px-4 py-2.5 text-right font-bold text-[#f2efe6]">
                     {step.sent}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className={opens > 0 ? "font-bold text-[#cfccc2]" : "text-[#57564f]"}>
+                      {opens}
+                    </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <span className={clicks > 0 ? "font-bold text-[#f6be00]" : "text-[#57564f]"}>
@@ -232,7 +239,17 @@ export default async function CampaignDashboard() {
         the sequence is rebuilt and switched over, since the automation now
         running still links straight to Calendly.
       </p>
-          <ClickResetPanel />
+          <p className="mt-3 text-[11px] leading-relaxed text-[#7a786f]">
+        <strong className="text-[#8a887f]">Opened</strong> counts pixel loads,
+        not readers. Apple Mail pre-fetches images for everyone using it, so
+        those register whether or not the mail was looked at; anyone with images
+        off registers nothing at all. Compare one email against another rather
+        than reading the number on its own.{" "}
+        <strong className="text-[#8a887f]">Clicked</strong> is recorded
+        server-side and is the reliable one.
+      </p>
+
+      <ClickResetPanel />
 
 </main>
   );

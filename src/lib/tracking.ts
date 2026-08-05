@@ -99,6 +99,25 @@ export async function initTrackingSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS email_clicks_key
       ON email_clicks (email_key, clicked_at DESC)`;
 
+  // Opens, from the tracking pixel in each email. Deliberately shaped like
+  // email_clicks so the two read the same way.
+  //
+  // Every hit is a row rather than one row per person. Apple Mail Privacy
+  // Protection pre-fetches images through a proxy, so a single recipient can
+  // produce several, and collapsing them on write would throw away the evidence
+  // that it happened. Distinct recipients are counted at read time instead,
+  // which is the figure worth looking at.
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_opens (
+      id         BIGSERIAL PRIMARY KEY,
+      email_key  TEXT NOT NULL,
+      recipient  TEXT,
+      opened_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS email_opens_key
+      ON email_opens (email_key, opened_at DESC)`;
+
   // One row per Calendly event rather than one per person: a booking followed by
   // a cancellation is two facts, and collapsing them would hide the churn.
   await sql`
@@ -128,6 +147,19 @@ export async function recordClick(input: {
   await sql`
     INSERT INTO email_clicks (email_key, link, recipient)
     VALUES (${input.emailKey}, ${input.link}, ${input.recipient})`;
+}
+
+export async function recordOpen(input: {
+  emailKey: string;
+  recipient: string | null;
+}): Promise<void> {
+  const url = connectionString();
+  if (!url) return;
+  const sql = neon(url);
+  await initTrackingSchema();
+  await sql`
+    INSERT INTO email_opens (email_key, recipient)
+    VALUES (${input.emailKey}, ${input.recipient})`;
 }
 
 export async function recordBooking(input: {
@@ -182,6 +214,16 @@ export async function resetEmailClicks(): Promise<number> {
 
 export interface EmailAttribution {
   key: string;
+  /**
+   * Pixel loads. Runs high and is not a count of people who read anything:
+   * Apple Mail Privacy Protection pre-fetches images for every recipient using
+   * it, so those register whether or not the mail was opened by a person, while
+   * anyone with images switched off registers nothing at all. Useful for
+   * comparing one email against another, not as a number in its own right.
+   */
+  opens: number;
+  /** Distinct recipients seen opening, where the merge tag identified them. */
+  openers: number;
   clicks: number;
   /** Distinct people, where the merge tag identified them. */
   clickers: number;
@@ -219,13 +261,32 @@ export async function getEmailAttribution(): Promise<
       n: number;
     }[];
 
+    const opens = (await sql`
+      SELECT email_key,
+             COUNT(*)::int                  AS opens,
+             COUNT(DISTINCT recipient)::int AS openers
+      FROM email_opens GROUP BY email_key`) as {
+      email_key: string;
+      opens: number;
+      openers: number;
+    }[];
+
     const blank = (key: string): EmailAttribution => ({
       key,
+      opens: 0,
+      openers: 0,
       clicks: 0,
       clickers: 0,
       booked: 0,
       canceled: 0,
     });
+
+    for (const row of opens) {
+      const entry = out.get(row.email_key) ?? blank(row.email_key);
+      entry.opens = row.opens;
+      entry.openers = row.openers;
+      out.set(row.email_key, entry);
+    }
 
     for (const row of clicks) {
       const entry = out.get(row.email_key) ?? blank(row.email_key);
