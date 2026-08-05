@@ -1,29 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { recordDelivery } from "@/lib/tracking";
+import { recordDelivery, recordEngagement, type EngagementKind } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Resend delivery webhook.
+ * Resend webhook: delivery outcomes and, now, engagement.
  *
- * This is the answer to "how are my emails doing" that costs nothing.
+ * `delivered`, `bounced` and `complained` come from the receiving server's SMTP
+ * response and from feedback loops — reported *to* the sender by the recipient's
+ * provider, with nothing added to the message. They are also the figures that
+ * matter most: a complaint rate is what Gmail and Yahoo judge a bulk sender on
+ * (the threshold is 0.3%) and a bounce rate is what damages a sending domain.
  *
- * Open tracking cannot be done without a tracking pixel — no email protocol
- * reports an open, so every ESP that shows an open rate embeds a 1×1 image, and
- * that image is a bulk-mail signal wherever it comes from. A pixel was added
- * here and then removed for exactly that reason.
+ * `clicked` and `opened` are a different trade, and this endpoint used to reject
+ * both on principle. Opens need a 1×1 pixel and clicks need every link rewritten
+ * through a redirector, and an unfamiliar redirector in a link is a bulk-mail
+ * signal. That objection is answered — not removed — by the custom tracking
+ * subdomain now configured on the domain: rewritten links point at
+ * track.footholdsystems.com, which shares the registrable domain with the From
+ * address and is covered by the same DMARC policy, so the link no longer sends
+ * the reader somewhere unrelated to the sender.
  *
- * These events are different in kind. `delivered`, `bounced` and `complained`
- * come from the receiving server's SMTP response and from feedback loops — they
- * are reported *to* the sender by the recipient's provider, not inferred from
- * something embedded in the message. Nothing is added to the email at all, so
- * there is no deliverability cost whatsoever.
- *
- * They are also the figures that actually matter. An open rate says an image
- * loaded. A complaint rate is the number Gmail and Yahoo judge a bulk sender on
- * — the threshold is 0.3% — and a bounce rate is what damages a sending domain.
- * Neither was visible anywhere before this.
+ * The pixel objection stands as it did. Opens are recorded because they were
+ * asked for and are genuinely useful for spotting a dead segment, but clicks are
+ * the metric to act on: an open now means an image loaded, which Apple Mail
+ * Privacy Protection does on the reader's behalf whether or not anyone looked.
  *
  * Verification follows Svix's scheme, which Resend uses:
  *   svix-id, svix-timestamp, svix-signature
@@ -38,13 +40,36 @@ const TOLERANCE_SECONDS = 300;
 
 interface ResendWebhookPayload {
   type?: string;
+  created_at?: string;
   data?: {
     email_id?: string;
     to?: string[];
     subject?: string;
+    template_id?: string;
+    broadcast_id?: string;
     bounce?: { type?: string; subType?: string; message?: string };
+    /**
+     * Clicks only. `email.opened` carries no equivalent object — its `data` is
+     * the base payload and nothing more — so an open has no user agent, no IP
+     * and no timestamp of its own, and is dated from the event's `created_at`.
+     */
+    click?: {
+      link?: string;
+      timestamp?: string;
+      ipAddress?: string;
+      userAgent?: string;
+    };
   };
 }
+
+/** Payload `type` → the kind stored, and nothing else is recorded. */
+const HANDLED: Record<string, EngagementKind> = {
+  "email.clicked": "clicked",
+  "email.opened": "opened",
+  "email.delivered": "delivered",
+  "email.bounced": "bounced",
+  "email.complained": "complained",
+};
 
 /** `whsec_<base64>` — the bytes after the prefix are the key. */
 function signingKey(secret: string): Buffer {
@@ -123,43 +148,78 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid JSON." }, { status: 400 });
   }
 
-  // Only the three that cost nothing to collect and mean something. `opened` and
-  // `clicked` are deliberately ignored even if Resend is configured to send
-  // them: both require Resend's own tracking, which injects a pixel and rewrites
-  // links, and clicks are already recorded server-side by /api/go/book.
-  const kind =
-    body.type === "email.delivered"
-      ? "delivered"
-      : body.type === "email.bounced"
-        ? "bounced"
-        : body.type === "email.complained"
-          ? "complained"
-          : null;
-
+  const kind = body.type ? HANDLED[body.type] : undefined;
   if (!kind) {
-    // Acknowledged so Resend stops retrying something we ignore on purpose.
+    // Acknowledged so Resend stops retrying something we ignore on purpose:
+    // email.sent, email.scheduled, the contact.* events and the rest.
     return NextResponse.json({ ok: true, ignored: body.type ?? "unknown" });
   }
 
+  const data = body.data;
+  const detail =
+    kind === "bounced"
+      ? [data?.bounce?.type, data?.bounce?.subType].filter(Boolean).join("/") ||
+        null
+      : null;
+
+  // The delivery tables are still written exactly as before. `email_deliveries`
+  // is what the campaign dashboard reads, and a richer log next to it is not a
+  // reason to change a page that works — so delivery outcomes land in both, and
+  // the dashboard keeps its own source of truth.
+  if (kind === "delivered" || kind === "bounced" || kind === "complained") {
+    try {
+      await recordDelivery({
+        kind,
+        subject: data?.subject ?? null,
+        recipient: data?.to?.[0] ?? null,
+        emailId: data?.email_id ?? null,
+        detail,
+      });
+    } catch (error) {
+      console.error("Resend webhook: delivery not recorded:", error);
+    }
+  }
+
+  // `svix-id` is the idempotency key. Resend retries a delivery it did not get a
+  // 2xx for, reusing the id, so this is what collapses a retry — while leaving
+  // three genuine clicks on three links in one email as three rows.
+  const eventId = request.headers.get("svix-id");
+  if (!eventId) {
+    // Unreachable: verification above rejects a request without it. Narrowing
+    // for the type checker, and a cheap guard if that order ever changes.
+    return NextResponse.json({ ok: false, error: "Missing svix-id." }, { status: 400 });
+  }
+
+  const click = kind === "clicked" ? data?.click : undefined;
+
   try {
-    await recordDelivery({
+    const outcome = await recordEngagement({
+      eventId,
       kind,
-      subject: body.data?.subject ?? null,
-      recipient: body.data?.to?.[0] ?? null,
-      emailId: body.data?.email_id ?? null,
-      detail:
-        kind === "bounced"
-          ? [body.data?.bounce?.type, body.data?.bounce?.subType]
-              .filter(Boolean)
-              .join("/") || null
-          : null,
+      recipient: data?.to?.[0] ?? null,
+      emailId: data?.email_id ?? null,
+      templateId: data?.template_id ?? null,
+      subject: data?.subject ?? null,
+      link: click?.link ?? null,
+      detail,
+      userAgent: click?.userAgent ?? null,
+      ipAddress: click?.ipAddress ?? null,
+      // A click reports when it happened, and that can be days after the send.
+      // Everything else is dated from the event itself.
+      occurredAt: click?.timestamp ?? body.created_at ?? null,
     });
+    if (outcome === "not-configured") {
+      console.error(
+        "Resend webhook verified but no database is configured — event dropped."
+      );
+    }
+    // Said out loud so a replayed test looks different from a fresh one, and so
+    // a deployment with no DATABASE_URL cannot answer "ok" while storing nothing.
+    return NextResponse.json({ ok: true, event: body.type, recorded: outcome });
   } catch (error) {
     // Still 200. Resend would otherwise retry, and a retry cannot fix a write
     // that failed for a reason on our side.
-    console.error("Resend webhook: delivery not recorded:", error);
+    console.error("Resend webhook: event not recorded:", error);
     return NextResponse.json({ ok: false, error: "Not recorded." });
   }
-
-  return NextResponse.json({ ok: true, event: body.type });
 }

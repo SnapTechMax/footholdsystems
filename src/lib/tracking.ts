@@ -82,6 +82,40 @@ export function knownKey(value: string | null | undefined): string | null {
   return KNOWN_KEYS.has(stripped) ? stripped : null;
 }
 
+/**
+ * Resolve a clicked URL back to the sequence email that contained it.
+ *
+ * This is what makes Resend's click webhook attributable, and it needs nothing
+ * added to the emails: every link in every message already carries the campaign
+ * name, because content/nurture-sequence.mjs runs the whole body through
+ * `tagLinks()` before the template is created. Booking links get it as `e`,
+ * everything else as `utm_campaign`, both in the form
+ * `foothold-nurture-07-quotes` — which `knownKey` already normalises.
+ *
+ * That matters because the obvious mechanism is not available here. Resend's
+ * per-send `tags` and custom headers only exist on POST /emails; an automation's
+ * `send_email` step takes `template`, `from`, `subject` and `reply_to` and
+ * nothing else, so there is no `X-Sequence-Step` to read and no tag to filter
+ * on. The link is the identifier the sequence can actually carry.
+ *
+ * Resend rewrites these links to the tracking subdomain in the delivered
+ * message, but the webhook reports the original destination, so what arrives
+ * here is the URL as written above.
+ */
+export function keyFromLink(link: string | null | undefined): string | null {
+  if (!link) return null;
+  let params: URLSearchParams;
+  try {
+    params = new URL(link).searchParams;
+  } catch {
+    return null;
+  }
+  // `e` first: booking links carry the campaign there, and also set utm_campaign
+  // on the far side of the redirect. Both agree, so the order is only about
+  // reading the one that is present.
+  return knownKey(params.get("e")) ?? knownKey(params.get("utm_campaign"));
+}
+
 export async function initTrackingSchema(): Promise<void> {
   const url = connectionString();
   if (!url) return;
@@ -121,6 +155,47 @@ export async function initTrackingSchema(): Promise<void> {
     CREATE UNIQUE INDEX IF NOT EXISTS email_deliveries_unique
       ON email_deliveries (email_id, kind)
       WHERE email_id IS NOT NULL`;
+
+  // Engagement reported by Resend's own tracking: clicks and opens, plus the
+  // delivery events, all with the detail `email_deliveries` has no columns for.
+  //
+  // A second table rather than more columns on `email_clicks`, because the two
+  // count different things and merging them would silently double the figures
+  // the dashboard already reports. `email_clicks` holds booking-button clicks
+  // seen by /api/go/book — one link, logged server-side, no rewriting. This
+  // holds every link Resend saw clicked, via the tracking subdomain. A click on
+  // the booking button lands in both, on purpose: they are a cross-check on each
+  // other, and the redirect keeps working if Resend's tracking is ever turned
+  // back off.
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_events (
+      id          BIGSERIAL PRIMARY KEY,
+      event_id    TEXT NOT NULL,
+      event_type  TEXT NOT NULL,
+      email_key   TEXT,
+      recipient   TEXT,
+      email_id    TEXT,
+      template_id TEXT,
+      subject     TEXT,
+      link        TEXT,
+      detail      TEXT,
+      user_agent  TEXT,
+      ip_address  TEXT,
+      occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`;
+  // Keyed on the Svix message id, not on (email_id, type): one email legitimately
+  // produces many clicks, and deduping on the email would keep only the first.
+  // A webhook retry re-sends the same svix-id, which is exactly what to collapse.
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS email_events_unique
+      ON email_events (event_id)`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS email_events_key
+      ON email_events (email_key, event_type, occurred_at DESC)`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS email_events_recipient
+      ON email_events (recipient, occurred_at DESC)`;
 
   // One row per Calendly event rather than one per person: a booking followed by
   // a cancellation is two facts, and collapsing them would hide the churn.
@@ -189,6 +264,107 @@ export async function recordDelivery(input: {
       ${cleanRecipient(input.recipient)}, ${input.emailId}, ${input.detail}
     )
     ON CONFLICT DO NOTHING`;
+}
+
+export type EngagementKind =
+  | "clicked"
+  | "opened"
+  | "delivered"
+  | "bounced"
+  | "complained";
+
+/** What actually gets stored — see `isUnsubscribeLink` for the extra one. */
+export type StoredEventType = EngagementKind | "unsubscribe_clicked";
+
+/**
+ * Is this the unsubscribe link rather than a link in the copy?
+ *
+ * With click tracking on, every email in the sequence has exactly two clickable
+ * links: the booking button and the unsubscribe footer. Only the first is
+ * interest. The second is the opposite of interest, and it does not carry a
+ * campaign — it is `{{{RESEND_UNSUBSCRIBE_URL}}}` in the template, substituted
+ * by Resend at send time — so `keyFromLink` returns null for it and the subject
+ * fallback would then file it as an ordinary click on that email.
+ *
+ * That single fallback would have made the click count the sequence is judged on
+ * include the people leaving, which is exactly backwards, and would have let an
+ * unsubscribe stand as the last touch before a booking.
+ *
+ * So it is stored under its own type. The row is kept rather than dropped —
+ * which email pushes people to unsubscribe is worth knowing, and is not recorded
+ * anywhere else — but it is not a click, and the attribution query only counts
+ * `clicked`.
+ */
+export function isUnsubscribeLink(link: string | null | undefined): boolean {
+  if (!link) return false;
+  return /unsubscribe|\/unsub\b/i.test(link);
+}
+
+/**
+ * Record one Resend webhook event, with the step it belongs to already resolved.
+ *
+ * Attribution is attempted in the order the identifiers are trustworthy: the
+ * clicked link carries the campaign explicitly, so it wins; the subject is the
+ * fallback for events with no link, and holds as long as the 22 subjects stay
+ * distinct. `template_id` is stored on every row whether or not it was needed —
+ * it is the one identifier Resend generates itself, so a map from it can be
+ * rebuilt later (scripts/map-templates.mjs) without re-reading history.
+ *
+ * Returns which of the three things happened, rather than a boolean. A retry and
+ * an unconfigured database both write no row, and reporting them the same way
+ * would mean a webhook against a deployment with no DATABASE_URL answered every
+ * event with "already had that one" — the one reply guaranteed to look fine.
+ */
+export type RecordOutcome = "written" | "duplicate" | "not-configured";
+export async function recordEngagement(input: {
+  eventId: string;
+  kind: EngagementKind;
+  recipient: string | null;
+  emailId: string | null;
+  templateId: string | null;
+  subject: string | null;
+  link: string | null;
+  detail: string | null;
+  userAgent: string | null;
+  ipAddress: string | null;
+  occurredAt: string | null;
+}): Promise<RecordOutcome> {
+  const url = connectionString();
+  if (!url) return "not-configured";
+  const sql = neon(url);
+  await initTrackingSchema();
+
+  // The unsubscribe footer is a click on the message but not a click on the
+  // offer, so it is typed apart before anything counts it.
+  const eventType: StoredEventType =
+    input.kind === "clicked" && isUnsubscribeLink(input.link)
+      ? "unsubscribe_clicked"
+      : input.kind;
+
+  const emailKey = keyFromLink(input.link) ?? keyFromSubject(input.subject);
+
+  // A timestamp we cannot parse is worse than none: `new Date("nonsense")` is
+  // Invalid Date, which Postgres rejects and would cost the whole row.
+  const occurred =
+    input.occurredAt && !Number.isNaN(Date.parse(input.occurredAt))
+      ? new Date(input.occurredAt).toISOString()
+      : new Date().toISOString();
+
+  const rows = (await sql`
+    INSERT INTO email_events (
+      event_id, event_type, email_key, recipient, email_id, template_id,
+      subject, link, detail, user_agent, ip_address, occurred_at
+    )
+    VALUES (
+      ${input.eventId}, ${eventType}, ${emailKey},
+      ${cleanRecipient(input.recipient)}, ${input.emailId}, ${input.templateId},
+      ${input.subject}, ${input.link}, ${input.detail},
+      ${input.userAgent}, ${input.ipAddress}, ${occurred}
+    )
+    ON CONFLICT (event_id) DO NOTHING
+    RETURNING id`) as { id: number }[];
+
+  return rows.length > 0 ? "written" : "duplicate";
 }
 
 export async function recordBooking(input: {
@@ -334,6 +510,121 @@ export async function getEmailAttribution(): Promise<
   }
 
   return out;
+}
+
+export interface StepToBooking {
+  key: string;
+  /** Distinct people who clicked a link in this email. */
+  clickers: number;
+  /**
+   * Bookings whose last click before the booking was on this email. One booking
+   * is credited to exactly one step, so these sum to the number of attributed
+   * bookings rather than over-counting people who clicked several emails.
+   */
+  bookedLastTouch: number;
+  /**
+   * Bookings by someone who clicked this email at any point beforehand. A
+   * booking appears under every email that contributed, so these sum to more
+   * than the number of bookings — which is the point of having both.
+   */
+  bookedAssisted: number;
+  /** Median hours from the last click to the booking, where there is one. */
+  medianHoursToBook: number | null;
+}
+
+/**
+ * Which sequence step precedes a booked audit.
+ *
+ * The join key is the recipient's email address, which both sides genuinely
+ * carry: Resend reports `data.to[0]` on every event, and Calendly puts the
+ * invitee's address in `payload.email` on `invitee.created`. Neither is inferred.
+ *
+ * Two credit models, because either alone misleads. Last touch answers "what
+ * finally moved them" and is the one to judge a single email on; assisted
+ * answers "what did they read on the way" and is the one to judge a *cut* on —
+ * an email with no last-touch bookings can still be doing the work that makes
+ * email 19 land, and dropping it on the first number alone would be a mistake.
+ *
+ * Only clicks at or before the booking count. Sequence sends continue until the
+ * Calendly webhook marks the contact booked, so a later click is a real click on
+ * an email that cannot have caused a booking that already happened.
+ */
+export async function getStepToBooking(): Promise<StepToBooking[]> {
+  const url = connectionString();
+  if (!url) return [];
+  const sql = neon(url);
+
+  try {
+    const rows = (await sql`
+      WITH clicks AS (
+        SELECT recipient AS email, email_key, occurred_at
+        FROM email_events
+        WHERE event_type = 'clicked'
+          AND email_key IS NOT NULL
+          AND recipient IS NOT NULL
+      ),
+      bookings AS (
+        SELECT email, MIN(created_at) AS booked_at
+        FROM sequence_bookings
+        WHERE status = 'booked'
+        GROUP BY email
+      ),
+      -- The one click that immediately precedes each booking.
+      last_touch AS (
+        SELECT DISTINCT ON (b.email)
+               b.email, b.booked_at, c.email_key, c.occurred_at
+        FROM bookings b
+        JOIN clicks c
+          ON c.email = b.email AND c.occurred_at <= b.booked_at
+        ORDER BY b.email, c.occurred_at DESC
+      ),
+      -- Every distinct email someone clicked before booking.
+      assisted AS (
+        SELECT DISTINCT b.email, c.email_key
+        FROM bookings b
+        JOIN clicks c
+          ON c.email = b.email AND c.occurred_at <= b.booked_at
+      )
+      SELECT s.email_key                                   AS key,
+             COUNT(DISTINCT s.email)::int                  AS clickers,
+             COALESCE(lt.n, 0)::int                        AS booked_last_touch,
+             COALESCE(a.n, 0)::int                         AS booked_assisted,
+             lt.median_hours                               AS median_hours_to_book
+      FROM clicks s
+      LEFT JOIN (
+        SELECT email_key,
+               COUNT(*)::int AS n,
+               PERCENTILE_CONT(0.5) WITHIN GROUP (
+                 ORDER BY EXTRACT(EPOCH FROM (booked_at - occurred_at)) / 3600
+               ) AS median_hours
+        FROM last_touch GROUP BY email_key
+      ) lt ON lt.email_key = s.email_key
+      LEFT JOIN (
+        SELECT email_key, COUNT(*)::int AS n FROM assisted GROUP BY email_key
+      ) a ON a.email_key = s.email_key
+      GROUP BY s.email_key, lt.n, a.n, lt.median_hours
+      ORDER BY booked_last_touch DESC, clickers DESC`) as {
+      key: string;
+      clickers: number;
+      booked_last_touch: number;
+      booked_assisted: number;
+      median_hours_to_book: string | number | null;
+    }[];
+
+    return rows.map((row) => ({
+      key: row.key,
+      clickers: row.clickers,
+      bookedLastTouch: row.booked_last_touch,
+      bookedAssisted: row.booked_assisted,
+      medianHoursToBook:
+        row.median_hours_to_book === null
+          ? null
+          : Math.round(Number(row.median_hours_to_book) * 10) / 10,
+    }));
+  } catch (error) {
+    console.error("Attribution: step-to-booking read failed:", error);
+    return [];
+  }
 }
 
 export interface SubscriberPoint {
