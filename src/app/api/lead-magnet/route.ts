@@ -16,7 +16,11 @@ import {
 } from "@/lib/cro/db";
 import { VISITOR_COOKIE } from "@/lib/cro/assign";
 import { subscribeToSequence } from "@/lib/subscribe";
-import { recordConsent } from "@/lib/consent";
+import { recordConsent, recentSubmissionsFromIp } from "@/lib/consent";
+import {
+  MAX_SUBMISSIONS_PER_IP_PER_HOUR,
+  screenSubmission,
+} from "@/lib/spam";
 import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
 import { describeAttribution, type Attribution } from "@/lib/attribution";
 
@@ -75,7 +79,23 @@ interface LeadPayload {
   consentText?: string;
   /** Campaign parameters from the landing URL. See lib/attribution.ts. */
   attribution?: Attribution | null;
+  /** Decoy field — anything in it means the submission was automated. */
+  honeypot?: string;
+  /** Milliseconds the form was on screen before submission. */
+  elapsedMs?: number;
 }
+
+/**
+ * What a rejected submission is told.
+ *
+ * Deliberately the same wording a genuine failure gets, and deliberately not an
+ * explanation. A bot learns nothing; a real person wrongly caught still has the
+ * email address in the form's error message and a working way to reach us. The
+ * actual reason goes to the log, where it can be seen if this ever starts
+ * turning away people it shouldn't.
+ */
+const REJECTION_MESSAGE =
+  "Something went wrong. Please try again, or email max@footholdsystems.com and we'll send it over.";
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,6 +129,31 @@ export async function POST(request: NextRequest) {
         { error: "Please tick the box to confirm you'd like the guide and the emails." },
         { status: 400 }
       );
+    }
+
+    // Bot screening, before a single email is sent or a row written. Ordered
+    // cheapest first: two field checks that need nothing, then the one query.
+    const screened = screenSubmission({
+      honeypot: body.honeypot,
+      elapsedMs: body.elapsedMs,
+    });
+    if (!screened.ok) {
+      console.warn(`Lead submission rejected (${screened.reason})`);
+      return NextResponse.json({ error: REJECTION_MESSAGE }, { status: 400 });
+    }
+
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null;
+
+    // Fails open by design — recentSubmissionsFromIp returns 0 when the database
+    // is unreachable, because a rate limiter that takes the form down with it is
+    // a worse outage than the thing it prevents.
+    const recentFromIp = await recentSubmissionsFromIp(clientIp, 60);
+    if (recentFromIp >= MAX_SUBMISSIONS_PER_IP_PER_HOUR) {
+      console.warn(
+        `Lead submission rejected (${recentFromIp} submissions from this IP in the last hour)`
+      );
+      return NextResponse.json({ error: REJECTION_MESSAGE }, { status: 429 });
     }
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -198,8 +243,7 @@ export async function POST(request: NextRequest) {
         source,
         // Both are evidence of when and from where consent was given, which is
         // the question asked if a provider ever reviews the list.
-        ipAddress:
-          request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null,
+        ipAddress: clientIp,
         userAgent: request.headers.get("user-agent"),
         attribution,
       });

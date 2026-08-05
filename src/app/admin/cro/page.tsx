@@ -124,9 +124,19 @@ function ExperimentCard({
         })}
       </div>
 
-      {stats && stats.pValue !== null && (
+      {/* The sequential p-value leads, because it is the one the engine acts on.
+          The naive p is kept beside it and labelled, since it is the number most
+          people expect to see — and the gap between them is a useful reminder of
+          what repeated looking costs. */}
+      {stats && stats.alwaysValidPValue !== null && (
         <p className="mt-3 text-xs text-[#8a887f]">
-          lift {stats.liftPct !== null ? `${stats.liftPct >= 0 ? "+" : ""}${stats.liftPct.toFixed(1)}%` : "—"} · p={stats.pValue.toFixed(4)}
+          lift {stats.liftPct !== null ? `${stats.liftPct >= 0 ? "+" : ""}${stats.liftPct.toFixed(1)}%` : "—"}
+          {" · "}sequential p={stats.alwaysValidPValue.toFixed(4)}
+          {stats.pValue !== null && (
+            <span className="text-[#6a6963]">
+              {" · "}fixed-horizon p={stats.pValue.toFixed(4)} (not acted on)
+            </span>
+          )}
         </p>
       )}
 

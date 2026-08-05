@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
 import { captureAttribution, type Attribution } from "@/lib/attribution";
+import { HONEYPOT_FIELD } from "@/lib/spam";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
@@ -37,6 +38,12 @@ export function LeadMagnetForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "error">("idle");
   const attribution = useRef<Attribution | null>(null);
+  // Decoy field. Hidden from people and from assistive technology, so anything
+  // in it came from something filling every input it could find.
+  const [honeypot, setHoneypot] = useState("");
+  // When this form appeared, for the dwell-time check. A ref, not state: it is
+  // written once and read once, and never rendered.
+  const mountedAt = useRef<number>(0);
 
   // Warm the thank-you route so the redirect after submit is instant.
   useEffect(() => {
@@ -50,6 +57,7 @@ export function LeadMagnetForm({
   // a value the form does not display.
   useEffect(() => {
     attribution.current = captureAttribution();
+    mountedAt.current = Date.now();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +81,10 @@ export function LeadMagnetForm({
           // direct visit with no referrer, which is a real answer rather than
           // a missing one.
           attribution: attribution.current,
+          // Bot screening. Both are advisory: the route decides, and neither is
+          // anything a real person has to do. See lib/spam.ts.
+          honeypot,
+          elapsedMs: mountedAt.current ? Date.now() - mountedAt.current : undefined,
         }),
       });
 
@@ -118,6 +130,25 @@ export function LeadMagnetForm({
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
+      {/* Decoy. Positioned off-screen rather than display:none, which some bots
+          skip; hidden from screen readers with aria-hidden and taken out of the
+          tab order, so no real visitor can reach it by any route. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+      >
+        <label htmlFor={`${HONEYPOT_FIELD}-field`}>Company</label>
+        <input
+          id={`${HONEYPOT_FIELD}-field`}
+          type="text"
+          name={HONEYPOT_FIELD}
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <input
           type="text"

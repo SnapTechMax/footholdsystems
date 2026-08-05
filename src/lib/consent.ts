@@ -81,6 +81,49 @@ export async function initConsentSchema(): Promise<void> {
   await sql`
     ALTER TABLE marketing_consent
       ADD COLUMN IF NOT EXISTS attribution JSONB`;
+
+  // Supports the per-IP rate limit below. Without it that count is a sequential
+  // scan on every submission — fine at today's size, and not something to leave
+  // waiting for the day it isn't.
+  await sql`
+    CREATE INDEX IF NOT EXISTS marketing_consent_ip
+      ON marketing_consent (ip_address, created_at DESC)`;
+}
+
+/**
+ * How many submissions this IP has made recently.
+ *
+ * Counted from `marketing_consent` rather than a table of its own, because that
+ * row is already written on every successful submission and already holds the IP
+ * and the timestamp for consent evidence. A second table would be a second thing
+ * to keep, storing what this one already stores.
+ *
+ * Returns 0 rather than throwing when the database is unreachable. A rate
+ * limiter that fails closed turns a database blip into a form outage, which is a
+ * far more expensive failure than briefly letting a script through.
+ */
+export async function recentSubmissionsFromIp(
+  ipAddress: string | null,
+  withinMinutes = 60
+): Promise<number> {
+  if (!ipAddress) return 0;
+  const url = connectionString();
+  if (!url) return 0;
+
+  try {
+    const sql = neon(url);
+    const rows = (await sql`
+      SELECT COUNT(*)::int AS n
+      FROM marketing_consent
+      WHERE ip_address = ${ipAddress}
+        AND created_at > now() - (${withinMinutes} * INTERVAL '1 minute')`) as {
+      n: number;
+    }[];
+    return rows[0]?.n ?? 0;
+  } catch (error) {
+    console.error("Rate limit check failed (submission allowed):", error);
+    return 0;
+  }
 }
 
 export async function recordConsent(record: ConsentRecord): Promise<void> {

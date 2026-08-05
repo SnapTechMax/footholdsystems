@@ -31,9 +31,76 @@ export interface Comparison {
   rateB: number;
   /** Relative change of b against a, as a percentage. */
   liftPct: number | null;
-  /** Two-sided p-value from a pooled two-proportion z-test. */
+  /**
+   * Two-sided p-value from a pooled two-proportion z-test.
+   *
+   * Reported, but **not** what decisions are made on. It is only valid at a
+   * sample size fixed before the test began, and this engine looks every three
+   * hours. Use `alwaysValidPValue` for anything that acts.
+   */
   pValue: number | null;
+  /**
+   * Sequential p-value, valid at every look. This is the one `verdict` uses.
+   * Always at least as large as `pValue` — that gap is the price of being
+   * allowed to stop whenever you like.
+   */
+  alwaysValidPValue: number | null;
   zScore: number | null;
+}
+
+/**
+ * Relative effect the mixture is centred to detect.
+ *
+ * The sequential test needs a scale for the effects worth finding. Too small and
+ * it takes forever to conclude anything; too large and it shrugs at real
+ * differences. A quarter is about the smallest lift worth rewriting a page for
+ * at this traffic — below that the test would outlive the copy.
+ */
+const TARGET_RELATIVE_LIFT = 0.25;
+
+/**
+ * A sequential (always-valid) p-value, via a mixture sequential probability
+ * ratio test.
+ *
+ * The problem this solves: a fixed-horizon p-value is only valid if you decided
+ * the sample size before looking. Test repeatedly and stop the first time it
+ * dips under 0.05 and the real false-positive rate is nowhere near 5% — with
+ * looks every three hours over a week it is comfortably into the twenties. The
+ * engine was doing exactly that, so a "winner" could easily be noise that
+ * happened to look good at 3am, and the page would then be rewritten around it.
+ *
+ * The fix is a likelihood ratio mixed over a normal prior on the true effect:
+ *
+ *     Λ = √(se² / (se² + τ²)) · exp( δ̂²τ² / (2 se² (se² + τ²)) )
+ *
+ * Under the null Λ is a non-negative martingale starting at 1, so Ville's
+ * inequality bounds the chance it *ever* reaches 1/α at α. Rejecting when
+ * 1/Λ ≤ α therefore holds the error rate across every look that will ever be
+ * taken, which is what makes continuous monitoring legitimate rather than a
+ * quiet way of manufacturing significance.
+ *
+ * τ is taken from the control arm's own rate. Strictly it should be fixed in
+ * advance; deriving it from observed data is a small liberty, standard in
+ * practice, and far less consequential than the problem it replaces.
+ */
+export function alwaysValidPValue(
+  delta: number,
+  standardError: number,
+  tau: number
+): number | null {
+  if (!(standardError > 0) || !(tau > 0)) return null;
+
+  const se2 = standardError * standardError;
+  const tau2 = tau * tau;
+
+  const logLambda =
+    0.5 * Math.log(se2 / (se2 + tau2)) +
+    (delta * delta * tau2) / (2 * se2 * (se2 + tau2));
+
+  // Worked in logs: Λ overflows for a decisive result on a large sample, and an
+  // Infinity here would read as a p-value of exactly 0.
+  const p = Math.exp(-logLambda);
+  return Number.isFinite(p) ? Math.min(1, p) : 0;
 }
 
 export function compare({ a, b }: ComparisonInput): Comparison {
@@ -41,21 +108,38 @@ export function compare({ a, b }: ComparisonInput): Comparison {
   const rateB = b.impressions > 0 ? b.conversions / b.impressions : 0;
   const liftPct = rateA > 0 ? ((rateB - rateA) / rateA) * 100 : null;
 
-  if (a.impressions === 0 || b.impressions === 0) {
-    return { rateA, rateB, liftPct, pValue: null, zScore: null };
-  }
+  const empty = {
+    rateA,
+    rateB,
+    liftPct,
+    pValue: null,
+    alwaysValidPValue: null,
+    zScore: null,
+  };
+
+  if (a.impressions === 0 || b.impressions === 0) return empty;
 
   const pooled = (a.conversions + b.conversions) / (a.impressions + b.impressions);
   const se = Math.sqrt(
     pooled * (1 - pooled) * (1 / a.impressions + 1 / b.impressions)
   );
-  if (se === 0) {
-    return { rateA, rateB, liftPct, pValue: null, zScore: null };
-  }
+  if (se === 0) return empty;
 
-  const zScore = (rateB - rateA) / se;
+  const delta = rateB - rateA;
+  const zScore = delta / se;
   const pValue = 2 * (1 - normalCdf(Math.abs(zScore)));
-  return { rateA, rateB, liftPct, pValue, zScore };
+
+  // Scale of effect worth finding, in absolute rate. Falls back to the pooled
+  // rate when the control has converted nobody yet, so an experiment that has
+  // not seen a conversion on A still has a usable scale rather than none.
+  const tau = (rateA > 0 ? rateA : pooled) * TARGET_RELATIVE_LIFT;
+
+  return {
+    ...empty,
+    pValue,
+    alwaysValidPValue: alwaysValidPValue(delta, se, tau),
+    zScore,
+  };
 }
 
 export type Verdict =
@@ -76,9 +160,19 @@ export interface VerdictOptions {
  * Decide what to do with a running experiment.
  *
  * Three outcomes: keep waiting, promote a winner, or bail out early because the
- * challenger is clearly hurting. The early bail deliberately uses a much lower
- * bar than declaring a winner — shipping a loser costs real leads every day it
- * stays up, so the asymmetry is intentional.
+ * challenger is clearly hurting.
+ *
+ * Promotion is judged on the sequential p-value, so this may be called as often
+ * as the cron fires without inflating the false-positive rate. The impression
+ * floor stays on top of it — not for the statistics, which no longer need it,
+ * but because a winner declared off forty visitors is not something worth
+ * rewriting a live page around however sound the arithmetic.
+ *
+ * The early bail is deliberately a much lower bar, and deliberately *not* a
+ * significance claim. It is a business rule: a challenger this far down is
+ * costing real leads every hour it stays up, and reverting to the control is
+ * the direction where being wrong is cheap. Treating it as evidence of anything
+ * would be a mistake; treating it as a stop-loss is the point.
  */
 export function verdict(
   totals: ComparisonInput,
@@ -125,12 +219,17 @@ export function verdict(
     };
   }
 
-  if (result.pValue === null || result.pValue > significanceLevel) {
-    const p = result.pValue === null ? "n/a" : result.pValue.toFixed(3);
+  // Sequential, not the fixed-horizon p-value beside it. This is the whole point
+  // of the change: the engine looks every three hours, and only this one stays
+  // honest when it does.
+  const sequentialP = result.alwaysValidPValue;
+
+  if (sequentialP === null || sequentialP > significanceLevel) {
+    const p = sequentialP === null ? "n/a" : sequentialP.toFixed(3);
     return {
       kind: "insufficient",
       reason:
-        `No significant difference yet (p=${p}, need <${significanceLevel}). ` +
+        `No significant difference yet (sequential p=${p}, need <${significanceLevel}). ` +
         `A ${fmtRate(result.rateA)}, B ${fmtRate(result.rateB)}.`,
     };
   }
@@ -141,7 +240,7 @@ export function verdict(
     winner,
     reason:
       `Variant ${winner.toUpperCase()} wins: ${fmtRate(result.rateA)} vs ` +
-      `${fmtRate(result.rateB)} (p=${result.pValue.toFixed(4)}, ` +
+      `${fmtRate(result.rateB)} (sequential p=${sequentialP.toFixed(4)}, ` +
       `${result.liftPct !== null ? `${result.liftPct >= 0 ? "+" : ""}${result.liftPct.toFixed(1)}%` : "n/a"}).`,
   };
 }
