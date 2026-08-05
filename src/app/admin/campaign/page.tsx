@@ -143,7 +143,9 @@ export default async function CampaignDashboard() {
               <th className="px-4 py-3 font-normal">Day</th>
               <th className="px-4 py-3 font-normal">Subject</th>
               <th className="px-4 py-3 text-right font-normal">Sent</th>
-              <th className="px-4 py-3 text-right font-normal">Opened</th>
+              <th className="px-4 py-3 text-right font-normal">Delivered</th>
+              <th className="px-4 py-3 text-right font-normal">Bounced</th>
+              <th className="px-4 py-3 text-right font-normal">Spam</th>
               <th className="px-4 py-3 text-right font-normal">Clicked</th>
               <th className="px-4 py-3 text-right font-normal">Booked</th>
               <th className="px-4 py-3 font-normal">Reach</th>
@@ -152,7 +154,7 @@ export default async function CampaignDashboard() {
           <tbody>
             {funnel.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-[#8a887f]">
+                <td colSpan={10} className="px-4 py-6 text-center text-[#8a887f]">
                   No runs yet. Numbers appear once someone opts in and the
                   sequence starts.
                 </td>
@@ -160,7 +162,9 @@ export default async function CampaignDashboard() {
             )}
             {funnel.map((step) => {
               const seen = attribution.get(step.key);
-              const opens = seen?.opens ?? 0;
+              const delivered = seen?.delivered ?? 0;
+              const bounced = seen?.bounced ?? 0;
+              const complained = seen?.complained ?? 0;
               const clicks = seen?.clicks ?? 0;
               const booked = seen?.booked ?? 0;
               // Against sent, not against the list: an email nobody has reached
@@ -180,8 +184,18 @@ export default async function CampaignDashboard() {
                     {step.sent}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className={opens > 0 ? "font-bold text-[#cfccc2]" : "text-[#57564f]"}>
-                      {opens}
+                    <span className={delivered > 0 ? "text-[#cfccc2]" : "text-[#57564f]"}>
+                      {delivered}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className={bounced > 0 ? "font-bold text-[#ff9d7a]" : "text-[#57564f]"}>
+                      {bounced}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <span className={complained > 0 ? "font-bold text-[#ff9d7a]" : "text-[#57564f]"}>
+                      {complained}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right">
@@ -240,13 +254,13 @@ export default async function CampaignDashboard() {
         running still links straight to Calendly.
       </p>
           <p className="mt-3 text-[11px] leading-relaxed text-[#7a786f]">
-        <strong className="text-[#8a887f]">Opened</strong> counts pixel loads,
-        not readers. Apple Mail pre-fetches images for everyone using it, so
-        those register whether or not the mail was looked at; anyone with images
-        off registers nothing at all. Compare one email against another rather
-        than reading the number on its own.{" "}
-        <strong className="text-[#8a887f]">Clicked</strong> is recorded
-        server-side and is the reliable one.
+        There is no <strong className="text-[#8a887f]">opened</strong> column,
+        and cannot be one without a tracking pixel — no mail protocol reports an
+        open, so every &ldquo;open rate&rdquo; anywhere is an embedded image, and
+        that image is a bulk-mail signal. These three come from the receiving
+        server instead and cost nothing to collect.{" "}
+        <strong className="text-[#8a887f]">Spam</strong> is the one to watch:
+        Gmail and Yahoo judge bulk senders at 0.3% of delivered.
       </p>
 
       <ClickResetPanel />

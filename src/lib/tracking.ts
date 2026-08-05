@@ -99,24 +99,28 @@ export async function initTrackingSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS email_clicks_key
       ON email_clicks (email_key, clicked_at DESC)`;
 
-  // Opens, from the tracking pixel in each email. Deliberately shaped like
-  // email_clicks so the two read the same way.
-  //
-  // Every hit is a row rather than one row per person. Apple Mail Privacy
-  // Protection pre-fetches images through a proxy, so a single recipient can
-  // produce several, and collapsing them on write would throw away the evidence
-  // that it happened. Distinct recipients are counted at read time instead,
-  // which is the figure worth looking at.
+  // Delivery outcomes reported by Resend's webhook: delivered, bounced,
+  // complained. Nothing is embedded in the email to collect these — they come
+  // from the receiving server's SMTP response and from feedback loops, which is
+  // what makes them free of the deliverability cost a tracking pixel carries.
   await sql`
-    CREATE TABLE IF NOT EXISTS email_opens (
+    CREATE TABLE IF NOT EXISTS email_deliveries (
       id         BIGSERIAL PRIMARY KEY,
-      email_key  TEXT NOT NULL,
+      email_key  TEXT,
+      kind       TEXT NOT NULL,
       recipient  TEXT,
-      opened_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+      email_id   TEXT,
+      detail     TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
   await sql`
-    CREATE INDEX IF NOT EXISTS email_opens_key
-      ON email_opens (email_key, opened_at DESC)`;
+    CREATE INDEX IF NOT EXISTS email_deliveries_key
+      ON email_deliveries (email_key, kind, created_at DESC)`;
+  // One row per Resend event id, so a webhook retry cannot count twice.
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS email_deliveries_unique
+      ON email_deliveries (email_id, kind)
+      WHERE email_id IS NOT NULL`;
 
   // One row per Calendly event rather than one per person: a booking followed by
   // a cancellation is two facts, and collapsing them would hide the churn.
@@ -149,17 +153,42 @@ export async function recordClick(input: {
     VALUES (${input.emailKey}, ${input.link}, ${input.recipient})`;
 }
 
-export async function recordOpen(input: {
-  emailKey: string;
+/**
+ * Match a delivered email back to its step by subject.
+ *
+ * The webhook payload carries no step key — it describes an email, not an
+ * automation position. Subjects are unique across the sequence, so they are the
+ * join. Anything unrecognised is stored with a null key rather than dropped: a
+ * bounce on the guide delivery email is still a bounce worth counting, it just
+ * does not belong to a step.
+ */
+const SUBJECT_TO_KEY = new Map(
+  SEQUENCE_STEPS.map((step) => [step.subject.trim().toLowerCase(), step.key])
+);
+
+export function keyFromSubject(subject: string | null | undefined): string | null {
+  if (!subject) return null;
+  return SUBJECT_TO_KEY.get(subject.trim().toLowerCase()) ?? null;
+}
+
+export async function recordDelivery(input: {
+  kind: "delivered" | "bounced" | "complained";
+  subject: string | null;
   recipient: string | null;
+  emailId: string | null;
+  detail: string | null;
 }): Promise<void> {
   const url = connectionString();
   if (!url) return;
   const sql = neon(url);
   await initTrackingSchema();
   await sql`
-    INSERT INTO email_opens (email_key, recipient)
-    VALUES (${input.emailKey}, ${input.recipient})`;
+    INSERT INTO email_deliveries (email_key, kind, recipient, email_id, detail)
+    VALUES (
+      ${keyFromSubject(input.subject)}, ${input.kind},
+      ${cleanRecipient(input.recipient)}, ${input.emailId}, ${input.detail}
+    )
+    ON CONFLICT DO NOTHING`;
 }
 
 export async function recordBooking(input: {
@@ -214,16 +243,12 @@ export async function resetEmailClicks(): Promise<number> {
 
 export interface EmailAttribution {
   key: string;
-  /**
-   * Pixel loads. Runs high and is not a count of people who read anything:
-   * Apple Mail Privacy Protection pre-fetches images for every recipient using
-   * it, so those register whether or not the mail was opened by a person, while
-   * anyone with images switched off registers nothing at all. Useful for
-   * comparing one email against another, not as a number in its own right.
-   */
-  opens: number;
-  /** Distinct recipients seen opening, where the merge tag identified them. */
-  openers: number;
+  /** Accepted by the receiving server. The denominator worth using. */
+  delivered: number;
+  /** Rejected. A rising count here is what damages a sending domain. */
+  bounced: number;
+  /** Marked as spam. Gmail and Yahoo judge bulk senders at 0.3%. */
+  complained: number;
   clicks: number;
   /** Distinct people, where the merge tag identified them. */
   clickers: number;
@@ -261,33 +286,34 @@ export async function getEmailAttribution(): Promise<
       n: number;
     }[];
 
-    const opens = (await sql`
-      SELECT email_key,
-             COUNT(*)::int                  AS opens,
-             COUNT(DISTINCT recipient)::int AS openers
-      FROM email_opens GROUP BY email_key`) as {
+    const deliveries = (await sql`
+      SELECT email_key, kind, COUNT(*)::int AS n
+      FROM email_deliveries
+      WHERE email_key IS NOT NULL
+      GROUP BY email_key, kind`) as {
       email_key: string;
-      opens: number;
-      openers: number;
+      kind: string;
+      n: number;
     }[];
 
     const blank = (key: string): EmailAttribution => ({
       key,
-      opens: 0,
-      openers: 0,
+      delivered: 0,
+      bounced: 0,
+      complained: 0,
       clicks: 0,
       clickers: 0,
       booked: 0,
       canceled: 0,
     });
 
-    for (const row of opens) {
+    for (const row of deliveries) {
       const entry = out.get(row.email_key) ?? blank(row.email_key);
-      entry.opens = row.opens;
-      entry.openers = row.openers;
+      if (row.kind === "delivered") entry.delivered = row.n;
+      else if (row.kind === "bounced") entry.bounced = row.n;
+      else if (row.kind === "complained") entry.complained = row.n;
       out.set(row.email_key, entry);
     }
-
     for (const row of clicks) {
       const entry = out.get(row.email_key) ?? blank(row.email_key);
       entry.clicks = row.clicks;

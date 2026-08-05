@@ -22,15 +22,17 @@ import { SEQUENCE } from "../content/nurture-sequence.mjs";
 const DRY = process.argv.includes("--dry-run");
 const TRIGGER_EVENT = "guide.downloaded";
 
-// Which HTML shell to push. `plain` selects the stripped-down one in
-// content/nurture-sequence.mjs — no wrapper, no masthead, no rule, and the CTA
-// as an inline link instead of a button — which is the shape that reads as
-// personal mail rather than as a newsletter. Default is the existing design, so
-// this changes nothing until it is asked for.
+// Which HTML shell to push.
 //
-// Reverting is dropping the variable. Both shells are built on every run, so
-// neither can rot while the other is in use.
-const PLAIN_STYLE = process.env.SEQUENCE_STYLE === "plain";
+// Plain is now the default: no wrapper, no coloured canvas, no masthead, no
+// rule, and the CTA as an ordinary inline link rather than a padded button.
+// Those five things are what separates a newsletter from a message a person
+// wrote, and Gmail files bulk mail on what it looks like rather than on who
+// sent it. It is the only lever on tab placement that is actually in our hands.
+//
+// `SEQUENCE_STYLE=designed` puts the old shell back. Both are built on every
+// run, so neither can rot while the other is in use.
+const PLAIN_STYLE = process.env.SEQUENCE_STYLE !== "designed";
 const bodyHtml = (email) => (PLAIN_STYLE ? email.plainHtml : email.html);
 
 // Contact property set by the Calendly webhook in app/api/calendly/webhook.

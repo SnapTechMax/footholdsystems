@@ -48,7 +48,6 @@ export function tagged(url, campaign, content = "cta") {
 }
 
 export const BOOKING_TRACKER = "https://www.footholdsystems.com/api/go/book";
-export const OPEN_TRACKER = "https://www.footholdsystems.com/api/go/open";
 
 /**
  * The booking button, pointed at our own redirect rather than at Calendly.
@@ -71,25 +70,6 @@ function booking(campaign, content = "cta-button") {
   return `${BOOKING_TRACKER}?${params}&r={{{EMAIL}}}`;
 }
 
-/**
- * Open-tracking pixel, appended to the end of both shells.
- *
- * Counts image loads, which is not the same as counts of people reading. Apple
- * Mail pre-fetches images for everyone using it, inflating the figure; anyone
- * with images off is invisible, deflating it. Worth comparing across emails,
- * not worth quoting on its own. See app/api/go/open/route.ts.
- *
- * Assembled by hand for the same reason as the booking link: `new URL()`
- * percent-encodes the braces, and Resend substitutes only a merge tag it can
- * still recognise, so an encoded one would be delivered literally.
- *
- * Empty alt and zero border so it cannot show as a broken-image icon in a client
- * that blocks images, and aria-hidden so a screen reader ignores it entirely.
- */
-function openPixel(campaign) {
-  const params = new URLSearchParams({ e: campaign });
-  return `<img src="${OPEN_TRACKER}?${params}&r={{{EMAIL}}}" width="1" height="1" border="0" alt="" aria-hidden="true" style="display:block;width:1px;height:1px;border:0;outline:none;">`;
-}
 
 /**
  * Tag every link in an email body, not just the button.
@@ -135,7 +115,6 @@ ${p("Max")}
       Foothold Systems &middot; ${BRAND_ADDRESS}<br>
       <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a786f;">Unsubscribe</a>. One click, no hard feelings.
     </p>
-    ${openPixel(campaign)}
   </div>
 </div>`;
 }
