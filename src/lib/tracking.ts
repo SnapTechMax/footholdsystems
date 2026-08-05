@@ -147,6 +147,37 @@ export async function recordBooking(input: {
             ${input.status})`;
 }
 
+/**
+ * Delete every recorded click on a sequence link.
+ *
+ * Exists because the first clicks any of these links ever receive are the
+ * operator's own, testing that the redirect works. Those are indistinguishable
+ * from real ones afterwards — same table, same shape — and left in place they
+ * quietly inflate the per-email figures the sequence is judged on for as long as
+ * the list is small enough for a handful of clicks to matter, which is exactly
+ * when those figures are being watched most closely.
+ *
+ * Clicks only. `sequence_bookings` is left alone: a booking is a real event with
+ * a Calendly record behind it, and deleting one would misreport a call that
+ * genuinely happened.
+ *
+ * Returns how many rows went, because a reset that cannot say what it removed is
+ * indistinguishable from one that silently did nothing.
+ */
+export async function resetEmailClicks(): Promise<number> {
+  const url = connectionString();
+  if (!url) return 0;
+  const sql = neon(url);
+  await initTrackingSchema();
+
+  const rows = (await sql`
+    SELECT COUNT(*)::int AS n FROM email_clicks`) as { n: number }[];
+  const removed = rows[0]?.n ?? 0;
+
+  await sql`DELETE FROM email_clicks`;
+  return removed;
+}
+
 /* ── reading ──────────────────────────────────────────────────────────────── */
 
 export interface EmailAttribution {

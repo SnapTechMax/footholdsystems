@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/AdminNav";
+import { ClickResetPanel } from "./ClickResetPanel";
 import { CAMPAIGN_CONFIGURED, getCampaignStats } from "@/lib/campaign";
 import { getEmailAttribution } from "@/lib/tracking";
 
@@ -68,6 +69,14 @@ export default async function CampaignDashboard() {
       ) : (
         <p className={`${mono} mt-2 text-[#8a887f]`}>no automation connected</p>
       )}
+
+      <p className={`${mono} mt-1 text-[11px] text-[#6a6963]`}>
+        {/* Said explicitly because the snapshot is reused for a minute. Without
+            this, two refreshes showing the same numbers looks like nothing is
+            updating rather than like the cache doing its job. */}
+        snapshot {new Date(stats.fetchedAt).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles" })} Pacific
+        {stats.unreadableRuns > 0 && ` · ${stats.unreadableRuns} run(s) unread`}
+      </p>
 
       {stats.errors.length > 0 && (
         <div className="mt-6 rounded-lg border border-[#5c4a1f] bg-[#2a2413] p-4">
@@ -223,6 +232,8 @@ export default async function CampaignDashboard() {
         the sequence is rebuilt and switched over, since the automation now
         running still links straight to Calendly.
       </p>
-    </main>
+          <ClickResetPanel />
+
+</main>
   );
 }

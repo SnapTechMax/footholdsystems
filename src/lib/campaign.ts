@@ -23,6 +23,64 @@ import { initConsentSchema } from "./consent";
 
 const RUN_SAMPLE_LIMIT = 50;
 
+/**
+ * Reading the per-email funnel means one API call per run, because Resend only
+ * returns step detail on an individual run. That fan-out was the whole problem:
+ * fifty requests were fired back to back on every page load, Resend rate-limited
+ * most of them, and each failure was swallowed by a bare `continue`. A different
+ * subset survived every time, so the same dashboard reported different numbers
+ * on every refresh — and never said it was guessing.
+ *
+ * Three things fix it: pace the requests, retry the ones that are rate-limited,
+ * and refuse to present a partial read as a complete one.
+ */
+const REQUEST_CONCURRENCY = 4;
+const MAX_RETRIES = 4;
+const RETRY_BASE_MS = 400;
+
+/**
+ * How long a computed snapshot is reused.
+ *
+ * The fan-out is slow and rate-limited, so recomputing it on every refresh was
+ * both the cause of the flapping and a good way to stay rate-limited. Held in
+ * module scope, which means per serverless instance rather than shared — good
+ * enough for one operator refreshing a page, and the numbers are correct either
+ * way now, so the worst case is a slightly older snapshot rather than a
+ * different one.
+ */
+const CACHE_TTL_MS = 60_000;
+let cached: { at: number; stats: CampaignStats } | null = null;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function isRateLimited(
+  error: { statusCode?: number | null; name?: string } | null
+): boolean {
+  if (!error) return false;
+  return error.statusCode === 429 || error.name === "rate_limit_exceeded";
+}
+
+/**
+ * Run a job over the ids a few at a time, so the API is not hit all at once.
+ * Order does not matter here — every result is folded into counters.
+ */
+async function mapWithConcurrency<T>(
+  ids: string[],
+  limit: number,
+  job: (id: string) => Promise<T>
+): Promise<T[]> {
+  const results: T[] = [];
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, ids.length) }, async () => {
+    while (cursor < ids.length) {
+      const index = cursor++;
+      results.push(await job(ids[index]));
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 const CONNECTION_ENV_VARS = [
   "DATABASE_URL",
   "STORAGE_DATABASE_URL",
@@ -61,6 +119,13 @@ export interface CampaignStats {
   /** True when the funnel below is from a sample rather than every run. */
   sampled: boolean;
   sampleSize: number;
+  /**
+   * Runs that could not be read even after retries. Any number above zero means
+   * every count below is a floor, not a total.
+   */
+  unreadableRuns: number;
+  /** When this snapshot was computed, so the page can say how fresh it is. */
+  fetchedAt: string;
   funnel: StepProgress[];
   /** Runs ended early by the booked check. */
   suppressedByBooking: number;
@@ -121,13 +186,42 @@ async function consentAndDownloads(): Promise<{
   return { granted, declined, downloads };
 }
 
-export async function getCampaignStats(): Promise<CampaignStats> {
+/**
+ * Campaign statistics, reusing a recent snapshot where there is one.
+ *
+ * The wrapper is the other half of the flapping fix. Even with the fan-out
+ * paced and retried, recomputing on every refresh means dozens of API calls
+ * each time and a fresh chance to be rate-limited. Within the TTL a refresh now
+ * returns the same answer because it is literally the same answer.
+ *
+ * `force: true` is what the reset control uses, so a deliberate action is never
+ * answered with a stale snapshot.
+ */
+export async function getCampaignStats(
+  options: { force?: boolean } = {}
+): Promise<CampaignStats> {
+  if (!options.force && cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.stats;
+  }
+  const stats = await computeCampaignStats();
+  cached = { at: Date.now(), stats };
+  return stats;
+}
+
+/** Clears the snapshot, so the next read is fresh. */
+export function invalidateCampaignStats(): void {
+  cached = null;
+}
+
+async function computeCampaignStats(): Promise<CampaignStats> {
   const errors: string[] = [];
   const empty: CampaignStats = {
     automation: null,
     runs: { total: 0, running: 0, completed: 0, cancelled: 0, failed: 0 },
     sampled: false,
     sampleSize: 0,
+    unreadableRuns: 0,
+    fetchedAt: new Date().toISOString(),
     funnel: [],
     suppressedByBooking: 0,
     consent: { granted: 0, declined: 0 },
@@ -243,44 +337,85 @@ export async function getCampaignStats(): Promise<CampaignStats> {
     return empty;
   }
 
-  // Steps are only on the individual run, so this is one request per run. Capped
-  // deliberately: a dashboard that fans out unboundedly gets slower every week.
+  // One request per run, because Resend returns step detail only on the run
+  // itself. Paced and retried rather than fired all at once — see the constants
+  // at the top of this file for why that mattered.
   const sent = new Map<string, number>();
   const waiting = new Map<string, number>();
   let suppressed = 0;
   let inspected = 0;
+  let unreadable = 0;
 
-  for (const runId of runIds) {
-    try {
-      const { data, error } = await resend.automations.runs.get({
-        automationId,
-        runId,
-      });
-      if (error || !data) continue;
-      inspected += 1;
+  await mapWithConcurrency(runIds, REQUEST_CONCURRENCY, async (runId) => {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { data, error } = await resend.automations.runs.get({
+          automationId,
+          runId,
+        });
 
-      for (const step of data.steps) {
-        if (step.type === "send_email" && step.status === "completed") {
-          sent.set(step.key, (sent.get(step.key) ?? 0) + 1);
+        if (error) {
+          // Only a rate limit is worth waiting out. Anything else is a fact
+          // about this run that another attempt will not change.
+          if (isRateLimited(error) && attempt < MAX_RETRIES) {
+            await sleep(RETRY_BASE_MS * 2 ** attempt);
+            continue;
+          }
+          unreadable += 1;
+          return;
         }
-        if (step.type === "delay" && (step.status === "waiting" || step.status === "running")) {
-          waiting.set(step.key, (waiting.get(step.key) ?? 0) + 1);
+        if (!data) {
+          unreadable += 1;
+          return;
         }
-      }
 
-      // A condition that completed with no send after it is someone who booked.
-      const endedOnCondition = data.steps.some(
-        (s) => s.type === "condition" && s.status === "completed"
-      );
-      if (endedOnCondition && data.status !== "running") {
-        const sends = data.steps.filter(
-          (s) => s.type === "send_email" && s.status === "completed"
-        ).length;
-        if (sends < SEQUENCE_STEPS.length) suppressed += 1;
+        inspected += 1;
+
+        for (const step of data.steps) {
+          if (step.type === "send_email" && step.status === "completed") {
+            sent.set(step.key, (sent.get(step.key) ?? 0) + 1);
+          }
+          if (
+            step.type === "delay" &&
+            (step.status === "waiting" || step.status === "running")
+          ) {
+            waiting.set(step.key, (waiting.get(step.key) ?? 0) + 1);
+          }
+        }
+
+        // A condition that completed with no send after it is someone who booked.
+        const endedOnCondition = data.steps.some(
+          (s) => s.type === "condition" && s.status === "completed"
+        );
+        if (endedOnCondition && data.status !== "running") {
+          const sends = data.steps.filter(
+            (s) => s.type === "send_email" && s.status === "completed"
+          ).length;
+          if (sends < SEQUENCE_STEPS.length) suppressed += 1;
+        }
+        return;
+      } catch {
+        if (attempt < MAX_RETRIES) {
+          await sleep(RETRY_BASE_MS * 2 ** attempt);
+          continue;
+        }
+        unreadable += 1;
+        return;
       }
-    } catch {
-      // One unreadable run should not blank the whole dashboard.
     }
+    unreadable += 1;
+  });
+
+  empty.unreadableRuns = unreadable;
+  if (unreadable > 0) {
+    // Said out loud rather than absorbed. This is exactly the number whose
+    // silent absence made the funnel change on every refresh, and a count that
+    // is quietly a floor is worse than one that admits it.
+    errors.push(
+      `${unreadable} of ${runIds.length} runs could not be read from Resend, ` +
+        "most likely rate limiting. Every per-email figure below is a floor " +
+        "rather than a total until this is zero."
+    );
   }
 
   empty.sampleSize = inspected;
