@@ -119,12 +119,11 @@ export function getHealth(): HealthItem[] {
       ok: Boolean(process.env.RESEND_AUTOMATION_ID),
       detail: "Without the automation id, campaign figures stay at zero.",
     },
-    {
-      label: "Mailing list",
-      ok: Boolean(process.env.RESEND_AUDIENCE_ID),
-      detail:
-        "The audience subscribers are added to. Unset, the sequence still runs but there is no list to send a broadcast to.",
-    },
+    // No row for RESEND_AUDIENCE_ID. One was added here and it was a mistake:
+    // Resend has replaced Audiences with Segments, so it reported a permanent
+    // red mark against a concept that no longer exists. Nothing reads that
+    // variable except a code path that is skipped when it is unset, which is
+    // always. A health list that cries wolf is worse than a shorter one.
     {
       label: "Calendly webhook",
       ok: Boolean(process.env.CALENDLY_WEBHOOK_SECRET),

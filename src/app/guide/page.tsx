@@ -103,15 +103,17 @@ export default async function GuidePage() {
     />
   );
 
-  // Same form, minus the optional name field. Above the fold the only job is to
-  // be answerable without thinking.
+  // The same form, above the fold. It used to drop the name field here to keep
+  // the ask to a single input on a phone; it no longer does, because this is the
+  // form most people convert on and a name field it does not have is a name
+  // nobody can give. Both instances are now identical, and kept as two constants
+  // only because they render in two places on the page.
   const heroForm = (
     <LeadMagnetForm
       submitLabel={content.submitLabel}
       experimentId={experimentId}
       variant={variant}
       consentRequired={consentRequired}
-      compact
     />
   );
 

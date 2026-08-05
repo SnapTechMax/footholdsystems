@@ -10,7 +10,6 @@ export function LeadMagnetForm({
   experimentId = null,
   variant = null,
   consentRequired = true,
-  compact = false,
 }: {
   submitLabel?: string;
   /** Set when a CRO experiment is running, so conversions can be attributed. */
@@ -21,14 +20,12 @@ export function LeadMagnetForm({
    * either way; ticking only decides whether they are enrolled.
    */
   consentRequired?: boolean;
-  /**
-   * Drops the optional name field, for the hero copy of this form. Two stacked
-   * inputs on a phone read as twice the work, and above the fold the only job is
-   * to be answerable without thinking. The name is still asked for lower down the
-   * page, where intent is higher — whichever form is used, the field is optional
-   * and the sequence handles an empty name.
-   */
-  compact?: boolean;
+  // There was a `compact` prop here that dropped the name field for the hero
+  // copy of this form, on the reasoning that two inputs above the fold read as
+  // twice the work on a phone. It did reduce friction, and it also meant the
+  // form most people actually converted on could not collect a name at all —
+  // which is why roughly one name in twenty was arriving. The field is now
+  // asked for in both places, so the prop had nothing left to do.
 } = {}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -107,17 +104,16 @@ export function LeadMagnetForm({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-        {!compact && (
-          <input
-            type="text"
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="First name (optional)"
-            autoComplete="given-name"
-            className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00] sm:max-w-[38%]"
-          />
-        )}
+        <input
+          type="text"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="First name"
+          required
+          autoComplete="given-name"
+          className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00] sm:max-w-[38%]"
+        />
         <input
           type="email"
           name="email"
