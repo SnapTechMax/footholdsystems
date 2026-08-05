@@ -71,7 +71,11 @@ export default async function CampaignDashboard() {
 
       {stats.errors.length > 0 && (
         <div className="mt-6 rounded-lg border border-[#5c4a1f] bg-[#2a2413] p-4">
-          <p className={`${mono} text-[#f6be00]`}>Not configured yet</p>
+          {/* Not "Not configured yet" any more. This list now carries real
+              misconfigurations — a RESEND_AUTOMATION_ID pointing at a retired
+              automation, or two enabled at once — and filing those under
+              "not configured" invites reading them as setup left undone. */}
+          <p className={`${mono} text-[#f6be00]`}>Needs attention</p>
           <ul className="mt-2 space-y-1 text-sm text-[#cfccc2]">
             {stats.errors.map((error) => (
               <li key={error}>• {error}</li>

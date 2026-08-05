@@ -62,6 +62,30 @@ async function main() {
       "\n"
   );
 
+  // Register the trigger event before anything references it.
+  //
+  // Resend treats events as first-class objects with their own endpoints, and
+  // this script previously assumed one into existence — the automation declared
+  // `guide.downloaded` as its trigger and lib/subscribe.ts sent it, but nothing
+  // ever created it. That works today, so Resend evidently creates it on first
+  // use, but it left the whole enrolment path resting on undocumented behaviour:
+  // on a fresh account the first download is what would have discovered it.
+  //
+  // No schema is declared on purpose. One would document the payload nicely, but
+  // it cannot be verified without sending against the live API, and a schema
+  // that rejects a field would break enrolment — which currently works. The only
+  // job here is to guarantee the event exists.
+  if (!DRY) {
+    const { error } = await resend.events.create({ name: TRIGGER_EVENT });
+    // 409 is the expected state on any account that has enrolled someone.
+    if (error && error.statusCode !== 409) {
+      throw new Error(`trigger event ${TRIGGER_EVENT}: ${error.message}`);
+    }
+    console.log(
+      `  trigger event ready: ${TRIGGER_EVENT}${error ? " (already existed)" : ""}`
+    );
+  }
+
   // The condition steps read contact.booked, so the property has to exist before
   // the automation referencing it does. Safe to re-run: an existing property is
   // treated as success.

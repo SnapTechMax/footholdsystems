@@ -171,6 +171,54 @@ export async function getCampaignStats(): Promise<CampaignStats> {
     );
   }
 
+  // Is the configured automation the one actually sending?
+  //
+  // This is the failure that cost an afternoon. create-email-sequence.mjs builds
+  // a *new* automation every run rather than editing the live one, because
+  // Resend will not let an enabled automation's steps change. So an account
+  // accumulates automations, exactly one is enabled, and RESEND_AUTOMATION_ID
+  // has to be moved across by hand — switch-sequence.mjs says so on the way out,
+  // and it is easy to miss.
+  //
+  // Miss it and `runs.list` is asked about a retired automation, finds nothing,
+  // and reports zero people in the sequence. Which is indistinguishable, on a
+  // dashboard, from an automation that is silently failing to enrol anyone —
+  // while the real one sends day-1 and day-2 emails perfectly well.
+  //
+  // Cheap to check and it removes the ambiguity, so it is checked on every load.
+  try {
+    const { data, error } = await resend.automations.list();
+    if (!error) {
+      const all = data?.data ?? [];
+      const enabled = all.filter((a) => a.status === "enabled");
+
+      if (enabled.length === 0) {
+        errors.push(
+          "No automation is enabled in Resend, so nobody is being enrolled. " +
+            "create-email-sequence.mjs builds them disabled on purpose — open " +
+            "Resend → Automations and press Start."
+        );
+      } else if (!enabled.some((a) => a.id === automationId)) {
+        const live = enabled[0];
+        errors.push(
+          `RESEND_AUTOMATION_ID is ${automationId}, which is not the automation ` +
+            `currently running. The live one is "${live.name}" (${live.id}). ` +
+            "Every figure below is being read off the wrong automation and will " +
+            "stay at zero until the variable is updated and the site redeployed."
+        );
+      } else if (enabled.length > 1) {
+        errors.push(
+          `${enabled.length} automations are enabled at once, so a download may ` +
+            "enrol someone in more than one sequence. Retire all but the live " +
+            "one in Resend."
+        );
+      }
+    }
+  } catch {
+    // A failed cross-check is not worth a visible error of its own — the
+    // numbers below still stand on the automation that was configured.
+  }
+
   let runIds: string[] = [];
   try {
     const { data, error } = await resend.automations.runs.list({

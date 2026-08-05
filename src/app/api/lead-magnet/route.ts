@@ -222,13 +222,43 @@ export async function POST(request: NextRequest) {
     try {
       const experimentId = body.experimentId;
       const variant = body.variant;
-      const visitorId = request.cookies.get(VISITOR_COOKIE)?.value;
+      const cookieVisitorId = request.cookies.get(VISITOR_COOKIE)?.value;
 
-      if (DATABASE_CONFIGURED && visitorId) {
+      // A download with no visitor cookie used to be dropped here without a
+      // word. Consent is recorded a few lines above unconditionally, so the two
+      // drifted apart and the gap looked like a conversion problem rather than a
+      // bookkeeping one — 19 opt-ins against 10 downloads, with nothing in the
+      // logs to say why.
+      //
+      // The cookie is set by /api/cro/track in response to the page view, so it
+      // is missing whenever that call never landed: cookies blocked, the form
+      // submitted before the tracker fired, a direct POST. None of those make the
+      // download less real, so it is counted under a synthetic id instead.
+      //
+      // Prefixed rather than anonymous, for two reasons. The unique index is on
+      // the visitor id, so a distinct value per download is what stops these
+      // collapsing into a single row; and the prefix makes them countable later
+      // — `WHERE visitor_id LIKE 'nocookie-%'` answers "how often does this
+      // happen" without needing the logs.
+      const visitorId =
+        cookieVisitorId ??
+        `nocookie-${crypto.randomUUID().replace(/-/g, "")}`;
+
+      if (DATABASE_CONFIGURED) {
         const inExperiment =
           typeof experimentId === "number" &&
           Number.isInteger(experimentId) &&
           (variant === "a" || variant === "b");
+
+        if (!cookieVisitorId) {
+          // Logged, not swallowed. If this line becomes common it means the
+          // tracker is not running, which is worth knowing on its own.
+          console.warn(
+            `Conversion recorded without a ${VISITOR_COOKIE} cookie ` +
+              `(source: ${source}, experiment: ${inExperiment ? experimentId : "none"}). ` +
+              "The download is counted; the visitor cannot be tied to their impression."
+          );
+        }
 
         await initSchema();
         if (inExperiment) {
