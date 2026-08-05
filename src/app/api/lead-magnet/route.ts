@@ -18,6 +18,7 @@ import { VISITOR_COOKIE } from "@/lib/cro/assign";
 import { subscribeToSequence } from "@/lib/subscribe";
 import { recordConsent } from "@/lib/consent";
 import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
+import { describeAttribution, type Attribution } from "@/lib/attribution";
 
 // Force this route to run at request time, not build time
 export const dynamic = "force-dynamic";
@@ -72,6 +73,8 @@ interface LeadPayload {
   optIn?: boolean;
   /** Wording shown beside that checkbox, stored with the consent record. */
   consentText?: string;
+  /** Campaign parameters from the landing URL. See lib/attribution.ts. */
+  attribution?: Attribution | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -82,6 +85,9 @@ export async function POST(request: NextRequest) {
     const name = (body.name || "").trim();
     const firstName = name.split(/\s+/)[0] || "";
     const source = body.source || "Foothold Systems - 5 Levels of AI";
+    // Narrowed before it goes near the database or an email: every value here
+    // came off a query string, so anyone can put anything in it.
+    const attribution = sanitiseAttribution(body.attribution);
 
     // Validation
     if (!email) {
@@ -195,6 +201,7 @@ export async function POST(request: NextRequest) {
         ipAddress:
           request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? null,
         userAgent: request.headers.get("user-agent"),
+        attribution,
       });
     } catch (consentErr) {
       console.error("Consent record failed (guide still delivered):", consentErr);
@@ -288,10 +295,11 @@ export async function POST(request: NextRequest) {
               <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;width:120px;">Email</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
               ${name ? `<tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;">Name</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;">${escapeHtml(name)}</td></tr>` : ""}
               <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;">Source</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;">${escapeHtml(source)}</td></tr>
+              <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;">Campaign</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;">${escapeHtml(describeAttribution(attribution))}</td></tr>
             </table>
             <p style="margin-top:20px;color:#6b7280;font-size:13px;">${submittedAt} (Pacific). The guide was emailed to them automatically. Good moment for a follow-up about their level.</p>
           </div>`,
-        text: `New "5 Levels of AI" download\n\nEmail: ${email}\n${name ? `Name: ${name}\n` : ""}Source: ${source}\n\n${submittedAt} (Pacific). The guide was emailed to them automatically.`,
+        text: `New "5 Levels of AI" download\n\nEmail: ${email}\n${name ? `Name: ${name}\n` : ""}Source: ${source}\nCampaign: ${describeAttribution(attribution)}\n\n${submittedAt} (Pacific). The guide was emailed to them automatically.`,
       });
     } catch (notifyErr) {
       console.error("Lead notification failed (guide still delivered):", notifyErr);
@@ -302,6 +310,29 @@ export async function POST(request: NextRequest) {
     console.error("Lead magnet API error:", err);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
+}
+
+/**
+ * Keep attribution to a known shape.
+ *
+ * Everything in it arrives from a query string the visitor controls, and it
+ * lands in a database row and in an email we send ourselves. Keys are capped in
+ * number, values in length, and anything that is not a string is dropped.
+ */
+function sanitiseAttribution(input: Attribution | null | undefined): Attribution | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const out: Attribution = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (!/^[a-z0-9_]{1,40}$/i.test(key)) continue;
+    out[key] = trimmed.slice(0, 200);
+    // A landing URL cannot meaningfully carry more than this, and a cap means a
+    // crafted query string cannot grow the row without bound.
+    if (Object.keys(out).length >= 12) break;
+  }
+  return Object.keys(out).length > 0 ? out : null;
 }
 
 // Escape HTML to prevent injection in email bodies

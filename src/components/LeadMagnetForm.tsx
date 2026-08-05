@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
+import { captureAttribution, type Attribution } from "@/lib/attribution";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
@@ -35,11 +36,21 @@ export function LeadMagnetForm({
   const [optIn, setOptIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "error">("idle");
+  const attribution = useRef<Attribution | null>(null);
 
   // Warm the thank-you route so the redirect after submit is instant.
   useEffect(() => {
     router.prefetch(THANKS_PATH);
   }, [router]);
+
+  // Read the campaign parameters on mount rather than at submit time. By the
+  // time someone has filled the form in they may have navigated within the site,
+  // and a soft navigation takes the query string with it. Held in a ref because
+  // nothing renders from it — putting it in state would re-render the form for
+  // a value the form does not display.
+  useEffect(() => {
+    attribution.current = captureAttribution();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +69,10 @@ export function LeadMagnetForm({
           variant,
           optIn,
           consentText: consentRequired ? CONSENT_TEXT : CONSENT_TEXT_OPTIONAL,
+          // Which ad, campaign or referrer produced this lead. Null for a
+          // direct visit with no referrer, which is a real answer rather than
+          // a missing one.
+          attribution: attribution.current,
         }),
       });
 

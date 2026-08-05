@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthorised } from "@/lib/admin-auth";
 
 /**
  * Gate on the CRO dashboard.
@@ -9,28 +10,21 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * With ADMIN_PASSWORD unset the dashboard is closed entirely rather than open —
  * failing shut is the only safe default for something that edits the live site.
+ *
+ * This guards *pages*. It is not what protects the Server Actions behind them:
+ * an action is dispatched by id and need not arrive as a request to the route
+ * it belongs to, so each one checks the password itself. See lib/admin-auth.ts.
  */
 export function proxy(request: NextRequest) {
-  const password = process.env.ADMIN_PASSWORD;
-
-  if (!password) {
+  if (!process.env.ADMIN_PASSWORD) {
     return new NextResponse(
       "The CRO dashboard is disabled because ADMIN_PASSWORD is not set.",
       { status: 503, headers: { "Content-Type": "text/plain" } }
     );
   }
 
-  const header = request.headers.get("authorization");
-  if (header?.startsWith("Basic ")) {
-    try {
-      const decoded = atob(header.slice(6));
-      const supplied = decoded.slice(decoded.indexOf(":") + 1);
-      if (timingSafeEqual(supplied, password)) {
-        return NextResponse.next();
-      }
-    } catch {
-      // Malformed header — fall through to the challenge.
-    }
+  if (isAdminAuthorised(request.headers.get("authorization"))) {
+    return NextResponse.next();
   }
 
   return new NextResponse("Authentication required.", {
@@ -39,16 +33,6 @@ export function proxy(request: NextRequest) {
       "WWW-Authenticate": 'Basic realm="Foothold CRO", charset="UTF-8"',
     },
   });
-}
-
-/** Constant-time comparison so the response time can't be used to guess. */
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
 }
 
 export const config = {

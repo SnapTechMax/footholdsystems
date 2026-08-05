@@ -41,6 +41,13 @@ export interface ConsentRecord {
   source: string;
   ipAddress: string | null;
   userAgent: string | null;
+  /**
+   * Campaign parameters from the landing URL — which ad, campaign or referrer
+   * produced this person. Stored here rather than in a table of its own because
+   * this is already the row that knows who they are, and the two are written in
+   * the same request.
+   */
+  attribution?: Record<string, string> | null;
 }
 
 export async function initConsentSchema(): Promise<void> {
@@ -63,6 +70,17 @@ export async function initConsentSchema(): Promise<void> {
   await sql`
     CREATE INDEX IF NOT EXISTS marketing_consent_email
       ON marketing_consent (email, created_at DESC)`;
+
+  // Added after the table existed, so it arrives as an ALTER rather than in the
+  // CREATE above — an existing install would never see a changed CREATE TABLE
+  // IF NOT EXISTS. Idempotent, so it stays safe to run on every write.
+  //
+  // JSONB rather than columns per parameter: the set of things worth keeping
+  // changes with whatever platform is being advertised on, and a schema
+  // migration per new click id would be a poor trade for a field nothing joins.
+  await sql`
+    ALTER TABLE marketing_consent
+      ADD COLUMN IF NOT EXISTS attribution JSONB`;
 }
 
 export async function recordConsent(record: ConsentRecord): Promise<void> {
@@ -72,9 +90,10 @@ export async function recordConsent(record: ConsentRecord): Promise<void> {
   await initConsentSchema();
   await sql`
     INSERT INTO marketing_consent
-      (email, granted, consent_text, source, ip_address, user_agent)
+      (email, granted, consent_text, source, ip_address, user_agent, attribution)
     VALUES (
       ${record.email}, ${record.granted}, ${record.text}, ${record.source},
-      ${record.ipAddress}, ${record.userAgent}
+      ${record.ipAddress}, ${record.userAgent},
+      ${record.attribution ? JSON.stringify(record.attribution) : null}::jsonb
     )`;
 }

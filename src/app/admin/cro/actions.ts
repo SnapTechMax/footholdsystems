@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { isAdminAuthorised } from "@/lib/admin-auth";
 import {
   DATABASE_CONFIGURED,
   initSchema,
@@ -13,11 +15,26 @@ import type { ResetCounts, Settings } from "@/lib/cro/types";
 /**
  * Saves engine settings.
  *
- * A Server Action rather than a public API route: it posts back to
- * /admin/cro, which the proxy already guards, so there is no second endpoint to
- * secure. These values decide when the site rewrites itself, so they must not be
- * writable by anyone who finds the URL.
+ * These values decide when the site rewrites itself, and the reset below
+ * destroys production data outright, so both check the admin password here
+ * rather than relying on the proxy.
+ *
+ * That was the previous arrangement and it was not sound. A Server Action is
+ * dispatched by an id in the `Next-Action` header and does not have to arrive as
+ * a request to the route it was written for, so `matcher: ["/admin/:path*"]`
+ * never was the boundary it appeared to be. Next's own guidance is that an
+ * action authorises itself. The proxy still guards the pages; this guards the
+ * actions.
  */
+
+/**
+ * The browser resends Basic credentials on every same-origin request once the
+ * proxy has challenged for them, so the header is present on the action's POST
+ * without the form having to carry anything.
+ */
+async function authorised(): Promise<boolean> {
+  return isAdminAuthorised((await headers()).get("authorization"));
+}
 
 /** Clamp everything — these bounds are the last line before the engine acts. */
 function sanitise(input: Partial<Settings>): Partial<Settings> {
@@ -71,6 +88,11 @@ export async function resetCroEngine(
   confirmation: string,
   options: { clearSettings: boolean }
 ): Promise<{ ok: true; counts: ResetCounts } | { ok: false; error: string }> {
+  // Before anything else, and before the confirmation string — that is a speed
+  // bump for the operator, not a credential.
+  if (!(await authorised())) {
+    return { ok: false, error: "Not authorised." };
+  }
   if (!DATABASE_CONFIGURED) {
     return { ok: false, error: "No database configured." };
   }
@@ -96,6 +118,9 @@ export async function resetCroEngine(
 export async function updateSettings(
   patch: Partial<Settings>
 ): Promise<{ ok: true; settings: Settings } | { ok: false; error: string }> {
+  if (!(await authorised())) {
+    return { ok: false, error: "Not authorised." };
+  }
   if (!DATABASE_CONFIGURED) {
     return { ok: false, error: "No database configured." };
   }

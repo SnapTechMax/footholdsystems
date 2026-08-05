@@ -3,6 +3,7 @@ import { Source_Serif_4, Inter, JetBrains_Mono, Archivo } from "next/font/google
 import Script from "next/script";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { RouteAnalytics } from "@/components/RouteAnalytics";
 import "./globals.css";
 
 const sourceSerif = Source_Serif_4({
@@ -108,6 +109,10 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        {/* Page views for soft navigations. The tag snippets below fire once on
+            document load and never again, and every in-site link is a next/link.
+            See the component for what that was costing. */}
+        <RouteAnalytics />
         {/* Google Analytics 4 — footholdsystems.com property only */}
         {GA_MEASUREMENT_ID && (
           <>
