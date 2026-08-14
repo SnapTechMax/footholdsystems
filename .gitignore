@@ -1,6 +1,9 @@
 .next/
 node_modules/
 .env*
+# ...except the documented list of variable names, which carries no values and
+# is the only record of what this app needs to run.
+!.env.example
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store

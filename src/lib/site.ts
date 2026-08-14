@@ -46,6 +46,20 @@ export const CONSENT_TEXT =
 export const CONSENT_TEXT_OPTIONAL =
   "Also email me occasional AI tips for businesses. Unsubscribe any time. The guide is yours either way.";
 
+/**
+ * Wording beside the phone-contact checkbox.
+ *
+ * A separate permission from the two above, not a rewording of them. Those cover
+ * marketing email under CAN-SPAM and GDPR; this covers being called or texted
+ * about what they downloaded, which in the US is TCPA's question rather than
+ * CAN-SPAM's. Two boxes because they are two agreements — someone may reasonably
+ * want the guide and the emails without wanting the phone to ring.
+ *
+ * Required to submit, because a phone number collected without it is a number
+ * that cannot lawfully be dialled, which makes the whole capture pointless.
+ */
+export const CONTACT_CONSENT_TEXT = "I agree to be contacted about my results.";
+
 // Direct line. Published to people who have opted in — the delivery email and the
 // guide PDF — but deliberately NOT on the public website, so it stays off the
 // pages anonymous visitors and scrapers hit. Keep those two surfaces in mind

@@ -5,18 +5,39 @@ feeding it.
 
 ## Lead capture
 
-When someone downloads the guide, `/api/lead-magnet`:
+When someone downloads the guide, `/api/lead`:
 
-1. **Rejects the request** if the consent box was not ticked. The guide is gated
+1. **Screens for bots** — honeypot and dwell time, `src/lib/spam.ts`. A filled
+   honeypot gets a 200 with nothing behind it, so a script learns nothing.
+2. **Validates with zod** and normalises the phone number to E.164
+   (`src/lib/lead-schema.ts`). A bad number comes back as an inline field error,
+   not a generic failure.
+3. **Rejects the request** if the consent box was not ticked. The guide is gated
    behind it.
-2. **Sends the guide.**
-3. **Records the consent** in `marketing_consent`.
-4. **Enrols them in the sequence.**
-5. **Emails Max** that a lead came in.
+4. **Appends a row to the leads spreadsheet** — awaited, because it is the
+   system of record. Columns A–L; M–R are CRM columns edited by hand and are
+   never written to. If it throws, the whole payload is emailed to `ALERT_EMAIL`
+   and the request still returns 200 — a lead is never dropped silently.
+5. **Pushes a notification** with a `tel:` action, so the callback is one tap.
+   Best-effort with a 2s timeout; it can never fail the request.
+6. **Sends the guide.**
+7. **Records the consent** in `marketing_consent`.
+8. **Enrols them in the sequence.**
+9. **Emails Max** that a lead came in.
 
-Steps 3 to 5 run only after the guide has actually sent, and are best-effort: a
+Steps 7 to 9 run only after the guide has actually sent, and are best-effort: a
 failure there must not turn a successful download into an error for the person
 who asked.
+
+`/api/lead-magnet` is the old path for the same handler, kept as an alias for
+anything still posting to it.
+
+`GET /api/lead/health` proves the Google credentials work and reports the row
+count, without writing a test lead. Behind the same basic auth as `/admin`.
+
+The Meta pixel's `Lead` event fires on `/guide/thanks`, not in the route — a
+conversion should mean a page someone actually reached. The experiment arm
+travels there in `sessionStorage`; see `src/lib/pixel-handoff.ts`.
 
 ## Consent
 
@@ -117,7 +138,7 @@ confusing. Clarity generates hypotheses. It never judges them.
 **Clarity has no idea who converted.** Conversions come from the Meta pixel
 (`Lead`, tagged with a `variant` custom field, read back through the Graph API's
 `custom_data_field` aggregation) and, in parallel, from our own records written
-in `/api/lead-magnet`.
+in `/api/lead`.
 
 Those two disagree, and the server-side number is the accurate one. Ad blockers
 and browser tracking prevention stop the pixel firing for a meaningful share of

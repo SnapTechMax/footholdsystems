@@ -34,13 +34,19 @@ export const HONEYPOT_FIELD = "company";
 /**
  * Minimum time on the form before a submission is believable, in milliseconds.
  *
- * Set low on purpose. A script posts in single-digit milliseconds, so anything
- * above a second already separates the two populations completely — while a
- * real person using password-manager autofill can be quicker than you would
- * think. The cost of being wrong is asymmetric: turning away a real lead is far
- * worse than accepting a bot, so this errs heavily toward letting people in.
+ * A script posts in single-digit milliseconds, so anything above a second
+ * already separates the two populations. This sat at 1200ms on the reasoning
+ * that the cost of being wrong is asymmetric — turning away a real lead is far
+ * worse than accepting a bot — and a real person using password-manager autofill
+ * can be quicker than you would think.
+ *
+ * Raised to 2000ms deliberately, now that the form asks for a phone number as
+ * well. Three fields and two checkboxes is more than autofill completes in two
+ * seconds, so the population this could wrongly catch has largely gone. If
+ * genuine submissions ever start showing up in the logs as rejections, this
+ * number is the first thing to put back.
  */
-export const MIN_FILL_MS = 1200;
+export const MIN_FILL_MS = 2000;
 
 /** Submissions allowed from one IP per hour before it is treated as a script. */
 export const MAX_SUBMISSIONS_PER_IP_PER_HOUR = 10;

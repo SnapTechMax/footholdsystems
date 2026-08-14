@@ -4,6 +4,7 @@ import {
   BUSINESS_ADDRESS,
   CONTACT_EMAIL,
   CONSENT_TEXT,
+  CONTACT_CONSENT_TEXT,
 } from "@/lib/site";
 
 /**
@@ -34,6 +35,14 @@ const PROCESSORS = [
   {
     name: "Resend",
     role: "Sends the guide, the follow-up emails and the internal notification that a lead came in. Holds your name and email address.",
+  },
+  {
+    name: "Google Sheets",
+    role: "Holds the working list of people who asked for the guide — your name, email, phone number, what you agreed to, and which ad you came from — so we can follow up. Access is limited to us.",
+  },
+  {
+    name: "Pushover",
+    role: "Sends the alert to our phone when someone new asks for the guide, so a call back is quick rather than next week. The alert carries your name and phone number.",
   },
   {
     name: "Vercel",
@@ -77,7 +86,7 @@ export default function PrivacyPage() {
             policy
           </h1>
           <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-[#8a887f]">
-            Last updated 2 August 2026
+            Last updated 10 August 2026
           </p>
         </div>
       </section>
@@ -86,10 +95,11 @@ export default function PrivacyPage() {
         <div className="space-y-12 font-serif text-[17px] leading-relaxed text-[#3a3a35]">
           <div>
             <p className="text-lg">
-              Short version: we collect your email address so we can send you a
-              guide and some follow-up emails. We do not sell it, we do not share
-              it with anyone outside the services that make this site work, and
-              you can have it deleted by asking.
+              Short version: we collect your name, email address and phone
+              number so we can send you a guide and talk to you about it. We do
+              not sell them, we do not share them with anyone outside the
+              services that make this site work, and you can have them deleted by
+              asking.
             </p>
           </div>
 
@@ -111,16 +121,17 @@ export default function PrivacyPage() {
             <List
               items={[
                 <>
-                  <strong>Your email address</strong>, and your first name if you
-                  choose to give it. You type these into the form on the guide
-                  page. Nothing else on this site asks you for anything.
+                  <strong>Your first name, email address and phone number.</strong>{" "}
+                  You type these into the form on the guide page. Nothing else on
+                  this site asks you for anything.
                 </>,
                 <>
-                  <strong>A record of your consent.</strong> When you tick the box
-                  we store the exact wording you were shown, the date and time,
-                  your IP address and your browser&apos;s user-agent string. We
-                  keep this so that if anyone later asks us to prove you agreed to
-                  the emails, we can. We record it the same way if you decline.
+                  <strong>A record of your consent.</strong> When you tick the
+                  boxes we store the exact wording you were shown, the date and
+                  time, your IP address and your browser&apos;s user-agent string.
+                  We keep this so that if anyone later asks us to prove you agreed
+                  to the emails or to being called, we can. We record it the same
+                  way if you decline.
                 </>,
                 <>
                   <strong>How the page gets used.</strong> Pages viewed, how far
@@ -144,6 +155,11 @@ export default function PrivacyPage() {
                   businesses. This one runs on your consent and nothing else. The
                   box you tick reads: &ldquo;{CONSENT_TEXT}&rdquo; You can
                   withdraw at any time and we stop.
+                </>,
+                <>
+                  <strong>To call or text you about what you downloaded.</strong>{" "}
+                  This runs on your consent too, and it is a separate box:
+                  &ldquo;{CONTACT_CONSENT_TEXT}&rdquo; Say so once and we stop.
                 </>,
                 <>
                   <strong>To work out whether the site and the ads are any

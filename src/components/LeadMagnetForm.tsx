@@ -3,9 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CONSENT_TEXT, CONSENT_TEXT_OPTIONAL, THANKS_PATH } from "@/lib/site";
+import {
+  CONSENT_TEXT,
+  CONSENT_TEXT_OPTIONAL,
+  CONTACT_CONSENT_TEXT,
+  THANKS_PATH,
+} from "@/lib/site";
 import { captureAttribution, type Attribution } from "@/lib/attribution";
 import { HONEYPOT_FIELD } from "@/lib/spam";
+import { PIXEL_HANDOFF_KEY } from "@/lib/pixel-handoff";
 
 export function LeadMagnetForm({
   submitLabel = "Send me the guide →",
@@ -32,18 +38,35 @@ export function LeadMagnetForm({
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  // Required, and the reason the whole lead-routing path exists: an email lead
+  // gets answered tomorrow, a phone lead gets answered in five minutes.
+  const [phone, setPhone] = useState("");
   // Unticked, and required to submit. Pre-ticking it would remove the
   // affirmative action that makes the stored consent record worth anything.
   const [optIn, setOptIn] = useState(false);
+  // Permission to call or text about what they downloaded. A separate agreement
+  // from the marketing tick above — see CONTACT_CONSENT_TEXT in lib/site.ts.
+  const [contactConsent, setContactConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "error">("idle");
+  /**
+   * A validation message from the route, and which input it belongs under.
+   *
+   * The phone number is the reason this exists. "Something went wrong" is a fine
+   * answer to a server error and a useless one to a mistyped area code, and the
+   * route already knows the difference — this just puts it where the person is
+   * looking.
+   */
+  const [fieldError, setFieldError] = useState<{ field: string | null; message: string } | null>(
+    null
+  );
   const attribution = useRef<Attribution | null>(null);
   // Decoy field. Hidden from people and from assistive technology, so anything
   // in it came from something filling every input it could find.
   const [honeypot, setHoneypot] = useState("");
-  // When this form appeared, for the dwell-time check. A ref, not state: it is
+  // When this form rendered, for the dwell-time check. A ref, not state: it is
   // written once and read once, and never rendered.
-  const mountedAt = useRef<number>(0);
+  const renderedAt = useRef<number>(0);
 
   // Warm the thank-you route so the redirect after submit is instant.
   useEffect(() => {
@@ -52,43 +75,58 @@ export function LeadMagnetForm({
 
   // Read the campaign parameters on mount rather than at submit time. By the
   // time someone has filled the form in they may have navigated within the site,
-  // and a soft navigation takes the query string with it. Held in a ref because
-  // nothing renders from it — putting it in state would re-render the form for
-  // a value the form does not display.
+  // and a soft navigation takes the query string with it. captureAttribution
+  // persists them to sessionStorage on first sight, so they survive that.
+  // Held in a ref because nothing renders from it — putting it in state would
+  // re-render the form for a value the form does not display.
   useEffect(() => {
     attribution.current = captureAttribution();
-    mountedAt.current = Date.now();
+    renderedAt.current = Date.now();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setStatus("idle");
+    setFieldError(null);
 
     try {
-      const response = await fetch("/api/lead-magnet", {
+      const response = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           name,
+          phone,
+          contactConsent,
           source: "Foothold Systems - 5 Levels of AI",
           experimentId,
           variant,
           optIn,
           consentText: consentRequired ? CONSENT_TEXT : CONSENT_TEXT_OPTIONAL,
-          // Which ad, campaign or referrer produced this lead. Null for a
-          // direct visit with no referrer, which is a real answer rather than
-          // a missing one.
+          // Which ad, campaign or referrer produced this lead, plus the landing
+          // path and referrer. Read from the URL on mount and persisted in
+          // sessionStorage — see lib/attribution.ts.
           attribution: attribution.current,
           // Bot screening. Both are advisory: the route decides, and neither is
           // anything a real person has to do. See lib/spam.ts.
           honeypot,
-          elapsedMs: mountedAt.current ? Date.now() - mountedAt.current : undefined,
+          elapsedMs: renderedAt.current ? Date.now() - renderedAt.current : undefined,
         }),
       });
 
-      if (!response.ok) throw new Error("Submission failed");
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        // A 400 from the route is about something the person can fix, and it
+        // says which field. Anything else is ours, and gets the generic line.
+        if (response.status === 400 && data?.error) {
+          setFieldError({ field: data.field ?? null, message: data.error });
+          setIsSubmitting(false);
+          return;
+        }
+        throw new Error("Submission failed");
+      }
 
       // GA4 recommended lead event — powers GA4's built-in lead-gen reports.
       // Fires only on a successful submission (guide actually delivered).
@@ -96,19 +134,26 @@ export function LeadMagnetForm({
         event_category: "lead-magnet",
         event_label: "5 Levels of AI",
       });
-      // Meta Pixel lead conversion. `variant` is sent as custom data so the
-      // pixel's conversions can be split by experiment arm via the Graph API's
-      // custom_data_field aggregation — see lib/cro/meta.ts.
-      window.fbq?.("track", "Lead", {
-        content_name: "5 Levels of AI",
-        ...(variant ? { variant, experiment_id: experimentId } : {}),
-      });
+
+      // The Meta Pixel Lead event now fires on the thank-you page, not here, so
+      // a conversion means a page someone actually landed on. Its custom data
+      // comes from the route and is handed over in sessionStorage, because a
+      // soft navigation cannot carry props and the variant is what lets
+      // lib/cro/meta.ts split pixel conversions by experiment arm.
+      if (data?.pixel) {
+        try {
+          window.sessionStorage.setItem(PIXEL_HANDOFF_KEY, JSON.stringify(data.pixel));
+        } catch {
+          // Private browsing or storage disabled. The thank-you page falls back
+          // to firing Lead without the custom data, which is still a conversion.
+        }
+      }
 
       // Soft-navigate to the thank-you page. A client-side push (rather than a
       // full page load) means the conversion hits above are never cut off by an
       // unload. isSubmitting stays true so the button keeps its spinner and the
       // form can't be double-submitted while the route transitions.
-      router.push(THANKS_PATH);
+      router.push(data?.redirect ?? THANKS_PATH);
     } catch {
       setStatus("error");
       setIsSubmitting(false);
@@ -127,6 +172,13 @@ export function LeadMagnetForm({
       content_name: "5 Levels of AI",
     });
   };
+
+  const inputClass =
+    "w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00]";
+
+  /** The inline message for one input, or null. */
+  const errorFor = (field: string) =>
+    fieldError?.field === field ? fieldError.message : null;
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -158,7 +210,8 @@ export function LeadMagnetForm({
           placeholder="First name"
           required
           autoComplete="given-name"
-          className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00] sm:max-w-[38%]"
+          aria-invalid={errorFor("name") ? true : undefined}
+          className={`${inputClass} sm:max-w-[38%]`}
         />
         <input
           type="email"
@@ -168,23 +221,69 @@ export function LeadMagnetForm({
           placeholder="you@yourbusiness.com"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-[#3a3a37] bg-[#f2efe6] px-4 py-3.5 text-[#1b1b1b] placeholder-[#8a887f] focus:border-[#f6be00] focus:outline-none focus:ring-2 focus:ring-[#f6be00]"
+          aria-invalid={errorFor("email") ? true : undefined}
+          className={inputClass}
         />
+      </div>
+      {(errorFor("name") || errorFor("email")) && (
+        <p className="mt-2 text-sm text-[#ff9d7a]">
+          {errorFor("name") ?? errorFor("email")}
+        </p>
+      )}
+
+      <div className="mt-3">
+        <input
+          type="tel"
+          name="phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="(909) 407-6602"
+          required
+          autoComplete="tel"
+          inputMode="tel"
+          aria-invalid={errorFor("phone") ? true : undefined}
+          className={inputClass}
+        />
+        {errorFor("phone") && (
+          <p className="mt-2 text-sm text-[#ff9d7a]">{errorFor("phone")}</p>
+        )}
       </div>
 
       <label className="mt-4 flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          name="contactConsent"
+          required
+          checked={contactConsent}
+          onChange={(e) => setContactConsent(e.target.checked)}
+          aria-invalid={errorFor("contactConsent") ? true : undefined}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#f6be00]"
+        />
+        <span className="font-serif text-[14px] leading-relaxed text-[#cfccc2]">
+          {CONTACT_CONSENT_TEXT}
+        </span>
+      </label>
+      {errorFor("contactConsent") && (
+        <p className="mt-2 text-sm text-[#ff9d7a]">{errorFor("contactConsent")}</p>
+      )}
+
+      <label className="mt-3 flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
           name="optIn"
           required={consentRequired}
           checked={optIn}
           onChange={(e) => setOptIn(e.target.checked)}
+          aria-invalid={errorFor("optIn") ? true : undefined}
           className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#f6be00]"
         />
         <span className="font-serif text-[14px] leading-relaxed text-[#cfccc2]">
           {consentRequired ? CONSENT_TEXT : CONSENT_TEXT_OPTIONAL}
         </span>
       </label>
+      {errorFor("optIn") && (
+        <p className="mt-2 text-sm text-[#ff9d7a]">{errorFor("optIn")}</p>
+      )}
 
       <button
         type="submit"
@@ -204,6 +303,11 @@ export function LeadMagnetForm({
           submitLabel
         )}
       </button>
+
+      {/* Anything the route flagged that isn't tied to one input. */}
+      {fieldError && !fieldError.field && (
+        <p className="mt-3 text-sm text-[#ff9d7a]">{fieldError.message}</p>
+      )}
 
       {status === "error" && (
         <p className="mt-3 text-sm text-[#ff9d7a]">

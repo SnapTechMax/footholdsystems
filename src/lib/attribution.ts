@@ -74,12 +74,17 @@ export function captureAttribution(): Attribution | null {
 
   // No campaign parameters at all — organic, direct, or a link someone shared.
   // The referrer is still worth having, since it is the only signal left.
-  const referrer = externalReferrer();
-  if (!referrer) return null;
+  //
+  // A record is returned either way. This used to return null for a direct visit
+  // with no referrer, which meant the one column that is always knowable — the
+  // page the form was actually on — was missing from precisely the leads there
+  // was least other information about. `landing_path` costs nothing and the
+  // spreadsheet has a column for it.
   const record: Attribution = {
-    referrer,
     landing_path: window.location.pathname.slice(0, MAX_VALUE_LENGTH),
   };
+  const referrer = externalReferrer();
+  if (referrer) record.referrer = referrer;
   writeStored(record);
   return record;
 }
