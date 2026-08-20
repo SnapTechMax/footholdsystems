@@ -6,7 +6,7 @@ import { GUIDE_PATH } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Your guide is on the way",
   description:
-    "The 5 Levels of AI is in your inbox. Here's the two-minute version, and how to get your number.",
+    "The 5 Levels of AI and the prompts is in your inbox, with a short intro video and how to book the call.",
   alternates: { canonical: "/guide/thanks" },
   // Funnel-internal page: keep it out of search results.
   robots: { index: false, follow: false },
@@ -119,9 +119,9 @@ export default function GuideThanksPage() {
           </h1>
 
           <p className="mt-8 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2]">
-            The 5 Levels of AI is on its way. It can take a minute to land. If
-            it&apos;s not there, check your spam folder — or just grab it right
-            here.
+            The 5 Levels of AI and the prompts is on its way and can take a
+            minute to land. If it hasn&apos;t turned up, have a look in your spam
+            folder, or just download it straight from here.
           </p>
 
           <a
@@ -135,7 +135,7 @@ export default function GuideThanksPage() {
         </div>
         <div className="bg-[#f6be00] py-3">
           <p className="mx-auto max-w-3xl px-6 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#1b1b1b]">
-            The map is free. Your step takes one call.
+            You have prompts 1 and 2. The call is where 3, 4 and 5 come from.
           </p>
         </div>
       </section>
@@ -152,8 +152,8 @@ export default function GuideThanksPage() {
             Watch this first
           </h2>
           <p className="mt-5 max-w-xl font-serif text-[17px] leading-relaxed text-[#cfccc2]">
-            A minute from me before you dig into the guide. Then, if it lands,
-            let&apos;s put a number on where you actually are.
+            A minute from me before you dig into the guide. If it makes sense,
+            the next step is putting a number on where you actually are.
           </p>
 
           <div className="mt-10">
@@ -170,26 +170,28 @@ export default function GuideThanksPage() {
         <h2
           className={`${display} mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-6xl`}
         >
-          You&apos;ll know your level.
+          What the guide
           <br />
-          Now get your number.
+          leaves locked
         </h2>
         <p className="mt-6 max-w-2xl font-serif text-lg leading-relaxed">
-          Everything in the guide you can do on your own, and you should start
-          today. What a guide can&apos;t tell you is which move is yours and what
-          it&apos;s worth. That takes twenty minutes.
+          Use the two prompts today, because that part you can do without me.
+          Levels 3, 4 and 5 print as frameworks rather than something you paste,
+          because the prompt is the easy half. Picking the first one worth
+          building and wiring it into what you already run is the other half, and
+          that is what the twenty minutes is for.
         </p>
 
         <div className="mt-10 bg-[#f6be00] p-8 text-[#1b1b1b] sm:p-10">
           <h3
             className={`${display} text-2xl font-black uppercase tracking-tight sm:text-3xl`}
           >
-            Twenty minutes. Bring your level.
+            Twenty minutes, whenever you&apos;ve read it
           </h3>
           <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
-            Tell me the level you landed on. I&apos;ll tell you what I usually
-            find there, and what it costs businesses like yours. Free,
-            whether or not you hire me.
+            Tell me the job that keeps coming back and I&apos;ll tell you which
+            level it belongs on, what to hand the AI, and what unlocking it is
+            worth. No charge for the call, whether you end up hiring me or not.
           </p>
 
           <BookCallButton

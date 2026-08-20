@@ -7,7 +7,7 @@ const display = "font-[family-name:var(--font-archivo)]";
 const services = [
   {
     label: "Build",
-    body: "We make you the tool. Describe the job in plain words and we build the small, boring software that does it: a price calculator with your real rules, a form that routes new jobs to the right person, one screen showing money in and money out. Then we write down how it works and hand it over. No black boxes.",
+    body: "Describe the job in plain words and we build the small, boring software that does it: a price calculator with your real rules, a form that routes new jobs to the right person, one screen showing money in and money out. When it's finished we write down how it works and hand you both, so if you ever replace us the next person can pick it up.",
   },
   {
     label: "Embed",
@@ -40,10 +40,11 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-8 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2] sm:text-xl">
-            Everybody says you should use AI. We&apos;re the ones who actually set
-            it up for a business: the right tool, built for how your shop
-            really runs, and looked after once it&apos;s live. No twenty apps. No
-            black boxes.
+            Plenty of people will tell you to use AI. Setting it up inside a
+            working business is the part nobody does for you. We pick the right
+            tool for the job you&apos;ve actually got, build it around how your shop
+            really runs, and look after it once it&apos;s live. You get one thing
+            that works, and you&apos;ll know how it works.
           </p>
 
           <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -76,9 +77,11 @@ export default function HomePage() {
 
         <div className="mt-8 max-w-2xl font-serif text-lg leading-relaxed">
           <p>
-            The app was never the hard part. Picking the right first tool, building
-            it so it keeps working, and looking after it once it touches real money
-            is. That is the whole job, and it is what we do.
+            Buying the software is the easy half, and it&apos;s where most of the
+            advice stops. What decides whether any of it pays off is picking the
+            right first tool, building it so it keeps working when you&apos;re busy,
+            and looking after it once it&apos;s handling real money. That&apos;s the
+            part we do.
           </p>
         </div>
 
@@ -108,10 +111,10 @@ export default function HomePage() {
             to start?
           </h2>
           <p className="mt-6 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2]">
-            Most owners don&apos;t know which level of AI they&apos;re on, or which
-            move is actually worth making. The 5 Levels of AI walks you through it
-            in ten minutes, in plain English. Find your level, then find out what
-            staying there is costing you.
+            Everybody says you should use AI. Nobody hands you the prompts that
+            actually work. The 5 Levels of AI is a ten minute read that does:
+            five levels, the prompt that moves you up each one, and two of them
+            printed in full so you can paste one into a chat box today.
           </p>
 
           {/* compact ladder */}
@@ -146,15 +149,16 @@ export default function HomePage() {
         <div className="mx-auto max-w-4xl px-6 py-20">
           <div className="bg-[#f6be00] p-8 text-[#1b1b1b] sm:p-12">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#1b1b1b]/70">
-              The next step
+              Talk to us
             </p>
             <h2 className={`${display} mt-3 text-3xl font-black uppercase tracking-tight sm:text-5xl`}>
-              Twenty minutes. Bring your level.
+              What twenty minutes gets you
             </h2>
             <p className="mt-4 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
-              Tell us the level you landed on and we&apos;ll tell you what we
-              usually find there, and what it costs businesses like yours.
-              Free, whether or not you hire us.
+              Tell us where AI has got to in your business and we&apos;ll tell you
+              what we usually find at that stage, and what it tends to cost. The
+              call costs nothing whether you hire us or not, and if the answer is
+              that you don&apos;t need us yet, we&apos;ll say so.
             </p>
             <BookCallButton
               entryPoint="homepage"

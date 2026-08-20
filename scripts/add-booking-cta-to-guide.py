@@ -7,7 +7,7 @@ agrees with the site. Rerun it whenever the guide is re-exported:
 
     python3 scripts/add-booking-cta-to-guide.py <exported.pdf>
 
-It writes public/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf.
+It writes public/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf.
 
 Three things happen: a "Book a call" button is stamped on the last page, the
 phone number is replaced with the current one from src/lib/site.ts, and the copy
@@ -57,8 +57,8 @@ from reportlab.pdfgen import canvas
 logging.getLogger("pdfminer").setLevel(logging.ERROR)
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_SOURCE = REPO / "public" / "downloads" / "Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf"
-OUTPUT = REPO / "public" / "downloads" / "Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf"
+DEFAULT_SOURCE = REPO / "public" / "downloads" / "Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf"
+OUTPUT = REPO / "public" / "downloads" / "Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf"
 
 SITE_TS = REPO / "src" / "lib" / "site.ts"
 
@@ -81,7 +81,7 @@ def site_constant(name: str) -> str:
 # Tagged as its own entry point so bookings that came out of the PDF are visible.
 BOOKING_URL = (
     f"{site_constant('CALENDLY_URL')}"
-    "?utm_source=footholdsystems&utm_medium=pdf&utm_campaign=guide-pdf"
+    "?utm_source=footholdsystems&utm_medium=pdf&utm_campaign=5-levels-guide"
 )
 CONTACT_PHONE = site_constant("CONTACT_PHONE")
 
@@ -128,17 +128,12 @@ PHONE_RE = re.compile(r"\(?\d{3}\)?[\s.–-]*\d{3}[\s.–-]*\d{4}")
 # A replacement has to fit the line it lands on. The text is re-typeset, not
 # re-flowed — the lines after it keep their own break points, so a `new` much
 # longer than its `old` will run into the right margin rather than wrap.
-COPY_REPLACEMENTS = [
-    # The site dropped headcount qualifying in favour of describing the state of
-    # the business, because the audience is defined by what it can carry, not by
-    # how many people it employs. Page 8 was the only place the guide disagreed.
-    # Chosen to match the length of the line it replaces, so the two lines below
-    # it are untouched.
-    (
-        "For a business with 5 to 50 people, going from Level 1 to Level 3 usually",
-        "In a business that already works, going from Level 1 to Level 3 usually",
-    ),
-]
+#
+# Empty because the current export needs no edits: the headcount line this list
+# used to rewrite ("For a business with 5 to 50 people...") is not in the prompts
+# edition at all. A replacement left here that the export does not contain is a
+# hard error, not a no-op, so retire one as soon as its line goes.
+COPY_REPLACEMENTS: list[tuple[str, str]] = []
 
 # Operators a text object may contain for this script to consider re-typesetting
 # it. Anything else and the object is left alone rather than guessed at.
@@ -624,9 +619,9 @@ def main() -> int:
 
     writer.add_metadata(
         {
-            "/Title": "The Five Levels of AI for Business",
+            "/Title": "The 5 Levels of AI and The Prompts That Get You There",
             "/Author": "Foothold Systems",
-            "/Subject": "A plain-English guide to the five levels of AI for business owners.",
+            "/Subject": "The five levels of AI in small business, and the exact prompts that move you up each one.",
         }
     )
 

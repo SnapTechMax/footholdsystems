@@ -11,9 +11,9 @@ import type { VariantContent } from "./types";
  */
 
 export const BASE_CONTENT: Required<VariantContent> = {
-  captureHeading: "Get the 5 Levels of AI",
+  captureHeading: "Get the guide and the two prompts",
   captureSubcopy:
-    "Drop your email and we'll send the guide straight over. Find the level your business is really on, and what the next one up is worth to an owner like you.",
+    "Give us an email address and it comes straight over. Two prompts printed in full that you can paste into a chat box today, the three frameworks we build with you, and the level your business is really on.",
   submitLabel: "Send me the guide →",
   heroCtaLabel: "Get the free guide →",
 };
@@ -74,25 +74,25 @@ function isCurrentCopy(field: string, value: unknown): boolean {
 /** Candidate copy the rules engine may reach for, grouped by the field it changes. */
 export const VARIANT_LIBRARY = {
   captureHeading: [
-    "Get the 5 Levels of AI",
-    "Find your level in ten minutes",
+    BASE_CONTENT.captureHeading,
+    "Two AI prompts you can use today",
     "Which of the 5 levels is your business on?",
     "The AI guide that skips the hype",
   ],
   captureSubcopy: [
     BASE_CONTENT.captureSubcopy,
-    "Nine pages, plain English, no jargon. Find your level, then find out what staying there costs you every month.",
-    "Send it over and you'll know your level before your next coffee. What that level is costing you is the part most owners get wrong.",
+    "Nine pages in plain English. Two prompts printed in full, and the three that are systems rather than something you paste.",
+    "It's a ten minute read. You'll finish it with the level you're on and a prompt you can put to work the same afternoon.",
   ],
   submitLabel: [
     "Send me the guide →",
-    "Send it to me →",
+    "Send me the prompts →",
     "Get my copy →",
     "Show me my level →",
   ],
   heroCtaLabel: [
     "Get the free guide →",
-    "Send me the guide →",
+    "Send me the prompts →",
     "Find my level →",
   ],
 } as const satisfies Record<string, readonly string[]>;

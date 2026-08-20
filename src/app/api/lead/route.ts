@@ -239,15 +239,16 @@ export async function POST(request: NextRequest) {
           <div style="background:#1b1b1b;padding:28px 32px;">
             <p style="margin:0;color:#f6be00;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">${BRAND_NAME} &nbsp;&middot;&nbsp; AI for Business</p>
             <h1 style="margin:12px 0 0;color:#f2efe6;font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-0.01em;">The 5 Levels of AI</h1>
+            <p style="margin:6px 0 0;color:#f6be00;font-size:14px;font-weight:700;letter-spacing:0.02em;">And the prompts that get you there.</p>
           </div>
           <div style="padding:28px 32px;color:#1f1f1d;">
             <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">${greeting}</p>
-            <p style="margin:0 0 20px;font-size:16px;line-height:1.6;">Here's your copy. Five levels, plain English. Find yours in ten minutes, then read what staying there is costing you.</p>
+            <p style="margin:0 0 20px;font-size:16px;line-height:1.6;">Here's your copy. Five levels in plain English, about ten minutes to read. Two of the prompts are printed in full, so you can paste one into a chat box before you finish the guide.</p>
             <a href="${GUIDE_URL}" style="display:inline-block;background:#f6be00;color:#1b1b1b;font-weight:700;font-size:16px;text-decoration:none;padding:14px 28px;border-radius:8px;">Download the guide &rarr;</a>
             <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#57564f;">If the button doesn't work, paste this into your browser:<br><a href="${GUIDE_URL}" style="color:#1b1b1b;">${GUIDE_URL}</a></p>
             <hr style="border:none;border-top:1px solid #d4d1c6;margin:24px 0;">
-            <p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><strong>The map is free. Your step takes one call.</strong></p>
-            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">The guide tells you your level. It can't tell you which move is yours or what it's worth. That's twenty minutes with us, free whether or not you hire us.</p>
+            <p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><strong>You have 1 and 2. The call is where 3, 4 and 5 come from.</strong></p>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">Levels 3 to 5 print as frameworks rather than something you paste, because the prompt is the easy half. Picking the first one worth building and wiring it into what you already run is the other half, and that's what the twenty minutes is for. No charge either way.</p>
             <a href="${BOOKING_URL}" style="display:inline-block;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">Book a call &rarr;</a>
             <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Twenty minutes, weekday afternoons &mdash; the only window I keep for these. The calendar opens seven days at a time, so what you see is what's left.</p>
             <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Rather just talk? Call <a href="tel:${CONTACT_PHONE_TEL}" style="color:#1b1b1b;font-weight:600;">${CONTACT_PHONE}</a>.</p>
@@ -259,16 +260,16 @@ export async function POST(request: NextRequest) {
       </div>`;
 
     const deliveryText = [
-      `The 5 Levels of AI, from ${BRAND_NAME}`,
+      `The 5 Levels of AI and the prompts that get you there, from ${BRAND_NAME}`,
       ``,
       firstName ? `Hi ${firstName},` : `Hi,`,
       ``,
-      `Here's your copy. Five levels, plain English. Find yours in ten minutes, then read what staying there is costing you.`,
+      `Here's your copy. Five levels in plain English, about ten minutes to read. Two of the prompts are printed in full, so you can paste one into a chat box before you finish the guide.`,
       ``,
       `Download the guide: ${GUIDE_URL}`,
       ``,
-      `The map is free. Your step takes one call.`,
-      `The guide tells you your level. It can't tell you which move is yours or what it's worth. That's twenty minutes with us, free whether or not you hire us.`,
+      `You have 1 and 2. The call is where 3, 4 and 5 come from.`,
+      `Levels 3 to 5 print as frameworks rather than something you paste, because the prompt is the easy half. Picking the first one worth building and wiring it into what you already run is the other half, and that's what the twenty minutes is for. No charge either way.`,
       ``,
       `Book a call: ${BOOKING_URL}`,
       ``,
@@ -282,7 +283,7 @@ export async function POST(request: NextRequest) {
       from: `${BRAND_NAME} <${FROM_EMAIL}>`,
       to: [email],
       replyTo: CONTACT_EMAIL,
-      subject: "Your copy of The 5 Levels of AI",
+      subject: "Your copy of The 5 Levels of AI, prompts included",
       html: deliveryHtml,
       text: deliveryText,
     });

@@ -73,7 +73,7 @@ export const CONTACT_EMAIL = "max@footholdsystems.com";
 // Hyphenated rather than spaced so the URL needs no percent-encoding — the plain
 // text version of the delivery email prints this link raw.
 export const GUIDE_PATH =
-  "/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf";
+  "/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf";
 
 // NOTE ON THE BOOKING WINDOW
 // The "max 7 days out, 1–4pm PT" rule is enforced inside Calendly, on the event

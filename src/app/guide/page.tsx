@@ -13,9 +13,9 @@ import { consentMayBeRequired, countryFromHeaders } from "@/lib/geo";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "The 5 Levels of AI",
+  title: "The 5 Levels of AI and the Prompts",
   description:
-    "The plain-English guide for business owners: five levels of AI, find yours in ten minutes, then find out what staying there is costing you. Free from Foothold Systems.",
+    "A guide for business owners: five levels of AI, the prompt that moves you up each one, and which of them you can paste today. Nine pages, free from Foothold Systems.",
   alternates: { canonical: "/guide" },
 };
 
@@ -26,61 +26,71 @@ const levels = [
   {
     n: "01",
     title: "Chatting",
-    line: "A better Google. You ask, it answers.",
+    line: "You ask, it answers. A better Google.",
+    prompt: "The one-line ask",
     width: "22%",
-    tag: "You are here",
-    money: false,
+    unlock: "Prompt inside",
+    tag: null,
+    locked: false,
   },
   {
     n: "02",
     title: "Working Together",
-    line: "You hand it real work. It does the first draft.",
+    line: "You hand over real work. It does the first draft.",
+    prompt: "The 5-block prompt",
     width: "36%",
-    tag: null,
-    money: false,
+    unlock: "Prompt inside",
+    tag: "The big unlock",
+    locked: false,
   },
   {
     n: "03",
     title: "Building",
     line: "It makes you a small tool you could never have paid for.",
+    prompt: "The build brief",
     width: "52%",
+    unlock: "Build to unlock",
     tag: "The money is here",
-    money: true,
+    locked: true,
   },
   {
     n: "04",
     title: "Chaining",
-    line: "A whole job runs start to finish. Nobody presses go.",
+    line: "A whole job runs across your systems, start to end.",
+    prompt: "The chain map",
     width: "70%",
+    unlock: "Build to unlock",
     tag: null,
-    money: false,
+    locked: true,
   },
   {
     n: "05",
     title: "Running a Team",
-    line: "You give a goal, not steps. Helpers work at once and report back.",
+    line: "One helper per job, plus a boss helper to run them.",
+    prompt: "The team spec",
     width: "88%",
+    unlock: "Build to unlock",
     tag: null,
-    money: false,
+    locked: true,
   },
 ];
 
 const inside = [
   {
-    label: "The five levels",
-    text: "Each one in plain English: what it looks like on a normal Tuesday, what it gets you, and how you know you've outgrown it.",
+    label: "The one-line ask",
+    text: "Level 1's prompt, printed in full. A plain question gets a plain answer. Add who it is for and one rule, and the same free tool gets sharper on the spot.",
   },
   {
-    label: "The 2-minute test",
-    text: "A five-box checklist that tells you the level you're really on, not the one you wish you were on.",
+    label: "The 5-block prompt",
+    text: "The same for Level 2, printed in full and then filled in on a real job: a three-year customer, an upset email, and a reply that keeps him. Fill in five blocks, paste the lot.",
   },
   {
-    label: "Watch-outs & apps",
-    text: "The real tools at each level, what they cost, and the trap most owners fall into before they hit it.",
+    label: "The three locked frameworks",
+    text: "The build brief, the chain map and the team spec, headings and all. You see the shape of Levels 3 to 5 before you commit to building one.",
   },
   {
-    label: "What moving up is worth",
-    text: "Going from Level 1 to Level 3 usually frees five to fifteen hours a week across a team. Here's why, and how to work out your own number.",
+    label: "The watch-outs",
+    text: "Where your customer information is quietly going, the block of the prompt everyone skips, and the one job to write down before you automate anything.",
   },
 ];
 
@@ -156,20 +166,28 @@ export default async function GuidePage() {
                 <br />
                 of <span className="text-[#f6be00]">AI</span>
               </h1>
+              {/* The second half of the offer, and the line the new cover leads
+                  with. Deliberately smaller than it is in print: on a phone this
+                  sits between the headline and the email field, and every pixel
+                  here pushes the field towards the fold. */}
+              <p
+                className={`${display} mt-2 text-sm font-extrabold uppercase leading-tight tracking-tight text-[#f6be00] sm:mt-4 sm:text-2xl`}
+              >
+                And the prompts that get you there
+              </p>
 
               <p className="mt-4 max-w-xl font-serif text-lg leading-relaxed text-[#cfccc2] sm:mt-8 sm:text-xl">
-                Everybody says you should use AI. Nobody says what that actually
-                means.{" "}
+                Everybody says you should use AI. Nobody hands you the prompts
+                that actually work.{" "}
                 <span className="font-semibold text-[#f2efe6]">
-                  This is the plain English version.
+                  So here they are.
                 </span>
                 {/* The tail is desktop-only. On a phone every line here pushes
                     the email field closer to the fold, and the same promise is
                     made again beside the form lower down. */}
                 <span className="hidden sm:inline">
                   {" "}
-                  Five levels. Find yours in ten minutes. Then find out what
-                  staying there is costing you.
+                  Two you can paste today. Three we build with you.
                 </span>
               </p>
 
@@ -188,15 +206,17 @@ export default async function GuidePage() {
                     </span>
                     <div className="h-3 w-24 shrink-0 overflow-hidden rounded-sm bg-[#2c2c29] sm:h-3.5 sm:w-auto sm:flex-1">
                       <div
-                        className={`h-full rounded-sm ${lvl.money || lvl.n === "01" ? "bg-[#f6be00]" : "bg-[#4a4a46]"}`}
+                        className={`h-full rounded-sm ${lvl.locked ? "bg-[#4a4a46]" : "bg-[#f6be00]"}`}
                         style={{ width: lvl.width }}
                       />
                     </div>
-                    <span className="font-mono text-[10px] uppercase leading-tight tracking-[0.1em] text-[#cfccc2] sm:w-64 sm:shrink-0 sm:text-xs sm:tracking-[0.12em]">
+                    <span className="font-mono text-[10px] uppercase leading-tight tracking-[0.1em] text-[#cfccc2] sm:w-72 sm:shrink-0 sm:text-xs sm:tracking-[0.12em]">
                       {lvl.title}
-                      {lvl.tag && (
-                        <span className="text-[#f6be00]"> &middot; {lvl.tag}</span>
-                      )}
+                      <span className={lvl.locked ? "text-[#8a887f]" : "text-[#f6be00]"}>
+                        {" "}
+                        &middot; {lvl.prompt}
+                        {lvl.locked && " (locked)"}
+                      </span>
                     </span>
                   </div>
                 ))}
@@ -210,14 +230,14 @@ export default async function GuidePage() {
                   edge has to come from the ring, not from contrast. */}
               <GuideCover className="w-full rounded-lg shadow-[0_30px_70px_-20px_rgba(0,0,0,0.9)] ring-1 ring-[#55534c]" />
               <p className="mt-4 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-[#8a887f]">
-                Nine pages &middot; PDF &middot; Free
+                Nine pages &middot; 2 prompts inside &middot; Free
               </p>
             </div>
           </div>
         </div>
         <div className="bg-[#f6be00] py-3">
           <p className="mx-auto max-w-5xl px-6 font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#1b1b1b]">
-            The map is free. Your step takes one call.
+            Levels 1 and 2 are in the guide. Levels 3 to 5 we build with you.
           </p>
         </div>
       </section>
@@ -235,16 +255,17 @@ export default async function GuidePage() {
 
         <div className="mt-8 max-w-2xl space-y-4 font-serif text-lg leading-relaxed">
           <p>
-            Most AI guides hand a business owner twenty apps. The app was
-            never the hard part.
+            Most AI guides hand a business owner twenty apps to go and try. The
+            app was never the hard part. The prompt was.
           </p>
           <p>
             Here are five levels instead. Each answers one question:{" "}
             <span className="font-semibold">
               how much of the work happens while you are not watching?
             </span>{" "}
-            Go one level at a time. People who jump from Level 1 to Level 4 land
-            on a mess and a bill.
+            The guide gives you both halves: the level, and the prompt that moves
+            you up it. Take them one at a time. Jumping from Level 1 to Level 4
+            is how owners end up with a mess to untangle and a bill for it.
           </p>
         </div>
 
@@ -262,11 +283,22 @@ export default async function GuidePage() {
                 <p className="mt-1 font-serif text-[15px] leading-relaxed text-[#57564f]">
                   {lvl.line}
                 </p>
-                {lvl.money && (
-                  <span className="mt-3 inline-block bg-[#1b1b1b] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[#f6be00]">
-                    Best payoff &middot; Almost nobody is here
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span
+                    className={`inline-block px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] ${
+                      lvl.locked
+                        ? "border border-[#b9b6aa] text-[#57564f]"
+                        : "bg-[#f6be00] text-[#1b1b1b]"
+                    }`}
+                  >
+                    {lvl.unlock} &middot; {lvl.prompt}
                   </span>
-                )}
+                  {lvl.tag && (
+                    <span className="inline-block bg-[#1b1b1b] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[#f6be00]">
+                      {lvl.tag}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -278,17 +310,19 @@ export default async function GuidePage() {
             The short version
           </p>
           <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-[#e6e3d9]">
-            Most businesses are on Level 1. Almost nobody is on Level 3, the
-            one that pays. Read the guide and you know your level. Call us and you
-            know your number.
+            Levels 1 and 2 are things you paste, so the guide prints them in
+            full. Levels 3 to 5 are not prompts you can paste, they are systems
+            you build, so the guide prints the frameworks and stops there. The
+            prompt is only half the job. The other half, the pick and the
+            write-down and the wiring, is the part we do with you.
           </p>
           {/* Qualifying line. Sets the shape of the work early, so the people who
               go on to book already expect a build and an ongoing arrangement
               rather than an afternoon of app setup. */}
           <p className="mt-4 max-w-2xl font-serif text-[15px] leading-relaxed text-[#8a887f]">
-            Written for owners of a business that already works — real revenue,
-            real staff, real load — who want this built properly and looked after
-            once it&apos;s live.
+            Written for owners of a business that already works: revenue coming
+            in, staff to pay, more work than there is time for. It assumes you
+            want this built properly and looked after once it&apos;s live.
           </p>
         </div>
       </section>
@@ -297,10 +331,10 @@ export default async function GuidePage() {
       <section className="border-t border-[#d4d1c6] bg-[#e2dfd4]">
         <div className="mx-auto max-w-4xl px-6 py-20">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#7a786f]">
-            What&apos;s inside
+            The contents
           </p>
           <h2 className={`${display} mt-3 text-3xl font-black uppercase leading-[0.98] tracking-tight sm:text-5xl`}>
-            Nine pages. No fluff.
+            What the nine pages cover
           </h2>
 
           <div className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2">
@@ -324,7 +358,7 @@ export default async function GuidePage() {
           <div className="grid gap-10 sm:grid-cols-[minmax(0,1fr)_200px] sm:items-start sm:gap-12">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-                The map is free
+                Send it over
               </p>
               <h2 className={`${display} mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight text-[#f2efe6] sm:text-5xl`}>
                 {content.captureHeading}
@@ -348,45 +382,78 @@ export default async function GuidePage() {
         </div>
       </section>
 
-      {/* ============================= SO WHERE ARE YOU? (teaser) ============================= */}
+      {/* ============================= A LOOK INSIDE (prompt teaser) =============================
+          This section used to be a five-box self-scoring test. The prompts
+          edition of the guide does not contain that test, so it is now the
+          Level 2 prompt instead: the skeleton is printed here, the filled-in
+          version and the other four prompts are in the PDF. Showing the real
+          deliverable beats describing it, and this is the last thing a scroller
+          reads before the final CTA. */}
       <section className="mx-auto max-w-4xl px-6 py-20">
         <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#7a786f]">
-          Two minutes
+          A look inside
         </p>
         <h2 className={`${display} mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight sm:text-6xl`}>
-          So where are you?
+          The prompt
+          <br />
+          worth keeping
         </h2>
         <p className="mt-6 max-w-2xl font-serif text-lg leading-relaxed">
-          Be honest. The question isn&apos;t &ldquo;has anyone here ever tried it
-          once.&rdquo; It&apos;s &ldquo;is this how we work on a normal
-          Tuesday.&rdquo; The full five-box test is in the guide. Here&apos;s the
-          shape of it:
+          Level 2 is where most of the time gets won. The difference between a
+          shrug and a finished draft is almost never the tool, it is how you
+          brief it. Five blocks, filled in and pasted as one. Here is the
+          skeleton. In the guide it comes filled in on a real job, next to the
+          one-liner for Level 1.
         </p>
 
-        <ul className="mt-10 space-y-4">
-          {[
-            "Someone here uses an AI chat box most days instead of searching the web.",
-            "We hand it real work, our files and our paperwork, and use what comes back.",
-            "There is at least one tool running in this business that AI helped us build.",
-            "There is at least one job that finishes without anybody pressing go.",
-            "We give goals, not steps. We check the results.",
-          ].map((q, i) => (
-            <li key={i} className="flex items-start gap-4 border-b border-[#d4d1c6] pb-4">
-              <span className="mt-0.5 h-5 w-5 shrink-0 rounded-[3px] border-2 border-[#1b1b1b]" />
-              <span className="font-mono text-sm text-[#7a786f]">0{i + 1}</span>
-              <span className="font-serif text-[15px] leading-relaxed text-[#3a3a35]">{q}</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-8 bg-[#1b1b1b] p-6 sm:p-8">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#f6be00]">
-            How to score it
+        <div className="mt-10 border-2 border-[#1b1b1b] bg-[#1b1b1b] p-6 text-[#f2efe6] sm:p-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#f6be00]">
+            The 5-block prompt
           </p>
-          <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#e6e3d9]">
-            Your real level is the highest box you checked where every box below
-            it is checked too. Skipped levels are why most of these projects
-            quietly die. The guide walks you through it.
+          <dl className="mt-6 space-y-5">
+            {[
+              {
+                block: "Role",
+                fill: 'Act as a [who, e.g. "seasoned bookkeeper," "blunt marketing consultant"].',
+              },
+              {
+                block: "Context",
+                fill: "Here's what you need to know about my situation: [my business, the customer, the problem, any history a smart assistant would need].",
+              },
+              {
+                block: "Task",
+                fill: "I need you to [exactly what you want done, plainly].",
+              },
+              {
+                block: "Constraints",
+                fill: "[rules, limits, must-haves] · [anything to avoid] · Tone: [friendly / direct].",
+              },
+              {
+                block: "Format",
+                fill: "Give it to me as [a short email / a table / 3 options / a script I can read out loud].",
+              },
+            ].map((row) => (
+              <div key={row.block} className="sm:flex sm:gap-6">
+                <dt className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-[#f6be00] sm:w-32 sm:shrink-0 sm:pt-0.5">
+                  {row.block}
+                </dt>
+                <dd className="mt-1 font-mono text-[13px] leading-relaxed text-[#cfccc2] sm:mt-0">
+                  {row.fill}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="mt-6 border-2 border-[#1b1b1b] bg-[#eae8e1] p-6 sm:p-8">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#7a786f]">
+            The one block everyone skips
+          </p>
+          <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#3a3a35]">
+            If you fill in only one, make it Context. The AI cannot see your
+            business. Leave it blank and it fills the gap with a guess. Vague
+            context in, vague answer out. When in doubt, over-explain, because
+            trimming is the easy part.
           </p>
         </div>
       </section>
@@ -396,18 +463,35 @@ export default async function GuidePage() {
         <div className="mx-auto max-w-4xl px-6 py-20">
           <div className="bg-[#1b1b1b] p-8 text-[#f2efe6] sm:p-12">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-              The next step
+              Before you go
             </p>
             <h2 className={`${display} mt-3 text-3xl font-black uppercase leading-[0.98] tracking-tight sm:text-5xl`}>
-              You know your level.
+              You&apos;ll have 1 and 2.
               <br />
-              Now get your number.
+              Let&apos;s unlock 3, 4, 5.
             </h2>
             <p className="mt-5 max-w-2xl font-serif text-lg leading-relaxed text-[#cfccc2]">
-              Everything in the guide you can do on your own, and you should start
-              today. What a guide can&apos;t give you is which move is yours and
-              what it&apos;s worth. That takes twenty minutes with us.
+              The prompts in the guide are yours, and you should use them today.
+              What a guide can&apos;t do is pick your first build, write your
+              busiest job down so it can be automated, and wire it into the tools
+              you already run. That part is different in every business.
             </p>
+
+            <p className="mt-8 font-mono text-xs uppercase tracking-[0.18em] text-[#f6be00]">
+              What the twenty minutes unlocks
+            </p>
+            <ul className="mt-4 max-w-2xl space-y-3">
+              {[
+                "Your real level, and the one thing holding you at it. Rarely what the owner guesses.",
+                "Your first build. The one Level 3 tool worth making first, and the ones to skip.",
+                "What the next level is worth to your business per month. A real number, not an average.",
+              ].map((item) => (
+                <li key={item} className="flex gap-3 font-serif text-[15px] leading-relaxed text-[#cfccc2]">
+                  <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 bg-[#f6be00]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -416,8 +500,9 @@ export default async function GuidePage() {
                 Build
               </h3>
               <p className="mt-2 font-serif text-[15px] leading-relaxed text-[#57564f]">
-                We make the tool. We write down how it works and hand it over. No
-                black boxes. One-time, flat fee agreed up front.
+                We pick the tool, make it, wire it in, and hand it over with the
+                write-down of how it works, so anyone you bring in later can pick
+                it up. No black boxes. One-time, flat fee agreed before we start.
               </p>
             </div>
             <div className="border-2 border-[#1b1b1b] bg-[#eae8e1] p-6">
@@ -433,12 +518,12 @@ export default async function GuidePage() {
 
           <div className="mt-6 bg-[#f6be00] p-8 text-[#1b1b1b] sm:p-10">
             <h3 className={`${display} text-2xl font-black uppercase tracking-tight sm:text-3xl`}>
-              Twenty minutes. Bring your level.
+              Twenty minutes. We&apos;ll save you hours.
             </h3>
             <p className="mt-3 max-w-2xl font-serif text-[15px] leading-relaxed text-[#1b1b1b]/80">
-              Tell us the level you landed on. We&apos;ll tell you what we usually
-              find there, and what it costs businesses like yours. Free,
-              whether or not you hire us.
+              Tell us the job that keeps coming back. We&apos;ll tell you which
+              level it belongs on, what to hand the AI, and what unlocking it is
+              worth. No charge for the call whether you hire us or not.
             </p>
             <BookCallButton
               entryPoint="guide"
@@ -448,10 +533,10 @@ export default async function GuidePage() {
                 thing here, and a call that ends in "you just needed the guide"
                 costs more than the lead was worth. */}
             <p className="mt-5 max-w-2xl font-serif text-[14px] leading-relaxed text-[#1b1b1b]/65">
-              Worth saying plainly: if what you want is someone to set your team
-              up on ChatGPT for an afternoon, the guide really is all you need,
-              and it&apos;s free. The call is for owners ready to have something
-              built and looked after properly.
+              If what you want is someone to set your team up on ChatGPT for an
+              afternoon, the two prompts in the guide really are all you need,
+              and they cost nothing. The call is for owners who are ready to have
+              something built and looked after properly.
             </p>
           </div>
 

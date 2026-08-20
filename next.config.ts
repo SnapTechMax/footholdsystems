@@ -1,18 +1,23 @@
 import type { NextConfig } from "next";
 
+// Every filename the guide has ever been published under. The delivery email and
+// the nurture sequence print the link as raw text, so a copy of every old name is
+// sitting in somebody's inbox for good. They all land on the current file.
+const RETIRED_GUIDE_PATHS = [
+  "/downloads/foothold-5-levels-of-ai.pdf",
+  "/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf",
+];
+
+const CURRENT_GUIDE_PATH =
+  "/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf";
+
 const nextConfig: NextConfig = {
   async redirects() {
-    return [
-      {
-        // The guide was renamed for branding. Anyone who received the delivery
-        // email before the rename still has the old link sitting in their inbox,
-        // so keep it working rather than handing them a 404.
-        source: "/downloads/foothold-5-levels-of-ai.pdf",
-        destination:
-          "/downloads/Foothold-The-Five-Levels-of-AI-for-Small-Business.pdf",
-        permanent: true,
-      },
-    ];
+    return RETIRED_GUIDE_PATHS.map((source) => ({
+      source,
+      destination: CURRENT_GUIDE_PATH,
+      permanent: true,
+    }));
   },
 };
 

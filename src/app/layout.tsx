@@ -63,14 +63,14 @@ export const metadata: Metadata = {
     template: "%s | Foothold Systems",
   },
   description:
-    "Foothold Systems sets up AI for businesses, in plain English. The right tool, built for how your shop really runs, and looked after once it's live. Start with our free guide, The 5 Levels of AI.",
+    "Foothold Systems sets up AI inside working businesses: the right tool, built around how your shop really runs, and looked after once it's live. Start with the free guide, The 5 Levels of AI and the Prompts That Get You There.",
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "Foothold Systems",
-    title: "The 5 Levels of AI | Foothold Systems",
+    title: "The 5 Levels of AI and the Prompts | Foothold Systems",
     description:
-      "The plain-English version. Five levels. Find yours in ten minutes. Free guide.",
+      "Five levels of AI for a business, in plain English, and the prompt that moves you up each one. Two you can paste today. Free guide.",
     url: "/",
     images: [
       {
