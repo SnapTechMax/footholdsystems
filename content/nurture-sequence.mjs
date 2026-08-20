@@ -1,5 +1,12 @@
 /**
- * The nurture sequence sent after someone downloads The 5 Levels of AI.
+ * The nurture sequence sent after someone downloads The 5 Levels of AI and The
+ * Prompts That Get You There.
+ *
+ * The guide prints the Level 1 and Level 2 prompts in full and leaves Levels 3
+ * to 5 as frameworks. That split is the spine of this sequence: the early
+ * emails sharpen a prompt the reader already has, the later ones are about the
+ * three they cannot paste. Anything here that cites the guide has to match what
+ * is actually in the PDF, so check a claim against the file before adding one.
  *
  * Content only. Resend owns the sequence, as templates plus an automation. This
  * file is the source of truth for the copy: edit here, then run
@@ -217,16 +224,20 @@ const emails = [
   {
     key: "context",
     delay: "1 day",
-    subject: "The habit that fixes most bad AI answers",
+    subject: "The one block everyone skips",
     cta: "Book a call",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("The quickest fix I know for a bad AI answer is to stop opening with the question."),
-      p("Not: <em>write me a follow up email</em>. Instead: <em>I run a 12 person HVAC company. This customer got a quote three weeks ago for $4,200 and has gone quiet. We have worked with them twice before. Write the follow up.</em>"),
+      p("You have the guide now. If you only ever use one part of it, use the Context block on page four."),
+      p("Most people open with the question. <em>Write me a follow up email.</em> What comes back sounds like everybody else's follow up email, because nothing in that sentence told it a single thing about you."),
+      p("Open with the facts instead. <em>I run a 12 person HVAC company. This customer got a quote three weeks ago for $4,200 and has gone quiet. We have worked with them twice before. Write the follow up.</em>"),
       p("Same tool, same thirty seconds of typing, completely different answer. It had the ability all along. What it was missing was anything at all about your business, and you are the only one who can hand it that."),
-      p("Try it today on something real."),
+      // The link lands at the end of the sentence on purpose: in the text part
+      // this becomes "label: url", and a URL in the middle of a sentence leaves
+      // the rest of it stranded after forty characters of query string.
+      p(`Try it today on something real. If the guide has already gone missing in your inbox, <a href="${GUIDE_URL}">here it is again</a>`),
     ],
-    ask: "The guide covers where this stops being enough on its own. If you would rather just talk it through, my calendar is open.",
+    ask: "Prompts 1 and 2 are yours to use this afternoon. Levels 3 to 5 are the ones that get built rather than pasted, and that is what the call is for.",
   },
   {
     key: "draft",
@@ -276,7 +287,7 @@ const emails = [
     body: [
       p("Hi {{{FIRST_NAME}}},"),
       p("Before it answers, make it interview you. Almost nobody does this and it changes the output more than any other single habit."),
-      p("Add this to any request: <em>before you answer, ask me up to five questions you need answered to do this well.</em>"),
+      p("Add this line to the bottom of the 5-block prompt: <em>before you answer, ask me up to five questions you need answered to do this well.</em>"),
       p("It will ask about things you forgot to mention. Your margins, your usual turnaround, whether this customer is price sensitive. Answer those and then let it run."),
       p("You get a better result out of it, and about half the time you notice you had not thought the job through properly either."),
     ],
@@ -331,7 +342,7 @@ const emails = [
     body: [
       p("Hi {{{FIRST_NAME}}},"),
       p("Pick the job your business does most often and write down how it gets done, start to finish, on one page. Roughly what you would hand a new hire on their first morning."),
-      p("It is on the last page of the guide as homework, and it is worth the hour."),
+      p("The Level 4 page in the guide puts it in one line: you cannot automate a job you have never written down. This is that hour."),
       p("Two things come out of it. You find steps nobody can justify any more, which you then delete. And you end up holding the document that makes automating that job possible later, because a process that only exists in somebody's head cannot be automated by anyone. Everything above Level 2 depends on having done this once."),
     ],
     ask: "Write it, then book twenty minutes and I will tell you what I would build from it.",
@@ -396,10 +407,11 @@ const emails = [
     body: [
       p("Hi {{{FIRST_NAME}}},"),
       p("That is a fortnight of tips. So: has anything actually changed in how you work?"),
-      p("If it has, you are on Level 2 or heading there. You hand it real work, with your own material, and you use what comes back."),
-      p("If nothing has changed, that is worth knowing too, and it is the normal outcome. Reading about something and doing it are different activities, and you have a business to run. Either way you now know your level, which is more than most owners can say."),
+      p("If it has, you are on Level 2 or heading there. You hand it real work, with your own material, and you use what comes back. That is both of the prompts in the guide doing their job, and it is further than most owners get."),
+      p("If nothing has changed, that is worth knowing too, and it is the normal outcome. Reading about something and doing it are different activities, and you have a business to run."),
+      p("Either way, the guide runs out here. Levels 3, 4 and 5 print as frameworks rather than something you paste, because there is nothing to paste. They get built."),
     ],
-    ask: "The next part is the bit a guide cannot do: which move is yours, and what it is worth. That is the call.",
+    ask: "Which of the three is yours, and what it is worth once it is running, is the whole of the call.",
   },
 
   /* ── Days 16-26: every other day. Ask gets direct. ──────────────────────── */
@@ -410,7 +422,7 @@ const emails = [
     cta: "Book a call",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Level 3 sounds abstract until you see one, and they are always smaller than people expect."),
+      p("You saw the four headings of the build brief in the guide and not much else, so here is what actually sits under them. Level 3 tools are always smaller than people expect."),
       p("A form your team fills in on site that writes the customer report itself. A sheet that reads your supplier's price list and reprices your quotes. Something that watches an inbox and files what arrives against the right job."),
       p("None of those is a product or a platform. Each one is a small, ugly, specific thing that does a job your business does constantly, built around the way you already work. That is the level almost nobody reaches, and it is the one that pays."),
     ],
@@ -468,9 +480,9 @@ const emails = [
       p("Hi {{{FIRST_NAME}}},"),
       p("Ask your team which AI tools they use and on what accounts. Most owners are surprised by the answer."),
       p("Personal accounts. Free tiers. Customer names and addresses pasted into a chat box that trains on whatever it is given. Nobody did anything malicious, they were trying to get through the day faster."),
-      p("It is on the audit list because I have never looked at a business and found nothing. The fix is usually simple and cheap once you know, which makes the finding out the only hard part."),
+      p("It is one of the three things the guide asks you to do this week, and it is there because I have never looked at a business and found nothing. The fix is usually simple and cheap once you know, which makes the finding out the only hard part."),
     ],
-    ask: "This is one of the four things I check on a call. Twenty minutes, and you would know.",
+    ask: "You can do that one without me. If you would rather have someone go through it with you, that is twenty minutes.",
   },
   {
     key: "handover",
@@ -495,7 +507,7 @@ const emails = [
     cta: "Get your number",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("For a business of five to fifty people, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team."),
+      p("In a business that already works, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team."),
       p("Your number will not be that number, because it depends on your jobs and your people. The shape of it holds though, and the hours are not dramatic ones. They are the same small tasks, done by hand, every week, for as long as you carry on."),
       p("The cost that gets less attention is that what lives in somebody's head stays there. If that person leaves, the process leaves with them. If you sell, you are selling a business that runs on people rather than systems, and it gets priced that way."),
       p("Doing nothing is a decision with a price on it, and most owners have simply never seen the figure."),
@@ -510,7 +522,7 @@ const emails = [
     body: [
       p("Hi {{{FIRST_NAME}}},"),
       p("This is the last email in this sequence. No more from me after today unless you ask."),
-      p("If the timing is wrong, that is genuinely fine. The three tasks on the last page of the guide are free, they work, and you do not need me to do them."),
+      p("If the timing is wrong, that is genuinely fine. The three tasks on the last page of the guide cost nothing and you do not need me for any of them. Pin the 5-block prompt where you work. Find out which AI accounts your team is using. Name the one job that keeps coming back."),
       p("If it is not timing but something else, reply and tell me. Wrong fit, wrong size, wrong problem, too expensive. I would rather know, and I will take the answer without arguing."),
       p("And if you have been meaning to book this for five weeks and it keeps sliding down the list, this is the nudge. It is twenty minutes and it is free."),
     ],
