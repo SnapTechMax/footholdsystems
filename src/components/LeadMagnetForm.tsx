@@ -319,7 +319,8 @@ export function LeadMagnetForm({
           landing page collects personal information, so this link has to be
           reachable from the form itself, not just the footer. */}
       <p className="mt-3 font-mono text-[11px] leading-relaxed tracking-[0.04em] text-[#8a887f]">
-        No spam, no selling your details, unsubscribe in one click.{" "}
+        We don&apos;t sell your details, and every email has a one-click
+        unsubscribe.{" "}
         <Link
           href="/privacy"
           className="underline underline-offset-2 transition-colors hover:text-[#cfccc2]"
