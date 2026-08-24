@@ -213,7 +213,7 @@ function Paywall({ token, findingCount }: { token: string; findingCount: number 
           Written so you or whoever runs your website can just go and do it.
         </p>
         <p className="font-semibold text-[var(--text)]">
-          Not a strategy document. Not a call. Instructions.
+          It reads like a checklist, because that is what it is.
         </p>
       </div>
 

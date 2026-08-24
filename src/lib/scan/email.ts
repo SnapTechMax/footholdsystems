@@ -209,7 +209,7 @@ export function buildReportEmail(args: {
                       The diagnosis above is free and it's yours to keep. The repair manual isn't.
                     </p>
                     <p style="margin:0 0 12px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
-                      For ${SOLUTIONS_PRICE} you get the exact fix for every problem on this list: what to change, where, in what order, written so you or whoever runs your website can just do it. Not a strategy document. Instructions.
+                      For ${SOLUTIONS_PRICE} you get the exact fix for every problem on this list: what to change, where, in what order, written so you or whoever runs your website can just do it. A checklist, in the order it should be done.
                     </p>
                     <p style="margin:0 0 20px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                       ${SOLUTIONS_PRICE} is less than an hour of most people's billable time. The competitor who fixes this first stops sharing the answer with you.
@@ -293,7 +293,7 @@ export function buildReportEmail(args: {
           ``,
           `The diagnosis above is free and yours to keep. The repair manual isn't.`,
           `For ${SOLUTIONS_PRICE} you get the exact fix for every problem listed: what to`,
-          `change, where, and in what order. Instructions, not a strategy document.`,
+          `change, where, and in what order. A checklist, in the order it should be done.`,
           ``,
           pay ? `Pay and unlock: ${pay}` : `Unlock: ${link}`,
           `Read your report online: ${link}`,

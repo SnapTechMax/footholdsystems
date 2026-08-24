@@ -73,7 +73,7 @@ const SIGNALS = [
     title: "Does the rest of the web agree?",
     lead: "A model does not trust your website about your website.",
     body: "It trusts consensus, meaning what independent sources say about you. Directories, review platforms, industry listings, local press, forums, other people’s pages, citations in places you have never visited. If the internet is quiet about your business, the model has nothing to form an opinion from.",
-    punch: "Silence does not read as neutral. It reads as unproven.",
+    punch: "The web's silence about you becomes the model's answer.",
   },
   {
     n: "03",
@@ -87,7 +87,7 @@ const SIGNALS = [
     title: "Are you still there?",
     lead: "These systems increasingly go and fetch live results mid-answer.",
     body: "They do not rely only on what they were trained on months ago. Which means a stale, thin, unanswerable site gets skipped at the moment of retrieval even when the brand is already known to the model. The seat is not permanent, and it is not one you win once.",
-    punch: "Being in the training data is a start, not a moat.",
+    punch: "Training data gets you known. Retrieval gets you named.",
   },
 ];
 
