@@ -4,10 +4,6 @@
     {
       "path": "/api/cro/tick",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/scan/sweep",
-      "schedule": "*/10 * * * *"
     }
   ]
 }

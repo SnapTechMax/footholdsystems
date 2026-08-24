@@ -15,8 +15,11 @@ import { runScanJob, sendReportEmail } from "@/lib/scan/run";
  * down). The first costs an Ora call to redo, the second does not — so they
  * are handled separately rather than by re-running everything.
  *
- * Wire to a cron in vercel.json. Every 10 minutes is plenty; the happy path
- * finishes in seconds and this only ever picks up the exceptions.
+ * Driven from .github/workflows/scan-sweep.yml every 10 minutes, not from
+ * vercel.json: the Hobby plan allows one cron run a day and fails the whole
+ * deployment on anything finer, and that daily allowance is already spent on
+ * /api/cro/tick. Authorises the same way either would, so it can be moved back
+ * without touching this file.
  */
 
 export const runtime = "nodejs";

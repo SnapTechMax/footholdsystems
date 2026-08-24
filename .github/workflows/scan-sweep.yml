@@ -1,0 +1,66 @@
+# Recovers scans that fell on the floor.
+#
+# The capture route answers the visitor immediately and runs the scan in
+# after(), which is background work on the same serverless invocation and has no
+# durability guarantee. If that invocation is killed — a deploy landing
+# mid-scan, a cold-start eviction, Ora hanging past the timeout — the work dies
+# silently. The visitor already saw "we're scanning". Nothing retries. They just
+# never get an email, and nobody finds out unless they complain.
+#
+# This is what notices. It picks up three states: queued and never claimed,
+# running and abandoned, and completed-but-never-emailed. The last one is the
+# cheapest and the most common, which is why the handler does those first.
+#
+# It lives here rather than in vercel.json for the same reason cro-tick does:
+# Vercel's Hobby plan allows daily cron only and does not degrade quietly (a
+# sub-daily schedule in vercel.json fails the whole deployment), and that daily
+# allowance is already spent on /api/cro/tick. Free here, and this repo is
+# public, so the minutes are not billed either.
+#
+# SETUP: none. The existing CRON_SECRET repository secret covers this, the same
+# one cro-tick and campaign-refresh use.
+#
+# Two things worth knowing about GitHub's scheduler: runs can be delayed by ten
+# minutes or more when the platform is busy, and schedules are disabled
+# automatically on a repository with no commits for 60 days. Neither matters
+# much for a safety net whose job is to catch things within the hour, but it is
+# why the recovery windows in findStuckScans are minutes rather than seconds.
+name: Scan sweep
+
+on:
+  schedule:
+    # Every 10 minutes. The happy path finishes in seconds and this finds
+    # nothing; the cadence is set by how long a customer should ever wait for a
+    # report that silently failed, not by how often anything is expected.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+# One at a time. Two overlapping sweeps would both try to claim the same stuck
+# scans; claimScan settles that safely in Postgres, but there is no reason to
+# spend two invocations discovering it.
+concurrency:
+  group: scan-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Sweep stuck scans and unsent reports
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::CRON_SECRET is not set, so there is nothing to call yet. See the setup note at the top of this workflow."
+            exit 0
+          fi
+
+          # --fail-with-body so a 401 or 500 fails the step *and* prints what the
+          # endpoint said, rather than a bare exit code with no explanation.
+          # Allowed longer than the optimiser: a sweep may re-run up to three
+          # scans, and each one waits on Ora.
+          curl --silent --show-error --fail-with-body --location \
+            --max-time 300 \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "https://www.footholdsystems.com/api/scan/sweep"
