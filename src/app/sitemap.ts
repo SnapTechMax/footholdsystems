@@ -1,14 +1,15 @@
 import type { MetadataRoute } from "next";
 
 /**
- * sitemap.xml, which was returning a 404 alongside robots.txt.
+ * sitemap.xml.
  *
- * Three public pages, listed by hand rather than derived. There is no content
- * collection to walk, and a generated sitemap over a four-page site would be
- * indirection standing in for a list.
+ * Two public pages now that the site is a single sales page plus the privacy
+ * policy it is legally required to carry. Listed by hand rather than derived —
+ * there is no content collection to walk, and a generated sitemap over a
+ * two-page site would be indirection standing in for a list.
  *
- * `/guide/thanks` and `/admin` are deliberately absent — a sitemap is a request
- * to index, and neither should be.
+ * `/admin` is deliberately absent. A sitemap is a request to index, and it
+ * should not be.
  *
  * The host is www, matching `metadataBase` in the layout and the canonical tags.
  * The apex 308s to it, and a sitemap that lists the redirecting host asks every
@@ -21,17 +22,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
+      // The sales page, and the only page worth ranking. Worth ranking in the
+      // ordinary sense and also in the sense this whole business is about:
+      // it is the page a model reads to decide what FootHold AEO is.
       url: `${BASE}/`,
       lastModified: now,
-      changeFrequency: "monthly",
-      priority: 1,
-    },
-    {
-      // The page paid traffic lands on, and the one worth ranking.
-      url: `${BASE}/guide`,
-      lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.9,
+      priority: 1,
     },
     {
       url: `${BASE}/privacy`,

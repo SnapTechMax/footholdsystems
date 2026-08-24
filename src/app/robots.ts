@@ -1,17 +1,14 @@
 import type { MetadataRoute } from "next";
 
 /**
- * robots.txt, which was returning a 404.
+ * robots.txt.
  *
- * Not decoration for an ad-funded site. A missing robots.txt is not fatal — a
- * crawler that gets a 404 assumes everything is allowed — but it means the two
- * routes that should never be indexed are relying on nothing but a meta tag, and
- * `/admin` does not carry one.
+ * Not decoration for an ad-funded site, and on this one it is slightly more
+ * than housekeeping: the whole pitch is that AI crawlers should be able to read
+ * and quote you, so the site had better be readable itself. Everything public
+ * is allowed, deliberately, including to the assistant crawlers.
  *
- * `/guide/thanks` already sets `robots: { index: false }` in its metadata. It is
- * repeated here because the two mechanisms fail differently: the meta tag is only
- * seen by a crawler that fetches the page, which is exactly what should not be
- * happening to a page that sits behind a conversion.
+ * Only the two things that are not pages are disallowed.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -21,12 +18,15 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         // Password-gated, and the 401 alone is not a reason to invite crawling.
         "/admin",
-        // Funnel-internal. Indexing it puts a thank-you page in search results
-        // for people who never downloaded anything.
-        "/guide/thanks",
         // Redirect endpoints, not pages. Crawling these would write click rows
         // for visits nobody made.
         "/api/",
+        // Every URL under here is somebody's individual scan report, reachable
+        // by an unguessable token. The pages carry noindex of their own; this is
+        // belt and braces, because the two fail differently — a meta tag is only
+        // seen by a crawler that already fetched the page, which is exactly what
+        // should not be happening to a private report.
+        "/scan/",
       ],
     },
     sitemap: "https://www.footholdsystems.com/sitemap.xml",

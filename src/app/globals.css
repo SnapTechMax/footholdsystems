@@ -1,32 +1,95 @@
 @import "tailwindcss";
 
+/**
+ * FootHold AEO — direct-response palette.
+ *
+ * Dark-dominant on purpose. This is a paid-traffic sales page, not a brochure:
+ * the eye needs to be pulled down a single column for 4,000 words, and a dark
+ * ground with one hot accent does that far better than the old cream site did.
+ * The yellow is the existing brand yellow, kept so the mark and the ads still
+ * look like the same company.
+ */
 :root {
-  --background: #eae8e1;
-  --foreground: #1f1f1d;
+  /* Grounds, darkest to lightest. --ink is the hero and the closers; --bg is
+     the default body; --panel / --panel-2 are cards and callouts. */
+  --ink: #08080a;
+  --bg: #0e0e11;
+  --panel: #15151a;
+  --panel-2: #1c1c22;
+  --line: #2a2a33;
+
+  --text: #f5f3ee;
+  --muted: #a5a29a;
+  /* Measured, not eyeballed: the previous #6d6a63 came out at 3.4:1 on the
+     panel ground, under the 4.5:1 AA floor — and --dim is not decoration here,
+     it carries the CTA reassurance lines, the comparison table's left column
+     and the footer disclaimer. This clears 5:1 and still reads as recessed. */
+  --dim: #8a877f;
+
+  /* Brand yellow. --accent-hot is the hover state on CTAs only. */
+  --accent: #f6be00;
+  --accent-hot: #ffd23d;
+
+  /* Reserved for loss/pain framing — the "you are invisible" callouts and the
+     red column of the comparison table. Used sparingly; it stops working the
+     moment it becomes decoration. */
+  --danger: #ff4d3d;
+  --danger-dim: #3a1a16;
+
+  --background: var(--bg);
+  --foreground: var(--text);
 }
 
 @theme inline {
+  --color-ink: var(--ink);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-accent: var(--accent);
+  --color-accent-hot: var(--accent-hot);
+  --color-danger: var(--danger);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Typography — mirrors the type roles used across the page */
+  /* Two faces plus a label face. The old site's serif is gone — long-form
+     response copy reads faster set in one sans, and the serif was doing
+     brochure work this page has no use for. */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
+  /* Long page, one column, no horizontal anything. */
+  overflow-x: hidden;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 :focus-visible {
-  outline: 2px solid #f6be00;
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Selection in brand yellow — small thing, but this page gets read closely and
+   quoted into emails. */
+::selection {
+  background: var(--accent);
+  color: var(--ink);
 }

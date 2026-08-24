@@ -1,86 +1,83 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookCallButton } from "@/components/BookCallButton";
 import { BUSINESS_ADDRESS } from "@/lib/site";
 
+/**
+ * Footer.
+ *
+ * Deliberately thin. The only links are the two that have to be here: the
+ * privacy policy, because the site collects email addresses and Meta's ad
+ * review looks for it, and nothing else. A footer full of exits on a
+ * single-page funnel is just a leak with a border on top.
+ *
+ * The postal address is the same one the delivery emails print for CAN-SPAM.
+ * It stays visible because a lead-capture page running cold paid traffic with
+ * no identifiable business behind it costs trust and draws ad-review attention.
+ */
 export function Footer() {
   return (
-    <footer className="border-t border-[#2c2c29] bg-[#1b1b1b] text-[#cfccc2]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-14 sm:flex-row sm:justify-between">
+    <footer className="border-t border-[var(--line)] bg-[var(--ink)]">
+      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-5 py-14 sm:flex-row sm:justify-between sm:px-6">
         <div>
-          <Link href="/" className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             <Image
               src="/images/foothold-mark.png"
-              alt="Foothold Systems logo"
+              alt="FootHold Systems"
               width={32}
               height={32}
               className="h-8 w-8 rounded-md"
             />
-            <span className="font-mono text-sm font-bold uppercase tracking-[0.16em] text-[#f2efe6]">
-              Foothold Systems
+            <span className="font-mono text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text)]">
+              FootHold <span className="text-[var(--accent)]">AEO</span>
             </span>
-          </Link>
-          <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-[#7a786f]">
-            AI for Business
+          </div>
+          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
+            Answer Engine Optimization
           </p>
-          {/* Same address the delivery email carries for CAN-SPAM. Published
-              here because a lead-capture page that names no real business is a
-              trust cost with cold traffic, and Meta's ad review notices. */}
           {BUSINESS_ADDRESS && (
-            <p className="mt-4 max-w-[16rem] font-mono text-[11px] uppercase leading-relaxed tracking-[0.1em] text-[#57564f]">
+            <p className="mt-5 max-w-[16rem] font-mono text-[11px] uppercase leading-relaxed tracking-[0.1em] text-[var(--dim)]">
               {BUSINESS_ADDRESS}
             </p>
           )}
         </div>
 
-        <div className="flex flex-col gap-6 sm:flex-row sm:gap-16">
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
-              Explore
-            </p>
-            <ul className="mt-3 space-y-2 font-serif text-[15px]">
-              <li>
-                <Link href="/#how-we-work" className="transition-colors hover:text-[#f2efe6]">
-                  How we work
-                </Link>
-              </li>
-              <li>
-                <Link href="/guide" className="transition-colors hover:text-[#f2efe6]">
-                  The 5 Levels of AI
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="transition-colors hover:text-[#f2efe6]">
-                  Privacy policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#7a786f]">
-              Get in touch
-            </p>
-            {/* Booking only — no phone or email published while inbound is
-                being kept to scheduled calls. */}
-            <ul className="mt-3 space-y-2 font-serif text-[15px]">
-              <li>
-                <BookCallButton
-                  entryPoint="footer"
-                  className="transition-colors hover:text-[#f2efe6]"
-                >
-                  Book a call
-                </BookCallButton>
-              </li>
-            </ul>
-          </div>
+        <div className="sm:text-right">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
+            Legal
+          </p>
+          <ul className="mt-3 space-y-2 text-[15px]">
+            <li>
+              <Link
+                href="/privacy"
+                className="text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+              >
+                Privacy policy
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
 
-      <div className="border-t border-[#2c2c29]">
-        <p className="mx-auto max-w-6xl px-6 py-5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#57564f]">
-          &copy; {new Date().getFullYear()} Foothold Systems
-        </p>
+      <div className="border-t border-[var(--line)]">
+        <div className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--dim)]">
+            &copy; {new Date().getFullYear()} FootHold Systems
+          </p>
+          {/* Not decoration. This page makes strong claims about a channel
+              nobody can guarantee an outcome in, and it runs on Meta traffic.
+              Saying plainly that results vary and that we are not affiliated
+              with the model vendors is both true and the thing that keeps the
+              ad account healthy. */}
+          <p className="mt-3 max-w-3xl text-[12px] leading-relaxed text-[var(--dim)]">
+            FootHold Systems is an independent consultancy and is not affiliated
+            with, endorsed by, or partnered with OpenAI, Google, Microsoft,
+            Perplexity, or Anthropic. ChatGPT, Gemini, Copilot, Perplexity and
+            Claude are trademarks of their respective owners. No agency can
+            control the output of a language model, and we do not promise a
+            specific ranking, placement, or recommendation. Results vary by
+            business, category, and market.
+          </p>
+        </div>
       </div>
     </footer>
   );

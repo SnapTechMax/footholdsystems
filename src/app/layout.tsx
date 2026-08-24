@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { Source_Serif_4, Inter, JetBrains_Mono, Archivo } from "next/font/google";
+import { Inter, JetBrains_Mono, Archivo } from "next/font/google";
 import Script from "next/script";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { RouteAnalytics } from "@/components/RouteAnalytics";
 import "./globals.css";
-
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,7 +16,7 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -40,9 +33,8 @@ const archivo = Archivo({
 const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-3G72HMB7VK";
 
-// Microsoft Clarity — heatmaps and session replay, for how pages actually get
-// used. Project ID is in Clarity under Settings → Overview. Env var overrides the
-// default; set it to an empty string to drop the tag entirely.
+// Microsoft Clarity — heatmaps and session replay. On a page this long, the
+// scroll maps are the fastest read on which section is losing people.
 const CLARITY_PROJECT_ID =
   process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID ?? "xurw6i8he8";
 
@@ -59,25 +51,25 @@ export const metadata: Metadata = {
   // clicks land on the redirect rather than the page.
   metadataBase: new URL("https://www.footholdsystems.com"),
   title: {
-    default: "AI Integration for Business | Foothold Systems",
-    template: "%s | Foothold Systems",
+    default: "FootHold AEO | Get Your Business Recommended by ChatGPT",
+    template: "%s | FootHold AEO",
   },
   description:
-    "Foothold Systems sets up AI inside working businesses: the right tool, built around how your shop really runs, and looked after once it's live. Start with the free guide, The 5 Levels of AI and the Prompts That Get You There.",
+    "Your customers are asking ChatGPT, Gemini and Perplexity who to hire, and the AI gives them one answer. FootHold AEO makes that answer your business. Free AI visibility scan.",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Foothold Systems",
-    title: "The 5 Levels of AI and the Prompts | Foothold Systems",
+    siteName: "FootHold AEO",
+    title: "When someone asks AI who to hire, one business gets named.",
     description:
-      "Five levels of AI for a business, in plain English, and the prompt that moves you up each one. Two you can paste today. Free guide.",
+      "There is no page two in an AI answer. One business gets recommended. FootHold AEO is how it becomes yours. Get a free scan of what the AIs say about you today.",
     url: "/",
     images: [
       {
         url: "/images/foothold-mark.png",
         width: 1080,
         height: 1080,
-        alt: "Foothold Systems",
+        alt: "FootHold AEO",
       },
     ],
   },
@@ -104,7 +96,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${sourceSerif.variable} ${inter.variable} ${jetbrainsMono.variable} ${archivo.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${archivo.variable} antialiased`}
       >
         <Header />
         {children}
