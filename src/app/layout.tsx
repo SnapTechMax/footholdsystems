@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     template: "%s | FootHold AEO",
   },
   description:
-    "Your customers are asking ChatGPT, Gemini and Perplexity who to hire — and the AI gives them one answer. FootHold AEO makes that answer your business. Free AI visibility scan.",
+    "Your customers are asking ChatGPT, Gemini and Perplexity who to hire, and the AI gives them one answer. FootHold AEO makes that answer your business. Free AI visibility scan.",
   openGraph: {
     type: "website",
     locale: "en_US",

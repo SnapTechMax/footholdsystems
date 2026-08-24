@@ -21,6 +21,12 @@ export default function robots(): MetadataRoute.Robots {
         // Redirect endpoints, not pages. Crawling these would write click rows
         // for visits nobody made.
         "/api/",
+        // Every URL under here is somebody's individual scan report, reachable
+        // by an unguessable token. The pages carry noindex of their own; this is
+        // belt and braces, because the two fail differently — a meta tag is only
+        // seen by a crawler that already fetched the page, which is exactly what
+        // should not be happening to a private report.
+        "/scan/",
       ],
     },
     sitemap: "https://www.footholdsystems.com/sitemap.xml",

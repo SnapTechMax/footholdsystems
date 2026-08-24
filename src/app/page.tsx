@@ -1,4 +1,5 @@
 import { ScanCta } from "@/components/ScanCta";
+import { ScanForm } from "@/components/ScanForm";
 
 /**
  * FootHold AEO — the sales page.
@@ -46,7 +47,7 @@ const SEO_BODY = [
   "Let me be careful here, because this gets misread constantly.",
   "Your SEO is not worthless. If you have built real rankings, you are ahead of most of your competitors and you have assets we can use. But it was built to win a different game, and it does not automatically carry over.",
   "Google ranks pages. Its entire job is to answer one question: which URL best matches this string of words?",
-  "Language models do not rank pages. They recommend entities — businesses, brands, named things they have formed an opinion about from everything they have ever read.",
+  "Language models do not rank pages. They recommend entities: businesses, brands, named things they have formed an opinion about from everything they have ever read.",
   "Those are not the same question. Ranking number one for “plumber in Dallas” does not make a model believe you are the plumber to call in Dallas. One is a document-matching problem. The other is a reputation problem.",
 ];
 
@@ -64,14 +65,14 @@ const SIGNALS = [
     n: "01",
     title: "Can it actually read you?",
     lead: "Most business websites are functionally invisible to an AI crawler.",
-    body: "Content painted in by JavaScript. No structured data. Services described in slogans instead of sentences. The facts that decide whether you fit a question — what you do, where, for whom, how fast, how much — sitting inside an image, a PDF, or nowhere at all. The crawler arrives, finds nothing it can quote, and leaves. You were never in the running.",
+    body: "Content painted in by JavaScript. No structured data. Services described in slogans instead of sentences. The facts that decide whether you fit a question (what you do, where, for whom, how fast, how much) sitting inside an image, a PDF, or nowhere at all. The crawler arrives, finds nothing it can quote, and leaves. You were never in the running.",
     punch: "You did not lose. You were never entered.",
   },
   {
     n: "02",
     title: "Does the rest of the web agree?",
     lead: "A model does not trust your website about your website.",
-    body: "It trusts consensus — what independent sources say about you. Directories, review platforms, industry listings, local press, forums, other people’s pages, citations in places you have never visited. If the internet is quiet about your business, the model has nothing to form an opinion from.",
+    body: "It trusts consensus, meaning what independent sources say about you. Directories, review platforms, industry listings, local press, forums, other people’s pages, citations in places you have never visited. If the internet is quiet about your business, the model has nothing to form an opinion from.",
     punch: "Silence does not read as neutral. It reads as unproven.",
   },
   {
@@ -94,7 +95,7 @@ const PHASES = [
   {
     n: "01",
     label: "Measure",
-    body: "We run your business through the models your customers actually use, against the questions they actually type. Dozens of real buying prompts in your category and your service area. We record who gets named, how often, in whose words, and exactly where you get dropped. That is your baseline — and for most people it is the moment this stops being theoretical.",
+    body: "We run your business through the models your customers actually use, against the questions they actually type. Dozens of real buying prompts in your category and your service area. We record who gets named, how often, in whose words, and exactly where you get dropped. That is your baseline, and for most people it is the moment this stops being theoretical.",
   },
   {
     n: "02",
@@ -104,7 +105,7 @@ const PHASES = [
   {
     n: "03",
     label: "Seed",
-    body: "We go and build the consensus. Your business represented accurately and consistently across the sources these models actually pull from — the directories, profiles, listings and citations a model checks to decide whether you are real. Same name, same claims, same specifics, everywhere, so there is nothing for a model to be uncertain about.",
+    body: "We go and build the consensus. Your business represented accurately and consistently across the sources these models actually pull from: the directories, profiles, listings and citations a model checks to decide whether you are real. Same name, same claims, same specifics, everywhere, so there is nothing for a model to be uncertain about.",
   },
   {
     n: "04",
@@ -131,7 +132,7 @@ const OBJECTIONS = [
   {
     q: "Isn’t this too early?",
     a: [
-      "It is the same instinct that made “we don’t really need a website” sound reasonable in 1999, and “we’re not paying Google for clicks we’d get free” sound reasonable in 2005. Both were survivable positions — for about three years.",
+      "It is the same instinct that made “we don’t really need a website” sound reasonable in 1999, and “we’re not paying Google for clicks we’d get free” sound reasonable in 2005. Both were survivable positions, for about three years.",
       "But there is a difference this time, and it is the whole argument. The businesses being recommended today are the ones being written into the consensus these models keep learning from. Early is not a small edge in this channel. It compounds, and it is slow to displace once someone else owns it.",
     ],
   },
@@ -139,13 +140,13 @@ const OBJECTIONS = [
     q: "Can you guarantee ChatGPT will recommend me?",
     a: [
       "No. Nobody can, and anyone who tells you otherwise is either lying to you or does not understand what they are selling. No agency controls the output of a language model.",
-      "What we control is every input the model uses to make that decision — all four signals — and we can show movement on it with the same prompts run month after month against the same competitors. If a vendor promises you a guaranteed number one in ChatGPT, walk away and keep your money.",
+      "What we control is every input the model uses to make that decision, all four signals, and we can show movement on it with the same prompts run month after month against the same competitors. If a vendor promises you a guaranteed number one in ChatGPT, walk away and keep your money.",
     ],
   },
   {
     q: "I already rank number one on Google.",
     a: [
-      "Then you have the most to lose and the shortest distance to travel. You already have the authority, the content and the mentions. Usually what is missing is structure and specificity — the machine-readable half nobody has done yet.",
+      "Then you have the most to lose and the shortest distance to travel. You already have the authority, the content and the mentions. Usually what is missing is structure and specificity, the machine-readable half nobody has done yet.",
       "Businesses in your position tend to move fastest of anyone. Which is exactly why you do not want the competitor at number four running their scan before you run yours.",
     ],
   },
@@ -159,14 +160,14 @@ const OBJECTIONS = [
   {
     q: "Can’t I just do this myself?",
     a: [
-      "Some of it, yes — and the scan will show you what is broken whether you hire us or not. That is not a trick; a business that reads the report and fixes it alone is a fine outcome for us.",
+      "Some of it, yes, and the scan will show you what is broken whether you hire us or not. That is not a trick; a business that reads the report and fixes it alone is a fine outcome for us.",
       "The parts that are genuinely hard to do yourself are knowing which of the four signals is actually costing you the answer, and rebuilding your site’s structure for machines without breaking the human rankings you already have.",
     ],
   },
 ];
 
 const FOR_YOU = [
-  "You sell something with real margin, where one new customer is worth hundreds or thousands — not twelve dollars.",
+  "You sell something with real margin, where one new customer is worth hundreds or thousands, not twelve dollars.",
   "Your customers research before they buy, rather than grabbing whatever is nearest.",
   "You have a real business behind you: actual customers, actual reviews, actual work to point at.",
   "You would rather move now, while your category is still empty, than after it is crowded.",
@@ -179,11 +180,20 @@ const NOT_FOR_YOU = [
   "You want a report to file away, not changes made to your site.",
 ];
 
+/**
+ * What the free scan actually returns.
+ *
+ * Kept deliberately in step with what the report can really produce — see
+ * lib/scan/report.ts. An earlier draft promised competitor names and a score
+ * against the four signals above; the scan delivers neither, and a landing page
+ * that oversells the deliverable buys refunds on the paid upgrade rather than
+ * customers.
+ */
 const SCAN_DELIVERS = [
-  "Whether the major answer engines name you at all when someone asks for a recommendation in your category.",
-  "Which competitors get named instead of you — by name, in the model’s own words.",
-  "Which of the four signals you are failing, and which one is costing you the most.",
-  "The specific fixes, in the order that moves the needle first.",
+  "Your AI visibility score out of 100: how readable, clear and recommendable your site is to an AI right now.",
+  "Every place your site is invisible or ambiguous to an assistant, ranked worst first.",
+  "What each one is actually costing you, in plain English rather than in jargon.",
+  "Whether an AI can even confirm your business is real when it goes looking for you by name.",
 ];
 
 const FAQS = [
@@ -201,7 +211,7 @@ const FAQS = [
   },
   {
     q: "Does this work for local service businesses?",
-    a: "It works best for them. Local recommendation questions — who should I call, who is good, who does this near me — are exactly the shape of query people have moved to AI fastest for, and local categories are the emptiest right now.",
+    a: "It works best for them. Local recommendation questions (who should I call, who is good, who does this near me) are exactly the shape of query people have moved to AI fastest for, and local categories are the emptiest right now.",
   },
   {
     q: "Is there a contract?",
@@ -361,8 +371,8 @@ export default function SalesPage() {
             Your customers have quietly stopped Googling. They open ChatGPT,
             describe their problem in one sentence, and take whatever it
             recommends. There is no page two. There is no fourth spot that still
-            gets clicks. There is one answer &mdash; and every month, a larger
-            share of your market buys from it.
+            gets clicks. There is one answer, and every month a larger share of
+            your market buys from it.
           </p>
 
           <p className="mt-5 max-w-[48ch] text-[17px] font-semibold leading-[1.65] text-[var(--text)] sm:text-[19px]">
@@ -375,8 +385,8 @@ export default function SalesPage() {
             </ScanCta>
             <p className="max-w-[42ch] text-[14px] leading-relaxed text-[var(--dim)]">
               Takes about 60 seconds to request. No call, no card. We show you
-              exactly what the AIs say about your business today &mdash; and who
-              they name instead of you.
+              exactly what the AIs say about your business today, and who they name
+              instead of you.
             </p>
           </div>
         </div>
@@ -499,8 +509,8 @@ export default function SalesPage() {
         </H2>
 
         <P>
-          Every one of these models &mdash; ChatGPT, Gemini, Perplexity, Copilot
-          &mdash; is doing a version of the same thing when it decides who to
+          Every one of these models, ChatGPT and Gemini and Perplexity and
+          Copilot, is doing a version of the same thing when it decides who to
           recommend. Once you can see the four inputs, this stops being a
           mysterious black box and starts being an engineering problem with a
           checklist.
@@ -741,28 +751,7 @@ export default function SalesPage() {
             of it yourself, that is a perfectly good outcome.
           </p>
 
-          {/* ---------------------------------------------------------------
-              SCAN CAPTURE FORM SLOT
-
-              The form is the next build. It drops in here and replaces this
-              placeholder entirely — everything above is finished copy and does
-              not need to move.
-
-              When it ships it needs: the URL field, email, phone, the two
-              consent checkboxes from lib/site.ts, a POST to /api/lead, and a
-              /scan/thanks route for THANKS_PATH to point at. LeadMagnetForm.tsx
-              is the working reference for all of that plumbing.
-              --------------------------------------------------------------- */}
-          <div className="mt-12 rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--panel)] p-8 text-center sm:p-10">
-            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-              Scan form goes here
-            </p>
-            <p className="mx-auto mt-4 max-w-[42ch] text-[15px] leading-relaxed text-[var(--dim)]">
-              Placeholder. The capture form is the next build &mdash; URL, email,
-              phone and consent, posting to the existing lead API. Everything
-              else on this page is finished.
-            </p>
-          </div>
+          <ScanForm entryPoint="scan-section" />
         </div>
       </section>
 
@@ -802,13 +791,12 @@ export default function SalesPage() {
           <P>
             The businesses that started this year will already own the answer by
             then. Consensus is slow to build, which is exactly what makes it
-            worth having &mdash; and exactly what makes arriving late so
-            expensive.
+            worth having, and exactly what makes arriving late so expensive.
           </P>
           <P>
             You can find out where you stand right now, for nothing. If the
-            answer is that you are already being recommended, brilliant &mdash;
-            close the tab and get on with your day.
+            answer is that you are already being recommended, brilliant. Close the
+            tab and get on with your day.
           </P>
 
           <div className="mt-11 flex flex-col items-start gap-4">

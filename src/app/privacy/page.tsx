@@ -4,7 +4,6 @@ import {
   BUSINESS_ADDRESS,
   CONTACT_EMAIL,
   CONSENT_TEXT,
-  CONTACT_CONSENT_TEXT,
 } from "@/lib/site";
 
 /**
@@ -29,20 +28,24 @@ export const metadata: Metadata = {
 
 const display = "font-display";
 
-// Kept in step with the tags in src/app/layout.tsx and the processors used by
-// the lead-magnet route. Adding a tag or a vendor means adding a row here.
+// Kept in step with the tags in src/app/layout.tsx and the processors the scan
+// flow actually touches. Adding a tag or a vendor means adding a row here.
+//
+// Google Sheets and Pushover are deliberately absent: they are only used by the
+// older /api/lead route, and nothing on the site posts to it any more. A
+// processor listed here that never sees your data is as wrong as one missing.
 const PROCESSORS = [
   {
     name: "Resend",
-    role: "Sends the scan report, the follow-up emails and the internal notification that a lead came in. Holds your name and email address.",
+    role: "Sends your scan report and the follow-up emails. Holds your email address.",
   },
   {
-    name: "Google Sheets",
-    role: "Holds the working list of people who asked for a scan — your name, email, phone number, what you agreed to, and which ad you came from — so we can follow up. Access is limited to us.",
+    name: "Ora",
+    role: "Runs the technical scan. We send it the website address you give us, nothing about you. It returns the findings your report is built from.",
   },
   {
-    name: "Pushover",
-    role: "Sends the alert to our phone when someone new asks for a scan, so a call back is quick rather than next week. The alert carries your name and phone number.",
+    name: "Whop",
+    role: "Takes the payment if you buy the fixes. Whop handles the card details; we never see or store them. We receive a confirmation that a payment succeeded and which report it was for.",
   },
   {
     name: "Vercel",
@@ -54,7 +57,7 @@ const PROCESSORS = [
   },
   {
     name: "Google Analytics 4",
-    role: "Aggregate traffic reporting — pages viewed, roughly where visitors came from.",
+    role: "Aggregate traffic reporting: pages viewed, roughly where visitors came from.",
   },
   {
     name: "Microsoft Clarity",
@@ -95,8 +98,8 @@ export default function PrivacyPage() {
         <div className="space-y-12 text-[17px] leading-relaxed text-[var(--muted)]">
           <div>
             <p className="text-lg">
-              Short version: we collect your name, email address and phone
-              number so we can send you your scan report and talk to you about it. We do
+              Short version: we collect your email address and your website
+              address so we can run your scan and send you the report. We do
               not sell them, we do not share them with anyone outside the
               services that make this site work, and you can have them deleted by
               asking.
@@ -121,9 +124,9 @@ export default function PrivacyPage() {
             <List
               items={[
                 <>
-                  <strong>Your first name, email address and phone number.</strong>{" "}
-                  You type these into the scan request form. Nothing else on this
-                  site asks you for anything.
+                  <strong>Your email address and your website address.</strong>{" "}
+                  You type these into the scan request form. That is the whole form. We
+                  do not ask for your name, your phone number, or a card.
                 </>,
                 <>
                   <strong>A record of your consent.</strong> When you tick the
@@ -137,7 +140,7 @@ export default function PrivacyPage() {
                   <strong>How the page gets used.</strong> Pages viewed, how far
                   down you scrolled, where you clicked, roughly what country you
                   are in, and which of our ads you arrived from. This is
-                  behavioural, not personal — it is not tied to your name.
+                  behavioural, not personal, and it is not tied to your name.
                 </>,
               ]}
             />
@@ -157,9 +160,9 @@ export default function PrivacyPage() {
                   withdraw at any time and we stop.
                 </>,
                 <>
-                  <strong>To call or text you about your results.</strong>{" "}
-                  This runs on your consent too, and it is a separate box:
-                  &ldquo;{CONTACT_CONSENT_TEXT}&rdquo; Say so once and we stop.
+                  <strong>To run the scan.</strong> Your website address is sent to
+                  Ora, the service that performs the technical assessment. It is a
+                  public web address and carries nothing personal about you.
                 </>,
                 <>
                   <strong>To work out whether the site and the ads are any
@@ -174,7 +177,7 @@ export default function PrivacyPage() {
               the emails is your consent, and for the analytics and site security
               it is our legitimate interest in understanding and protecting our
               own website. Where consent is the basis, ticking the box is
-              genuinely optional — your scan report is sent either way.
+              genuinely optional, and your scan report is sent either way.
             </p>
           </Block>
 
@@ -220,8 +223,8 @@ export default function PrivacyPage() {
             <p>
               Your email address stays on our list until you unsubscribe or ask us
               to delete it. Consent records are kept for as long as we hold your
-              email and for three years afterwards — the whole point of the record
-              is to outlive the thing it is evidence for. Analytics data expires on
+              email and for three years afterwards, because the whole point of the
+              record is to outlive the thing it is evidence for. Analytics data expires on
               each provider&apos;s own schedule, which is 14 months for Google
               Analytics and 13 months for Clarity.
             </p>
