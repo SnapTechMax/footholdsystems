@@ -9,7 +9,7 @@ import {
 } from "@/lib/scan/pricing";
 import { toPublicReport } from "@/lib/scan/report";
 import type { ReportFinding, ScanReport } from "@/lib/scan/types";
-import { calendlyUrl } from "@/lib/site";
+import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
 
 /**
  * The scan report, with the fixes behind a paywall.
@@ -376,10 +376,10 @@ export default async function ScanReportPage({
         <p className="mt-6 text-[15px] leading-relaxed text-[var(--dim)]">
           If it still hasn&apos;t arrived tomorrow, email{" "}
           <a
-            href="mailto:max@footholdsystems.com"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="text-[var(--muted)] underline underline-offset-4"
           >
-            max@footholdsystems.com
+            {CONTACT_EMAIL}
           </a>{" "}
           and we&apos;ll run it by hand.
         </p>

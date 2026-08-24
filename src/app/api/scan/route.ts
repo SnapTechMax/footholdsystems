@@ -10,7 +10,7 @@ import {
 import { normaliseDomain } from "@/lib/scan/ora";
 import { runScanJob } from "@/lib/scan/run";
 import { ScanRequestSchema } from "@/lib/scan/schema";
-import { CONSENT_TEXT } from "@/lib/site";
+import { CONSENT_TEXT, CONTACT_EMAIL } from "@/lib/site";
 import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
 
 /**
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Something went wrong on our end. Try again in a moment. If it keeps happening, email max@footholdsystems.com and we'll run it by hand.",
+          `Something went wrong on our end. Try again in a moment. If it keeps happening, email ${CONTACT_EMAIL} and we'll run it by hand.`,
       },
       { status: 500 }
     );

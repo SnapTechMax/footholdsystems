@@ -25,7 +25,15 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * recorded on the row instead and the sweeper decides whether to try again.
  */
 
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "max@footholdsystems.com";
+/**
+ * Envelope sender. Deliberately its own constant rather than CONTACT_EMAIL,
+ * even though the two currently hold the same address: this one has to be on a
+ * domain Resend has verified, and CONTACT_EMAIL is wherever we want replies to
+ * land. Collapsing them means a future change to the contact address silently
+ * breaks sending. The report email sets replyTo: CONTACT_EMAIL separately.
+ */
+const FROM_EMAIL =
+  process.env.CONTACT_FROM_EMAIL || "maximilian@footholdsystems.com";
 const BRAND = "FootHold AEO";
 
 export type RunOutcome =

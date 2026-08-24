@@ -50,8 +50,8 @@ const SUPPRESS_AFTER_BOOKING = process.env.SUPPRESS_AFTER_BOOKING !== "0";
 // domain is verified in Resend and publishes DMARC p=reject, which Resend
 // satisfies through DKIM alignment.
 const FROM =
-  process.env.SEQUENCE_FROM || "Max at Foothold Systems <max@footholdsystems.com>";
-const REPLY_TO = process.env.SEQUENCE_REPLY_TO || "max@footholdsystems.com";
+  process.env.SEQUENCE_FROM || "Max at Foothold Systems <maximilian@footholdsystems.com>";
+const REPLY_TO = process.env.SEQUENCE_REPLY_TO || "maximilian@footholdsystems.com";
 
 const resend = new Resend(process.env.RESEND_API_KEY ?? "re_dry_run");
 

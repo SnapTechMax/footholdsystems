@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unsubscribe } from "@/lib/scan/db";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * One-click unsubscribe, linked from the footer of every scan email.
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     console.error("[unsubscribe] failed:", error);
     return page(
       "That didn't work",
-      "Email max@footholdsystems.com and we'll take you off by hand, which always works."
+      `Email ${CONTACT_EMAIL} and we'll take you off by hand, which always works.`
     );
   }
 

@@ -73,7 +73,7 @@ export const CONTACT_CONSENT_TEXT = "I agree to be contacted about my results.";
 // mind before adding it anywhere new.
 export const CONTACT_PHONE = "(909) 407-6602";
 export const CONTACT_PHONE_TEL = "9094076602";
-export const CONTACT_EMAIL = "max@footholdsystems.com";
+export const CONTACT_EMAIL = "maximilian@footholdsystems.com";
 
 /**
  * Static deliverable in public/downloads.

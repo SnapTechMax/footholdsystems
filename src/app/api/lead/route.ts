@@ -61,7 +61,7 @@ const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "max@snaptechrepair.com";
 // than landing in spam. Resend passes it through DKIM alignment on
 // resend._domainkey.footholdsystems.com. If this address is ever changed to a
 // domain without that in place, delivery stops dead.
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "max@footholdsystems.com";
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "maximilian@footholdsystems.com";
 
 // Public base URL used to build the download link
 // www, matching the canonical host. The apex 308s, and the download link in the
@@ -86,7 +86,7 @@ const BOOKING_URL = calendlyUrl("guide-email", "email");
  * turning away people it shouldn't.
  */
 const REJECTION_MESSAGE =
-  "Something went wrong. Please try again, or email max@footholdsystems.com and we'll send it over.";
+  "Something went wrong. Please try again, or email maximilian@footholdsystems.com and we'll send it over.";
 
 export async function POST(request: NextRequest) {
   try {

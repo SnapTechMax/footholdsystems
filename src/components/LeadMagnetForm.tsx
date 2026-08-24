@@ -311,7 +311,7 @@ export function LeadMagnetForm({
 
       {status === "error" && (
         <p className="mt-3 text-sm text-[#ff9d7a]">
-          Something went wrong. Please try again, or email max@footholdsystems.com and we&apos;ll send it over.
+          Something went wrong. Please try again, or email maximilian@footholdsystems.com and we&apos;ll send it over.
         </p>
       )}
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Post-submission page.
@@ -80,10 +81,10 @@ export default async function ScanThanksPage({
         <p className="mt-10 text-[14px] leading-relaxed text-[var(--dim)]">
           Nothing after fifteen minutes? Email{" "}
           <a
-            href="mailto:max@footholdsystems.com"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="text-[var(--muted)] underline underline-offset-4"
           >
-            max@footholdsystems.com
+            {CONTACT_EMAIL}
           </a>{" "}
           and we&apos;ll run it by hand.
         </p>

@@ -61,14 +61,14 @@ const campaign = email.campaign;
 const fill = (s) => s.replaceAll("{{{EMAIL}}}", encodeURIComponent(to));
 
 const FROM =
-  process.env.SEQUENCE_FROM || "Max at Foothold Systems <max@footholdsystems.com>";
+  process.env.SEQUENCE_FROM || "Max at Foothold Systems <maximilian@footholdsystems.com>";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const { data, error } = await resend.emails.send({
   from: FROM,
   to,
-  replyTo: process.env.SEQUENCE_REPLY_TO || "max@footholdsystems.com",
+  replyTo: process.env.SEQUENCE_REPLY_TO || "maximilian@footholdsystems.com",
   subject: `[test] ${email.subject}`,
   html: fill(email.plainHtml),
   text: fill(email.text),

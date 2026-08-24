@@ -12,7 +12,7 @@
  *
  * Why a custom subdomain rather than Resend's shared one: click tracking works
  * by rewriting every link in the message to point at the ESP, so without this
- * the reader hovers a link in a mail from max@footholdsystems.com and sees a
+ * the reader hovers a link in a mail from maximilian@footholdsystems.com and sees a
  * resend.com URL. That mismatch is a phishing shape, it is scored as one, and it
  * is the whole deliverability cost of click tracking. Pointing the rewrite at
  * track.footholdsystems.com keeps the registrable domain the same as the From
