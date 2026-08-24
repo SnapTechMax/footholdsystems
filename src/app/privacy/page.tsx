@@ -23,26 +23,26 @@ import {
 export const metadata: Metadata = {
   title: "Privacy policy",
   description:
-    "What Foothold Systems collects, why, who it goes to, and how to get it deleted.",
+    "What FootHold Systems collects, why, who it goes to, and how to get it deleted.",
   alternates: { canonical: "/privacy" },
 };
 
-const display = "font-[family-name:var(--font-archivo)]";
+const display = "font-display";
 
 // Kept in step with the tags in src/app/layout.tsx and the processors used by
 // the lead-magnet route. Adding a tag or a vendor means adding a row here.
 const PROCESSORS = [
   {
     name: "Resend",
-    role: "Sends the guide, the follow-up emails and the internal notification that a lead came in. Holds your name and email address.",
+    role: "Sends the scan report, the follow-up emails and the internal notification that a lead came in. Holds your name and email address.",
   },
   {
     name: "Google Sheets",
-    role: "Holds the working list of people who asked for the guide — your name, email, phone number, what you agreed to, and which ad you came from — so we can follow up. Access is limited to us.",
+    role: "Holds the working list of people who asked for a scan — your name, email, phone number, what you agreed to, and which ad you came from — so we can follow up. Access is limited to us.",
   },
   {
     name: "Pushover",
-    role: "Sends the alert to our phone when someone new asks for the guide, so a call back is quick rather than next week. The alert carries your name and phone number.",
+    role: "Sends the alert to our phone when someone new asks for a scan, so a call back is quick rather than next week. The alert carries your name and phone number.",
   },
   {
     name: "Vercel",
@@ -62,7 +62,7 @@ const PROCESSORS = [
   },
   {
     name: "Meta (Facebook) Pixel",
-    role: "Tells us which of our Facebook ads led to a download, so we know which ones to stop paying for.",
+    role: "Tells us which of our Facebook ads led to a scan request, so we know which ones to stop paying for.",
   },
   {
     name: "Calendly",
@@ -72,11 +72,11 @@ const PROCESSORS = [
 
 export default function PrivacyPage() {
   return (
-    <div className="bg-[#eae8e1] text-[#1f1f1d]">
-      <section className="bg-[#1b1b1b] text-[#f2efe6]">
+    <div className="bg-[var(--bg)] text-[var(--text)]">
+      <section className="bg-[var(--ink)] text-[var(--text)]">
         <div className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#f6be00]">
-            Foothold Systems
+          <p className="font-mono text-xs uppercase tracking-[0.22em] text-[var(--accent)]">
+            FootHold Systems
           </p>
           <h1
             className={`${display} mt-4 text-5xl font-black uppercase leading-[0.94] tracking-tight sm:text-7xl`}
@@ -85,18 +85,18 @@ export default function PrivacyPage() {
             <br />
             policy
           </h1>
-          <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-[#8a887f]">
-            Last updated 10 August 2026
+          <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-[var(--dim)]">
+            Last updated 24 August 2026
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-16">
-        <div className="space-y-12 font-serif text-[17px] leading-relaxed text-[#3a3a35]">
+        <div className="space-y-12 text-[17px] leading-relaxed text-[var(--muted)]">
           <div>
             <p className="text-lg">
               Short version: we collect your name, email address and phone
-              number so we can send you a guide and talk to you about it. We do
+              number so we can send you your scan report and talk to you about it. We do
               not sell them, we do not share them with anyone outside the
               services that make this site work, and you can have them deleted by
               asking.
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
 
           <Block title="Who we are">
             <p>
-              Foothold Systems, {BUSINESS_ADDRESS}. You can reach us at{" "}
+              FootHold Systems, {BUSINESS_ADDRESS}. You can reach us at{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="font-semibold underline underline-offset-2"
@@ -122,8 +122,8 @@ export default function PrivacyPage() {
               items={[
                 <>
                   <strong>Your first name, email address and phone number.</strong>{" "}
-                  You type these into the form on the guide page. Nothing else on
-                  this site asks you for anything.
+                  You type these into the scan request form. Nothing else on this
+                  site asks you for anything.
                 </>,
                 <>
                   <strong>A record of your consent.</strong> When you tick the
@@ -147,17 +147,17 @@ export default function PrivacyPage() {
             <List
               items={[
                 <>
-                  <strong>To send you the guide.</strong> You asked for it, so
+                  <strong>To send you your scan report.</strong> You asked for it, so
                   sending it is simply doing the thing you requested.
                 </>,
                 <>
-                  <strong>To send you follow-up emails</strong> about AI for
-                  businesses. This one runs on your consent and nothing else. The
+                  <strong>To send you follow-up emails</strong> about AI
+                  visibility for businesses. This one runs on your consent and nothing else. The
                   box you tick reads: &ldquo;{CONSENT_TEXT}&rdquo; You can
                   withdraw at any time and we stop.
                 </>,
                 <>
-                  <strong>To call or text you about what you downloaded.</strong>{" "}
+                  <strong>To call or text you about your results.</strong>{" "}
                   This runs on your consent too, and it is a separate box:
                   &ldquo;{CONTACT_CONSENT_TEXT}&rdquo; Say so once and we stop.
                 </>,
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
               the emails is your consent, and for the analytics and site security
               it is our legitimate interest in understanding and protecting our
               own website. Where consent is the basis, ticking the box is
-              genuinely optional — the guide is sent either way.
+              genuinely optional — your scan report is sent either way.
             </p>
           </Block>
 
@@ -201,16 +201,16 @@ export default function PrivacyPage() {
               needs and no more. We do not sell personal information, and we do
               not share it for anyone else&apos;s advertising.
             </p>
-            <dl className="mt-6 divide-y divide-[#d4d1c6] border-y border-[#d4d1c6]">
+            <dl className="mt-6 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {PROCESSORS.map((processor) => (
                 <div
                   key={processor.name}
                   className="flex flex-col gap-1 py-4 sm:flex-row sm:gap-6"
                 >
-                  <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-[#1b1b1b] sm:w-44 sm:shrink-0 sm:pt-1">
+                  <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-[var(--text)] sm:w-44 sm:shrink-0 sm:pt-1">
                     {processor.name}
                   </dt>
-                  <dd className="text-[15px] text-[#57564f]">{processor.role}</dd>
+                  <dd className="text-[15px] text-[var(--muted)]">{processor.role}</dd>
                 </div>
               ))}
             </dl>
@@ -279,12 +279,12 @@ export default function PrivacyPage() {
           </Block>
         </div>
 
-        <div className="mt-16 border-t border-[#d4d1c6] pt-8">
+        <div className="mt-16 border-t border-[var(--line)] pt-8">
           <Link
-            href="/guide"
-            className="font-mono text-xs uppercase tracking-[0.14em] text-[#7a786f] transition-colors hover:text-[#1b1b1b]"
+            href="/"
+            className="font-mono text-xs uppercase tracking-[0.14em] text-[var(--dim)] transition-colors hover:text-[var(--text)]"
           >
-            &larr; Back to the guide
+            &larr; Back to FootHold AEO
           </Link>
         </div>
       </section>
@@ -302,7 +302,7 @@ function Block({
   return (
     <div>
       <h2
-        className={`${display} text-2xl font-black uppercase tracking-tight sm:text-3xl`}
+        className={`${display} text-2xl font-black uppercase tracking-tight text-[var(--text)] sm:text-3xl`}
       >
         {title}
       </h2>
@@ -316,7 +316,7 @@ function List({ items }: { items: React.ReactNode[] }) {
     <ul className="space-y-4">
       {items.map((item, i) => (
         <li key={i} className="flex gap-4">
-          <span className="mt-2.5 h-1.5 w-1.5 shrink-0 bg-[#f6be00]" />
+          <span className="mt-2.5 h-1.5 w-1.5 shrink-0 bg-[var(--accent)]" />
           <span>{item}</span>
         </li>
       ))}

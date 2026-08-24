@@ -1,14 +1,28 @@
 // Shared site-wide constants.
+
+/**
+ * The one destination on the sales page.
+ *
+ * Every CTA points here. Kept in one place because there are a dozen of them
+ * down the page and a typo in any single one produces a button that silently
+ * does nothing on a page people are being paid to visit.
+ */
+export const SCAN_ANCHOR = "#scan";
+
 // The dedicated event type carrying the rolling 7-day / 1–4pm Pacific window.
 export const CALENDLY_URL =
   "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call";
 
-// Where the lead-magnet form sends people once the guide is actually delivered.
-export const THANKS_PATH = "/guide/thanks";
-
-// The capture form low on /guide. The header link and the sticky mobile bar both
-// point here, so it lives in one place rather than being retyped at each site.
-export const GUIDE_CAPTURE_ANCHOR = "#get-the-guide";
+/**
+ * Where lead capture sends people once delivery has happened.
+ *
+ * ORPHANED PENDING THE SCAN BUILD. This pointed at `/guide/thanks`, which went
+ * away with the rest of the 5 Levels funnel. Nothing on the site posts to the
+ * lead API right now, so nothing reaches a 404 — but the scan form is going to
+ * need a thank-you page, and this constant is where it gets named. Build the
+ * route before shipping the form, not after.
+ */
+export const THANKS_PATH = "/scan/thanks";
 
 /**
  * Postal address, shown on the privacy policy and in the site footer.
@@ -30,48 +44,44 @@ export const BUSINESS_ADDRESS =
  * and the form is a client component. Both import this one, so the wording shown
  * to someone and the wording stored against their consent cannot drift apart —
  * which is the only thing that makes the stored record worth anything.
- *
- * Required, not optional: the guide is only sent to people who agree to the
- * emails. Worded so the exchange is stated plainly rather than dressed up as a
- * choice that isn't one.
  */
 export const CONSENT_TEXT =
-  "Yes, send me the guide and occasional AI tips for businesses. Unsubscribe any time.";
+  "Yes, send me my scan results and occasional AI visibility tips. Unsubscribe any time.";
 
 /**
- * Shown where consent has to be a free choice, so the guide cannot be presented
- * as conditional on it. Both wordings are stored verbatim with the consent
- * record, which is how the difference stays provable later.
+ * Shown where consent has to be a free choice, so the deliverable cannot be
+ * presented as conditional on it. Both wordings are stored verbatim with the
+ * consent record, which is how the difference stays provable later.
  */
 export const CONSENT_TEXT_OPTIONAL =
-  "Also email me occasional AI tips for businesses. Unsubscribe any time. The guide is yours either way.";
+  "Also email me occasional AI visibility tips for businesses. Unsubscribe any time. Your scan is yours either way.";
 
 /**
  * Wording beside the phone-contact checkbox.
  *
  * A separate permission from the two above, not a rewording of them. Those cover
  * marketing email under CAN-SPAM and GDPR; this covers being called or texted
- * about what they downloaded, which in the US is TCPA's question rather than
+ * about what they requested, which in the US is TCPA's question rather than
  * CAN-SPAM's. Two boxes because they are two agreements — someone may reasonably
- * want the guide and the emails without wanting the phone to ring.
- *
- * Required to submit, because a phone number collected without it is a number
- * that cannot lawfully be dialled, which makes the whole capture pointless.
+ * want the scan and the emails without wanting the phone to ring.
  */
 export const CONTACT_CONSENT_TEXT = "I agree to be contacted about my results.";
 
-// Direct line. Published to people who have opted in — the delivery email and the
-// guide PDF — but deliberately NOT on the public website, so it stays off the
-// pages anonymous visitors and scrapers hit. Keep those two surfaces in mind
-// before adding it anywhere new.
+// Direct line. Published to people who have opted in — the delivery email and
+// the report itself — but deliberately NOT on the public website, so it stays
+// off the pages anonymous visitors and scrapers hit. Keep those two surfaces in
+// mind before adding it anywhere new.
 export const CONTACT_PHONE = "(909) 407-6602";
 export const CONTACT_PHONE_TEL = "9094076602";
 export const CONTACT_EMAIL = "max@footholdsystems.com";
 
-// The lead magnet in public/downloads. Kept here because both the thank-you page
-// and the delivery email link to it, and a mismatch silently breaks the download.
-// Hyphenated rather than spaced so the URL needs no percent-encoding — the plain
-// text version of the delivery email prints this link raw.
+/**
+ * Static deliverable in public/downloads.
+ *
+ * Still the 5 Levels PDF. The marketing pages around it are gone, but delivery
+ * emails already sent to real people link straight to this file, so the file
+ * stays until those sequences are retired. Do not delete it to tidy up.
+ */
 export const GUIDE_PATH =
   "/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf";
 
@@ -87,9 +97,9 @@ export const GUIDE_PATH =
  * Calendly link tagged with the entry point it was clicked from, so bookings can
  * be told apart in Calendly's UTM reporting.
  *
- * @param entryPoint Where the link lives, e.g. "header" or "guide-email".
+ * @param entryPoint Where the link lives, e.g. "header" or "scan-report".
  * @param medium     Channel it went out on. Defaults to the website; the
- *                   delivery email and the PDF pass their own.
+ *                   delivery email and the report pass their own.
  */
 export function calendlyUrl(entryPoint: string, medium = "website"): string {
   const url = new URL(CALENDLY_URL);
