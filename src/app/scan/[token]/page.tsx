@@ -225,7 +225,16 @@ function Finding({
   );
 }
 
-function Paywall({ token, findingCount }: { token: string; findingCount: number }) {
+function Paywall({
+  token,
+  findingCount,
+  failed,
+}: {
+  token: string;
+  findingCount: number;
+  /** Set when a checkout attempt just bounced back here. */
+  failed: boolean;
+}) {
   const pay = checkoutUrl(token, "solutions");
 
   return (
@@ -253,33 +262,35 @@ function Paywall({ token, findingCount }: { token: string; findingCount: number 
         </p>
       </div>
 
-      <div className="mt-8">
-        {pay ? (
+      {failed && (
+        <p className="mt-7 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3 text-[14px] leading-relaxed text-[var(--muted)]">
+          <span className="font-semibold text-[var(--text)]">
+            That didn&apos;t reach the payment page.{" "}
+          </span>
+          Nothing was charged. Try again, and if it happens twice email{" "}
           <a
-            href={pay}
-            className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="underline underline-offset-4"
           >
-            Unlock the fixes &mdash; {SOLUTIONS_PRICE}
-            <span
-              aria-hidden="true"
-              className="transition-transform duration-150 group-hover:translate-x-1"
-            >
-              &rarr;
-            </span>
-          </a>
-        ) : (
-          // Checkout isn't configured yet. Showing a dead button would be worse
-          // than showing none — see checkoutUrl() in pricing.ts.
-          <div className="rounded-lg border-2 border-dashed border-[var(--line)] px-6 py-5">
-            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
-              Checkout not connected
-            </p>
-            <p className="mt-2 text-[14px] leading-relaxed text-[var(--dim)]">
-              Set <code className="font-mono">WHOP_CHECKOUT_URL</code> to the Whop
-              plan link and this becomes a live {SOLUTIONS_PRICE} button.
-            </p>
-          </div>
-        )}
+            {CONTACT_EMAIL}
+          </a>{" "}
+          and we&apos;ll send you a payment link directly.
+        </p>
+      )}
+
+      <div className="mt-8">
+        <a
+          href={pay}
+          className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
+        >
+          Unlock the fixes &mdash; {SOLUTIONS_PRICE}
+          <span
+            aria-hidden="true"
+            className="transition-transform duration-150 group-hover:translate-x-1"
+          >
+            &rarr;
+          </span>
+        </a>
         <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
           One payment. Instant access on this page. {SOLUTIONS_PRICE} is less than
           an hour of most people&apos;s billable time, and the competitor who
@@ -349,14 +360,12 @@ function DoneForYou({ token, domain }: { token: string; domain: string }) {
         >
           Book a call about this
         </a>
-        {pay && (
-          <a
-            href={pay}
-            className="inline-flex items-center justify-center gap-2.5 rounded-lg border border-[var(--line)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            Start now &mdash; {DONE_FOR_YOU_PRICE}
-          </a>
-        )}
+        <a
+          href={pay}
+          className="inline-flex items-center justify-center gap-2.5 rounded-lg border border-[var(--line)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        >
+          Start now &mdash; {DONE_FOR_YOU_PRICE}
+        </a>
       </div>
       <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
         Twenty minutes, no pitch deck. If your list is short enough to handle
@@ -370,10 +379,16 @@ function DoneForYou({ token, domain }: { token: string; domain: string }) {
 
 export default async function ScanReportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const { token } = await params;
+  // Set by /api/go/checkout when Whop could not be reached, so the buyer lands
+  // back on the button they pressed rather than on an error page.
+  const { checkout } = await searchParams;
+  const checkoutFailed = checkout === "failed";
   const scan = await getScanByToken(token).catch(() => null);
 
   // Same 404 for a bad token and a missing one. Distinguishing them would let
@@ -506,7 +521,11 @@ export default async function ScanReportPage({
             {unlocked ? (
               <DoneForYou token={scan.token} domain={report.domain} />
             ) : (
-              <Paywall token={scan.token} findingCount={findings.length} />
+              <Paywall
+                token={scan.token}
+                findingCount={findings.length}
+                failed={checkoutFailed}
+              />
             )}
           </div>
         </>

@@ -16,16 +16,15 @@ import {
 /**
  * Whop payment webhook — unlocks the paid half of a report.
  *
- * NOT YET CONNECTED. What is here is the receiving end: signature check,
- * payload parsing, idempotent write. To finish it, in the Whop dashboard add a
- * webhook pointing at POST /api/whop/webhook for the payment-succeeded event,
- * then set WHOP_WEBHOOK_SECRET to the signing secret it gives you and
- * WHOP_CHECKOUT_URL to the plan's checkout link.
+ * The scan token travels out as metadata on a checkout created through the API
+ * (see lib/scan/whop.ts) and comes back here in `data.metadata`. That round
+ * trip is the only thing connecting a payment to a report, so both halves have
+ * to stay in step.
  *
- * The scan token travels out on the checkout link as `metadata[scan_token]`
- * and comes back in the webhook payload. That round trip is the only thing
- * connecting a payment to a report, so both halves have to stay in step —
- * see checkoutUrl() in pricing.ts.
+ * Setup: in the Whop dashboard add a webhook pointing at POST
+ * /api/whop/webhook subscribed to payment.succeeded, then set
+ * WHOP_WEBHOOK_SECRET to the ws_ signing secret it gives you. Unset, every
+ * delivery is rejected and no payment can ever unlock a report.
  */
 
 export const runtime = "nodejs";

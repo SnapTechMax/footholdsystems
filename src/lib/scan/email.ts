@@ -111,8 +111,7 @@ export function buildReportEmail(args: {
     )
     .join("");
 
-  const payButton = pay
-    ? `
+  const payButton = `
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
         <tr>
           <td style="background:${ACCENT};border-radius:8px;">
@@ -123,18 +122,8 @@ export function buildReportEmail(args: {
         </tr>
       </table>
       <p style="margin:0 0 8px;font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
-        Pay straight from this email. You get the full write-up immediately. No call, no upsell to sit through.
-      </p>`
-    : `
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
-        <tr>
-          <td style="background:${ACCENT};border-radius:8px;">
-            <a href="${escapeHtml(link)}" style="display:inline-block;padding:16px 30px;font:800 16px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};text-decoration:none;">
-              Unlock the fixes &mdash; ${SOLUTIONS_PRICE} &rarr;
-            </a>
-          </td>
-        </tr>
-      </table>`;
+        Pay straight from this email. You get the full write-up immediately, no call and no upsell to sit through.
+      </p>`;
 
   const html = `<!doctype html>
 <html lang="en">
@@ -318,7 +307,7 @@ export function buildReportEmail(args: {
           `For ${SOLUTIONS_PRICE} you get the exact fix for every problem listed: what to`,
           `change, where, and in what order. A checklist, in the order it should be done.`,
           ``,
-          pay ? `Pay and unlock: ${pay}` : `Unlock: ${link}`,
+          `Pay and unlock: ${pay}`,
           `Read your report online: ${link}`,
         ].join("\n")
       : `Your full report: ${link}`,

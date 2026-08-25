@@ -44,35 +44,23 @@ export function unsubscribeUrl(email: string): string {
 }
 
 /**
- * Whop checkout link for a scan.
+ * Where a buy button points.
  *
- * NOT YET WIRED. `WHOP_CHECKOUT_URL` is the plan checkout link from the Whop
- * dashboard (it looks like https://whop.com/checkout/plan_xxxxxxxx). Whop
- * passes `metadata[...]` query parameters through to the webhook payload
- * untouched, which is how a completed payment finds its way back to the right
- * scan — the token is the only thing tying the two together, so it must be on
- * every checkout link.
+ * Our own route, never Whop directly. A Whop checkout has to be created
+ * server-side per buyer so the scan token can be attached as metadata, and
+ * metadata is the only thing tying a payment back to a report. A static link
+ * cannot carry it, so there is no version of this that is a plain href to
+ * whop.com.
  *
- * Returns null when unset. Every caller has to handle that, because the
- * alternative is an email with a dead "Pay now" button in it, which costs more
- * than showing no button at all.
+ * Always returns a URL. The route handles Whop being unreachable or
+ * unconfigured, which is the right place for it: a caller cannot do anything
+ * useful with a null except hide the button, and hiding the button loses the
+ * sale even when the problem is momentary.
  */
 export function checkoutUrl(
   token: string,
   product: "solutions" | "done_for_you" = "solutions"
-): string | null {
-  const base =
-    product === "done_for_you"
-      ? process.env.WHOP_CHECKOUT_URL_DONE_FOR_YOU
-      : process.env.WHOP_CHECKOUT_URL;
-  if (!base) return null;
-
-  try {
-    const url = new URL(base);
-    url.searchParams.set("metadata[scan_token]", token);
-    url.searchParams.set("metadata[product]", product);
-    return url.toString();
-  } catch {
-    return null;
-  }
+): string {
+  const params = new URLSearchParams({ token, product });
+  return `${siteUrl()}/api/go/checkout?${params}`;
 }
