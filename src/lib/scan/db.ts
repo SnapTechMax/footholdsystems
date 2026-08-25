@@ -471,6 +471,32 @@ export async function findLatestScanForEmail(
   return rows[0] ? toScanRow(rows[0]) : null;
 }
 
+/**
+ * The most recent completed scan for a domain, whoever ran it.
+ *
+ * For admin work, where the thing being talked about is a website rather than a
+ * token nobody has memorised. Expects an already-normalised hostname — pass it
+ * through `normaliseDomain` first, or "www.Example.com/" will not match the
+ * "example.com" that was stored.
+ *
+ * Completed only. An admin correcting a report means the one that exists, not a
+ * queued row with nothing in it yet.
+ */
+export async function findLatestScanForDomain(
+  domain: string
+): Promise<ScanRow | null> {
+  const db = sql();
+  const rows = (await db.query(
+    `SELECT ${SCAN_SELECT}
+       FROM scans s
+      WHERE s.domain = $1 AND s.status = 'complete'
+      ORDER BY s.completed_at DESC NULLS LAST, s.created_at DESC
+      LIMIT 1`,
+    [domain]
+  )) as RawScanRow[];
+  return rows[0] ? toScanRow(rows[0]) : null;
+}
+
 /* ── orders ───────────────────────────────────────────────────────────────── */
 
 /** Has this scan paid for this product? The paywall's only question. */
