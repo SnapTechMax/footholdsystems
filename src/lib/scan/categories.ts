@@ -13,7 +13,21 @@
  * Client-safe: no server-only import, because the form needs the labels.
  */
 
-export type BusinessCategory = "sbo" | "ecommerce" | "saas";
+/**
+ * `sbo` is Local Services.
+ *
+ * The stored value keeps its original name while the label does not, because
+ * every scan ever run carries 'sbo' in its `category` column and in the JSONB
+ * report beside it. Renaming the value to match the label would mean migrating
+ * live rows and rewriting stored reports to change a string nobody outside this
+ * file ever sees. The label is the thing customers read; this is the key.
+ */
+export type BusinessCategory =
+  | "sbo"
+  | "digital"
+  | "ecommerce"
+  | "saas"
+  | "app";
 
 export const DEFAULT_CATEGORY: BusinessCategory = "sbo";
 
@@ -22,37 +36,83 @@ export interface CategoryOption {
   label: string;
   /** Shown under the label so nobody has to guess which one they are. */
   hint: string;
+  /**
+   * How the report refers to this kind of business in a sentence.
+   *
+   * Plural, so the summary line needs no article. "the set that applies to
+   * online stores" works; "the set that applies to a eCommerce" was what the
+   * label produced when it was dropped into that sentence directly, which is
+   * what this field exists to stop.
+   */
+  reportNoun: string;
 }
 
 /**
  * Order matters: this is the order they appear in the dropdown, and it is
  * roughly most-common first. Most people running a scan from a cold ad are a
  * service business, and the first option is the one a hurried person picks.
+ *
+ * Local and Digital are split because the alternative was worse in a way we
+ * watched happen: a web developer with no product API picked "SaaS", since it
+ * was the only option that sounded like software, and got a report demanding an
+ * OpenAPI spec, a developer portal and an MCP server. Every one of those was
+ * irrelevant to him and every one of them counted against his score. Somebody
+ * who sells services has to be able to say so without also claiming to sell an
+ * API.
  */
 export const CATEGORIES: CategoryOption[] = [
   {
     value: "sbo",
-    label: "Local or service business",
-    hint: "Trades, clinics, agencies, restaurants, anyone serving an area",
+    label: "Local Services",
+    hint: "Trades, clinics, restaurants, anyone serving a physical area",
+    reportNoun: "local service businesses",
+  },
+  {
+    value: "digital",
+    label: "Digital Services",
+    hint: "Agencies, web developers, designers, consultants — services delivered remotely",
+    reportNoun: "digital services businesses",
   },
   {
     value: "ecommerce",
     label: "eCommerce",
     hint: "You sell physical or digital products online",
+    reportNoun: "online stores",
   },
   {
     value: "saas",
-    label: "SaaS or software",
-    hint: "You sell software, an app, or an API",
+    label: "SaaS or platform",
+    hint: "Other businesses connect to you, or build on your API",
+    reportNoun: "software platforms",
+  },
+  {
+    value: "app",
+    label: "App or software product",
+    hint: "People use your product directly — nobody builds on top of it",
+    reportNoun: "software products",
   },
 ];
 
 export function isBusinessCategory(value: unknown): value is BusinessCategory {
-  return value === "sbo" || value === "ecommerce" || value === "saas";
+  return (
+    value === "sbo" ||
+    value === "digital" ||
+    value === "ecommerce" ||
+    value === "saas" ||
+    value === "app"
+  );
 }
 
 export function categoryLabel(category: BusinessCategory): string {
   return CATEGORIES.find((c) => c.value === category)?.label ?? category;
+}
+
+/** How the report names this kind of business mid-sentence. Plural. */
+export function categoryNoun(category: BusinessCategory): string {
+  return (
+    CATEGORIES.find((c) => c.value === category)?.reportNoun ??
+    "businesses like yours"
+  );
 }
 
 /**
@@ -62,7 +122,8 @@ export function categoryLabel(category: BusinessCategory): string {
  * does the rest of the web corroborate it. Nothing here assumes an API, a
  * checkout, or a storefront.
  *
- * This is also the whole of the `sbo` set. A local service business has no
+ * This is also the whole of the `sbo` and `digital` sets. A business that sells
+ * services — whether it turns up at your house or works remotely — has no
  * additions, because the agentic-commerce and developer-tooling checks Ora runs
  * genuinely do not apply to one. That is not a gap in the list; it is the
  * finding.
@@ -107,8 +168,25 @@ const BASE_CHECKS = [
  * does not stop mattering because you also happen to sell an API.
  */
 const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
-  // See BASE_CHECKS: the local-business set is the base set.
+  // See BASE_CHECKS: the services sets are the base set.
   sbo: [],
+
+  /**
+   * Deliberately identical to `sbo`, and worth saying why rather than leaving
+   * two empty arrays looking like an oversight.
+   *
+   * Ora has no check that separates a business serving a postcode from one
+   * serving a Zoom link. What decides whether either gets recommended is the
+   * same list: can it be found by name, can a crawler read it, does it say
+   * plainly what it sells and for whom, does anything outside its own website
+   * corroborate that. Inventing a difference here would mean moving checks
+   * between the two on vibes, and the report would be worse for it.
+   *
+   * The split earns its place at the top of the funnel, not in the scoring: it
+   * gives a web developer somewhere honest to put himself, so he stops landing
+   * in `saas` and being told to ship an API he does not have.
+   */
+  digital: [],
 
   /**
    * Agentic commerce. Every one of these is a `bonus` check in Ora's scoring,
@@ -128,9 +206,16 @@ const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
 
   /**
    * Developer surface. These are the checks that made the local-business report
-   * absurd and make the SaaS one honest: for a software company, having no
-   * OpenAPI spec and no MCP server genuinely is why an agent cannot work with
-   * you, and it belongs at the top of the report rather than filtered out.
+   * absurd and make the platform one honest: for a company other businesses are
+   * meant to build on, having no OpenAPI spec and no MCP server genuinely is
+   * why an agent cannot work with you, and it belongs at the top of the report
+   * rather than filtered out.
+   *
+   * Note what `isCategoryExtra` does with these: an `na` counts as a failure
+   * rather than an exclusion, so a platform with no API surface at all scores
+   * badly instead of scoring well for having nothing to assess. That is correct
+   * here and wrong for `app`, which is why the two are separate categories
+   * rather than one with a softer rule.
    */
   saas: [
     "openapi-spec",
@@ -147,6 +232,33 @@ const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
     "webmcp",
     "ard-catalog",
   ],
+
+  /**
+   * Software people use, that nobody builds on.
+   *
+   * A consumer app, a desktop tool, a closed B2B product: still software, still
+   * sold online, and deliberately without a public API. Before this category
+   * existed the only honest-sounding option was `saas`, which scored them
+   * against eleven checks measuring an API surface they had decided not to
+   * build — an OpenAPI spec, a developer portal, SDKs, OAuth. On one live site
+   * that was a twenty-one point penalty for a product working exactly as
+   * intended. Not having an API is a choice here, not a finding.
+   *
+   * So the developer surface is dropped and two things are kept, both of which
+   * hold whether or not anyone integrates with you:
+   *
+   *   webmcp             — a browser agent operating your app has no declared
+   *                        actions and has to guess at your interface. This
+   *                        asks you to describe pages you already ship, not to
+   *                        open an API. Ora scores it `required` at 2 points,
+   *                        so it is a real but small finding.
+   *   chatgpt-app-listed — a `bonus` check, so it can never drag the score
+   *                        down. Being inside the assistant rather than a name
+   *                        it mentions matters more for a product than for
+   *                        anything else on this list, and the directory is not
+   *                        crowded yet.
+   */
+  app: ["webmcp", "chatgpt-app-listed"],
 };
 
 /** The check ids scored and reported for a category. */

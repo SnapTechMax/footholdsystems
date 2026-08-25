@@ -7,6 +7,7 @@ import {
 } from "./relevance";
 import {
   categoryLabel,
+  categoryNoun,
   isCategoryExtra,
   type BusinessCategory,
 } from "./categories";
@@ -225,7 +226,8 @@ function verdictFor(grade: Grade, domain: string): string {
  */
 function summaryFor(args: {
   grade: Grade;
-  categoryLabel: string;
+  /** Plural, from categoryNoun — the sentence below supplies no article. */
+  categoryNoun: string;
   domain: string;
   findings: ReportFinding[];
   requiredFailures: number;
@@ -242,7 +244,7 @@ function summaryFor(args: {
   const parts: string[] = [];
 
   parts.push(
-    `We ran ${assessed} checks on the things that decide whether an AI assistant can find you, understand what you sell, and recommend you when someone asks, using the set that applies to a ${args.categoryLabel.toLowerCase()}. You passed ${passed}.`
+    `We ran ${assessed} checks on the things that decide whether an AI assistant can find you, understand what you sell, and recommend you when someone asks, using the set that applies to ${args.categoryNoun}. You passed ${passed}.`
   );
 
   if (requiredFailures > 0) {
@@ -446,7 +448,7 @@ export function buildReport(
     verdict: verdictFor(grade, scan.domain),
     summary: summaryFor({
       grade,
-      categoryLabel: categoryLabel(category),
+      categoryNoun: categoryNoun(category),
       domain: scan.domain,
       findings,
       requiredFailures,

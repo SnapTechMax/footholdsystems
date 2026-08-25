@@ -41,7 +41,7 @@ export const ScanRequestSchema = z.object({
    * should produce a slightly generic report rather than an error.
    */
   category: z
-    .enum(["sbo", "ecommerce", "saas"])
+    .enum(["sbo", "digital", "ecommerce", "saas", "app"])
     .optional()
     .default(DEFAULT_CATEGORY),
 
