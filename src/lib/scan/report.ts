@@ -110,6 +110,84 @@ function gradeFor(score: number): Grade {
   return "F";
 }
 
+/** Worst to best, so a ceiling can be applied by index. */
+const GRADE_ORDER: Grade[] = ["F", "D", "C", "B", "A"];
+
+/**
+ * The check nothing else survives without.
+ *
+ * Named rather than inlined because the report copy makes a specific promise
+ * about it ("Everything else on this list is downstream of this"), and a grade
+ * that ignores it while the copy says that is the contradiction this whole
+ * mechanism exists to remove.
+ */
+const FOUNDATIONAL_CHECK = "brand-search-accuracy";
+
+/**
+ * Lowers a grade when required checks are failing.
+ *
+ * The score is an unweighted point ratio, which is fine for ranking effort and
+ * wrong for a headline grade. `brand-search-accuracy` is worth 3 points out of
+ * 47, so a site could fail the one check we call the most important and lose
+ * six percent of its score: a real report came back 91/100, Grade A, with a
+ * verdict saying the remaining gaps were ones competitors had not found either,
+ * directly above a finding saying an assistant could not confirm the business
+ * was real. Both cannot be true, and the grade was the half that was lying.
+ *
+ * A ceiling rather than a penalty, so it can only ever lower a grade. A site
+ * already scoring F is not dragged further, and the arithmetic stays honest:
+ * the number is still the number, the letter reflects what is unresolved.
+ *
+ * Hard failures count harder than warnings, because "we could not find your
+ * business by name at all" and "you come up fifth for your own name" are
+ * different problems and should not carry the same weight.
+ */
+function capGrade(
+  raw: Grade,
+  args: { hardFails: number; warnings: number; foundationalHardFail: boolean }
+): { grade: Grade; reason: string | null } {
+  const { hardFails, warnings, foundationalHardFail } = args;
+
+  let ceiling: Grade | null = null;
+  let reason: string | null = null;
+
+  if (hardFails >= 3) {
+    ceiling = "D";
+    reason = `${hardFails} of the checks we treat as non-negotiable are failing.`;
+  } else if (hardFails === 2) {
+    ceiling = "C";
+    reason = "Two of the checks we treat as non-negotiable are failing.";
+  } else if (hardFails === 1) {
+    ceiling = "B";
+    reason = "One of the checks we treat as non-negotiable is failing.";
+  } else if (warnings > 0) {
+    // No outright failures, but something required is not fully passing. Not an
+    // A: an A says there is nothing here worth acting on.
+    ceiling = "B";
+    reason =
+      warnings === 1
+        ? "One of the checks we treat as non-negotiable is only partly passing."
+        : `${warnings} of the checks we treat as non-negotiable are only partly passing.`;
+  }
+
+  // Nothing downstream matters if an assistant cannot confirm the business is
+  // real, so this outranks the count-based ceiling above.
+  if (foundationalHardFail) {
+    ceiling = "C";
+    reason =
+      "An AI cannot confirm your business exists when it looks you up by name, and everything else depends on that.";
+  }
+
+  if (!ceiling) return { grade: raw, reason: null };
+
+  const capped =
+    GRADE_ORDER.indexOf(raw) > GRADE_ORDER.indexOf(ceiling) ? ceiling : raw;
+
+  // Only explain a cap that actually changed something. A site scoring F with
+  // eight failures does not need to be told its grade was limited to D.
+  return { grade: capped, reason: capped === raw ? null : reason };
+}
+
 /**
  * The line that opens the email.
  *
@@ -164,7 +242,9 @@ function summaryFor(args: {
 
   if (requiredFailures > 0) {
     parts.push(
-      `${requiredFailures} of the failures are in the group we treat as non-negotiable. Those are the ones that keep coming up when a business simply never appears in an answer.`
+      requiredFailures === 1
+        ? "One of them is in the group we treat as non-negotiable, which is the group that keeps coming up when a business simply never appears in an answer."
+        : `${requiredFailures} of them are in the group we treat as non-negotiable, which is the group that keeps coming up when a business simply never appears in an answer.`
     );
   }
 
@@ -316,13 +396,38 @@ export function buildReport(
     ({ check }) => check.tier === "required"
   ).length;
 
-  const grade = gradeFor(score);
+  // Counted over the checks this category actually asked for, and only the
+  // required tier: a failing "recommended" check is a to-do, not a reason to
+  // hold the whole grade down.
+  const requiredRelevant = relevant.filter(
+    ({ check }) => check.tier === "required" && !check.bonus
+  );
+  const hardFails = requiredRelevant.filter(
+    ({ check }) =>
+      check.status === "fail" ||
+      (check.status === "na" && isCategoryExtra(check.id, category))
+  ).length;
+  const requiredWarnings = requiredRelevant.filter(
+    ({ check }) => check.status === "warning"
+  ).length;
+  const foundationalHardFail = requiredRelevant.some(
+    ({ check }) => check.id === FOUNDATIONAL_CHECK && check.status === "fail"
+  );
+
+  const { grade, reason: gradeCappedBecause } = capGrade(gradeFor(score), {
+    hardFails,
+    warnings: requiredWarnings,
+    foundationalHardFail,
+  });
 
   return {
     domain: scan.domain,
     score,
     maxScore: 100,
     grade,
+    // Null unless the cap actually moved the letter. Renderers show it beside
+    // the grade so a 91 sitting next to a B is explained rather than disputed.
+    gradeCappedBecause,
     verdict: verdictFor(grade, scan.domain),
     summary: summaryFor({
       grade,

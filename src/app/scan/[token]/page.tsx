@@ -78,11 +78,11 @@ function LockedBlock({ seed }: { seed: string }) {
 
 function ScoreHeader({ report }: { report: ScanReport }) {
   const tone =
-    report.score >= 70
+    report.grade === "A" || report.grade === "B"
       ? "text-[var(--accent)]"
-      : report.score >= 40
-        ? "text-[var(--text)]"
-        : "text-[var(--danger)]";
+      : report.grade === "F"
+        ? "text-[var(--danger)]"
+        : "text-[var(--text)]";
 
   return (
     <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-7 sm:p-10">
@@ -105,6 +105,25 @@ function ScoreHeader({ report }: { report: ScanReport }) {
         <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
           Scored as: {report.categoryLabel}
         </span>
+      </div>
+      {/* Only rendered when the cap actually moved the letter. A high score
+          sitting next to a middling grade reads as a broken scale unless the
+          reason is right there. */}
+      {report.gradeCappedBecause && (
+        <div className="mt-4 flex gap-3 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3">
+          <span aria-hidden="true" className="text-[var(--danger)]">
+            !
+          </span>
+          <p className="max-w-[54ch] text-[14px] leading-[1.55] text-[var(--muted)]">
+            <span className="font-semibold text-[var(--text)]">
+              Your grade is held at {report.grade} despite a score of{" "}
+              {report.score}.{" "}
+            </span>
+            {report.gradeCappedBecause}
+          </p>
+        </div>
+      )}
+      <div>
       </div>
       <p className="mt-6 max-w-[42ch] font-display text-xl font-extrabold uppercase leading-[1.15] tracking-[-0.01em] text-[var(--text)] sm:text-2xl">
         {report.verdict}

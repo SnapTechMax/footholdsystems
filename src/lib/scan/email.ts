@@ -170,6 +170,16 @@ export function buildReportEmail(args: {
               <p style="margin:6px 0 0;font:400 12px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
                 Scored as: ${escapeHtml(report.categoryLabel)}
               </p>
+              ${
+                report.gradeCappedBecause
+                  ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px auto 0;"><tr><td style="padding:12px 16px;background:#fdf3f1;border-radius:8px;">
+                <p style="margin:0;max-width:44ch;font:400 13px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};text-align:left;">
+                  <strong style="color:${INK};">Held at ${escapeHtml(report.grade)} despite a score of ${report.score}.</strong>
+                  ${escapeHtml(report.gradeCappedBecause)}
+                </p>
+              </td></tr></table>`
+                  : ""
+              }
             </td>
           </tr>
 
@@ -284,6 +294,9 @@ export function buildReportEmail(args: {
     `${report.domain}`,
     `Score: ${report.score}/100 (grade ${report.grade})`,
     `Scored as: ${report.categoryLabel}`,
+    report.gradeCappedBecause
+      ? `Held at ${report.grade} despite a score of ${report.score}. ${report.gradeCappedBecause}`
+      : "",
     ``,
     report.verdict,
     ``,

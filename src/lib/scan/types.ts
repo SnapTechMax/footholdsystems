@@ -109,6 +109,14 @@ export interface ScanReport {
   score: number;
   maxScore: number;
   grade: Grade;
+  /**
+   * Why the grade is lower than the score alone implies, or null when it isn't.
+   *
+   * Set when a required check is failing. Without it a reader sees 91/100 next
+   * to a B and concludes the grading is broken, which is a worse outcome than
+   * the contradiction it was introduced to fix.
+   */
+  gradeCappedBecause: string | null;
   /** One-line verdict in our voice, not Ora's. */
   verdict: string;
   /** The 2-3 sentence plain-English summary that opens the email. */
