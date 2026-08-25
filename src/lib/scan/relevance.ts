@@ -301,6 +301,15 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "Sitemap doesn't say what changed when",
     consequence: "Crawlers can't tell fresh pages from stale ones, so they re-read everything or nothing.",
     fix: "Add accurate lastmod dates. Accurate is the operative word. A sitemap claiming every page changed today is treated as unreliable.",
+    // The failure wording above is false of a sitemap that does carry dates on
+    // some entries. Ora warns rather than fails once they are present but thin:
+    // it wants lastmod on at least half the entries, with the newest inside a
+    // year, so a partial pass is either patchy coverage or dates gone stale.
+    warning: {
+      title: "Sitemap dates are patchy",
+      consequence:
+        "Some entries carry a lastmod date and some do not, or the newest one is old enough to read as abandoned. A crawler that cannot rely on the dates stops reading them, which puts you back to re-reading everything or nothing.",
+    },
   },
   "docs-auth-gate": {
     title: "Key content sits behind a login",
