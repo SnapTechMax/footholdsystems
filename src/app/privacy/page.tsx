@@ -45,7 +45,7 @@ const PROCESSORS = [
   },
   {
     name: "Whop",
-    role: "Takes the payment if you buy the fixes. Whop handles the card details; we never see or store them. We receive a confirmation that a payment succeeded and which report it was for.",
+    role: "Takes the payment if you buy the fixes. Whop handles the card details; we never see or store them. We receive a confirmation that a payment succeeded and which report it was for. Whop also sets a tag on this site that records page views, so a purchase can be matched to the visit that led to it.",
   },
   {
     name: "Vercel",

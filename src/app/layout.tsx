@@ -128,6 +128,23 @@ export default function RootLayout({
             {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${CLARITY_PROJECT_ID}");`}
           </Script>
         )}
+        {/* Whop pixel. Attributes a purchase back to the visit that produced
+            it, which none of the tags above can do: GA and Meta stop at our own
+            conversion events, and checkout happens on whop.com.
+
+            The body is Whop's snippet verbatim, including the business id.
+            Not moved to an env var on purpose — it is a public identifier that
+            ships in the page source either way, and a second place to set it is
+            a second place for it to be wrong. Same treatment as the Meta pixel
+            id above.
+
+            afterInteractive, matching the others: the snippet injects its own
+            async script tag, so hoisting it earlier would buy nothing and cost
+            first paint. */}
+        <Script id="whop-pixel" strategy="afterInteractive">
+          {`!function(w,d,s,u,n,a,b){if(w[n])return;a=w[n]={q:[],t:+new Date,s:[],o:u,track:function(){a.q.push([+new Date].concat([].slice.call(arguments)))},setScope:function(){a.s=[].slice.call(arguments).filter(function(x){return typeof x==="string"});a.q.push([+new Date,"setScope"].concat(a.s))},scope:function(){var c=[].slice.call(arguments);return{track:function(){a.q.push([+new Date].concat([].slice.call(arguments)).concat([{__scope:c}]))}}}};b=d.createElement(s);b.async=1;b.src=u+"/s.js";d.getElementsByTagName(s)[0].parentNode.insertBefore(b,d.getElementsByTagName(s)[0])}(window,document,"script","https://t.whop.tw","whop");whop.setScope("biz_hDWlSwXChzsMuv");whop.track("page");`}
+        </Script>
+
         {/* Meta (Facebook) Pixel base code */}
         {META_PIXEL_ID && (
           <>
