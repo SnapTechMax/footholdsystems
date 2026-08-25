@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_CATEGORY } from "./categories";
 
 /**
  * What a scan request has to look like.
@@ -34,6 +35,17 @@ export const ScanRequestSchema = z.object({
   email: z.email("That email address doesn't look right.").trim().max(200),
 
   /**
+   * What kind of business this is, which decides the check set the scan is
+   * scored against. Defaulted rather than required: the form preselects the
+   * most common answer, and a submission that somehow arrives without one
+   * should produce a slightly generic report rather than an error.
+   */
+  category: z
+    .enum(["sbo", "ecommerce", "saas"])
+    .optional()
+    .default(DEFAULT_CATEGORY),
+
+  /**
    * One box covering both the report and the follow-up emails.
    *
    * Required, so a literal rather than a boolean — there is no version of this
@@ -60,5 +72,5 @@ export type ScanRequest = z.infer<typeof ScanRequestSchema>;
 /** Shape the form expects back on failure, so it can place messages per field. */
 export interface ScanErrorResponse {
   error: string;
-  field?: "url" | "email" | "consent";
+  field?: "url" | "email" | "consent" | "category";
 }

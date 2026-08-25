@@ -94,6 +94,8 @@ export interface ReportFinding {
   specUrl?: string;
 }
 
+import type { BusinessCategory } from "./categories";
+
 /**
  * Report grade. A, B, C, D, F — the American school scale, no E.
  *
@@ -121,6 +123,11 @@ export interface ScanReport {
     /** Total points recoverable across every finding we surfaced. */
     pointsAvailable: number;
   };
+  /** The category the reader picked, which decided the check set. */
+  businessCategory: BusinessCategory;
+  /** Human label for it, so renderers don't each map the enum themselves. */
+  categoryLabel: string;
+  /** Ora's own sector guess, where it has one. Usually absent. */
   category?: string;
   scannedAt: string;
   /** True when Ora returned before every check finished. */

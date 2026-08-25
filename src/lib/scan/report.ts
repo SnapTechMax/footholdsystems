@@ -1,5 +1,10 @@
 import "server-only";
-import { RELEVANT_CHECKS, tierWeight } from "./relevance";
+import { CHECK_COPY, isRelevant, tierWeight } from "./relevance";
+import {
+  categoryLabel,
+  isCategoryExtra,
+  type BusinessCategory,
+} from "./categories";
 import type {
   Grade,
   OraCheck,
@@ -62,11 +67,21 @@ const DEPENDENT_CHECKS: Record<string, string> = {
  * checks are excluded because they cannot cost points by definition, and
  * including them in the denominator would make a perfect site score under 100.
  */
-function scoreSubset(checks: OraCheck[]): { earned: number; available: number } {
+function scoreSubset(
+  checks: OraCheck[],
+  category: BusinessCategory
+): { earned: number; available: number } {
   let earned = 0;
   let available = 0;
   for (const check of checks) {
-    if (check.bonus || check.status === "na" || check.status === "error") continue;
+    if (check.bonus || check.status === "error") continue;
+    if (check.status === "na") {
+      // See isCategoryExtra: unassessable is a failure when the reader declared
+      // the category that asked for this check, and an exclusion otherwise.
+      if (!isCategoryExtra(check.id, category)) continue;
+      available += check.maxScore;
+      continue;
+    }
     earned += check.score;
     available += check.maxScore;
   }
@@ -127,6 +142,7 @@ function verdictFor(grade: Grade, domain: string): string {
  */
 function summaryFor(args: {
   grade: Grade;
+  categoryLabel: string;
   domain: string;
   findings: ReportFinding[];
   requiredFailures: number;
@@ -143,7 +159,7 @@ function summaryFor(args: {
   const parts: string[] = [];
 
   parts.push(
-    `We ran ${assessed} checks on the things that decide whether an AI assistant can find you, understand what you sell, and recommend you when someone asks. You passed ${passed}.`
+    `We ran ${assessed} checks on the things that decide whether an AI assistant can find you, understand what you sell, and recommend you when someone asks, using the set that applies to a ${args.categoryLabel.toLowerCase()}. You passed ${passed}.`
   );
 
   if (requiredFailures > 0) {
@@ -198,7 +214,7 @@ function tidyDetails(details: string | undefined): string | null {
 }
 
 function buildFinding(check: OraCheck, layerName: string): ReportFinding | null {
-  const copy = RELEVANT_CHECKS[check.id];
+  const copy = CHECK_COPY[check.id];
   if (!copy) return null;
 
   const found = tidyDetails(check.details);
@@ -224,30 +240,56 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
   };
 }
 
-export function buildReport(scan: OraScan): ScanReport {
+/**
+ * Builds the report for one business category.
+ *
+ * The category decides which checks are scored and reported, which is the whole
+ * point of asking for it: a local business assessed on the SaaS set is told to
+ * ship an SDK, and a SaaS company assessed on the local set is congratulated for
+ * having a sitemap while shipping no API spec. See categories.ts.
+ */
+export function buildReport(
+  scan: OraScan,
+  category: BusinessCategory
+): ScanReport {
   const relevant: { check: OraCheck; layer: string }[] = [];
   for (const layer of scan.layers) {
     for (const check of layer.checks) {
-      if (Object.hasOwn(RELEVANT_CHECKS, check.id)) {
+      if (isRelevant(check.id, category)) {
         relevant.push({ check, layer: layer.name });
       }
     }
   }
 
   const checks = relevant.map((r) => r.check);
-  const { earned, available } = scoreSubset(checks);
+  const { earned, available } = scoreSubset(checks, category);
   // A site where every relevant check was `na` would divide by zero. Treat it
   // as unscoreable rather than as a perfect zero, which would be a lie.
   const score = available > 0 ? Math.round((earned / available) * 100) : 0;
 
   const failingIds = new Set(
     relevant
-      .filter(({ check }) => check.status === "fail" || check.status === "warning")
+      .filter(
+        ({ check }) =>
+          check.status === "fail" ||
+          check.status === "warning" ||
+          (check.status === "na" &&
+            !check.bonus &&
+            isCategoryExtra(check.id, category))
+      )
       .map(({ check }) => check.id)
   );
 
   const failing = relevant.filter(({ check }) => {
-    if (check.status !== "fail" && check.status !== "warning") return false;
+    const counts =
+      check.status === "fail" ||
+      check.status === "warning" ||
+      // Same rule as the scoring: nothing found, for a check this category
+      // explicitly asked for, is a finding rather than a non-applicable.
+      (check.status === "na" &&
+        !check.bonus &&
+        isCategoryExtra(check.id, category));
+    if (!counts) return false;
     const parent = DEPENDENT_CHECKS[check.id];
     return !(parent && failingIds.has(parent));
   });
@@ -262,7 +304,11 @@ export function buildReport(scan: OraScan): ScanReport {
     .slice(0, MAX_FINDINGS);
 
   const passed = checks.filter((c) => c.status === "pass").length;
-  const failed = checks.filter((c) => c.status === "fail").length;
+  const failed = checks.filter(
+    (c) =>
+      c.status === "fail" ||
+      (c.status === "na" && !c.bonus && isCategoryExtra(c.id, category))
+  ).length;
   const warnings = checks.filter((c) => c.status === "warning").length;
   // Excludes `na` and `error`: we only claim to have assessed what we could.
   const assessed = passed + failed + warnings;
@@ -280,6 +326,7 @@ export function buildReport(scan: OraScan): ScanReport {
     verdict: verdictFor(grade, scan.domain),
     summary: summaryFor({
       grade,
+      categoryLabel: categoryLabel(category),
       domain: scan.domain,
       findings,
       requiredFailures,
@@ -294,6 +341,11 @@ export function buildReport(scan: OraScan): ScanReport {
       pointsAvailable:
         Math.round(findings.reduce((sum, f) => sum + f.pointsBack, 0) * 10) / 10,
     },
+    // What we assessed against, not Ora's guess at the sector. The reader chose
+    // this, and the report has to be able to say so: a score means nothing
+    // without the set it was scored over.
+    businessCategory: category,
+    categoryLabel: categoryLabel(category),
     category: scan.category,
     scannedAt: scan.scannedAt ?? new Date().toISOString(),
     partial: scan.analysisStatus === "partial" || scan.analysisStatus === "stuck",

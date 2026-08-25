@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { sql } from "@/lib/pg";
+import { DEFAULT_CATEGORY, isBusinessCategory, type BusinessCategory } from "./categories";
 import type { OraScan, ScanReport } from "./types";
 
 /**
@@ -29,6 +30,7 @@ export interface ScanRow {
   email: string;
   domain: string;
   url: string;
+  category: BusinessCategory;
   status: ScanStatus;
   score: number | null;
   grade: string | null;
@@ -83,6 +85,7 @@ export async function initScanSchema(): Promise<void> {
       lead_id           BIGINT NOT NULL REFERENCES scan_leads(id) ON DELETE CASCADE,
       domain            TEXT NOT NULL,
       url               TEXT NOT NULL,
+      category          TEXT NOT NULL DEFAULT 'sbo',
       status            TEXT NOT NULL DEFAULT 'queued',
       score             INTEGER,
       grade             TEXT,
@@ -96,6 +99,11 @@ export async function initScanSchema(): Promise<void> {
       completed_at      TIMESTAMPTZ,
       report_emailed_at TIMESTAMPTZ
     )`;
+
+  // The CREATE above only runs on a fresh install, so an existing deployment
+  // needs the column added explicitly. IF NOT EXISTS makes this a no-op
+  // everywhere else, which is what keeps initSchema safe to call per request.
+  await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'sbo'`;
 
   await db`CREATE INDEX IF NOT EXISTS scans_status_idx ON scans (status, created_at)`;
   await db`CREATE INDEX IF NOT EXISTS scans_lead_idx ON scans (lead_id)`;
@@ -195,6 +203,7 @@ export async function createScan(args: {
   leadId: number;
   domain: string;
   url: string;
+  category: BusinessCategory;
   ipAddress: string | null;
 }): Promise<{ id: number; token: string; reused: boolean }> {
   const db = sql();
@@ -203,6 +212,9 @@ export async function createScan(args: {
     SELECT id, token FROM scans
     WHERE lead_id = ${args.leadId}
       AND domain = ${args.domain}
+      -- Same site, different category is a different report, so it does not
+      -- count as a duplicate and is worth a fresh scan.
+      AND category = ${args.category}
       AND status = 'complete'
       AND completed_at > now() - INTERVAL '24 hours'
     ORDER BY completed_at DESC
@@ -214,8 +226,8 @@ export async function createScan(args: {
 
   const token = newToken();
   const rows = (await db`
-    INSERT INTO scans (token, lead_id, domain, url, ip_address)
-    VALUES (${token}, ${args.leadId}, ${args.domain}, ${args.url}, ${args.ipAddress})
+    INSERT INTO scans (token, lead_id, domain, url, category, ip_address)
+    VALUES (${token}, ${args.leadId}, ${args.domain}, ${args.url}, ${args.category}, ${args.ipAddress})
     RETURNING id, token`) as { id: number; token: string }[];
 
   return { id: Number(rows[0].id), token: rows[0].token, reused: false };
@@ -302,7 +314,7 @@ export async function markReportEmailed(id: number): Promise<void> {
 }
 
 const SCAN_SELECT = `
-  s.id, s.token, s.lead_id, s.domain, s.url, s.status, s.score, s.grade,
+  s.id, s.token, s.lead_id, s.domain, s.url, s.category, s.status, s.score, s.grade,
   s.report, s.raw, s.error, s.attempts, s.created_at, s.completed_at,
   s.report_emailed_at, l.email`;
 
@@ -313,6 +325,7 @@ interface RawScanRow {
   email: string;
   domain: string;
   url: string;
+  category: string;
   status: ScanStatus;
   score: number | null;
   grade: string | null;
@@ -333,6 +346,10 @@ function toScanRow(r: RawScanRow): ScanRow {
     email: r.email,
     domain: r.domain,
     url: r.url,
+    // Widened to string on the way out of Postgres, so it is narrowed here
+    // rather than trusted. A row written before this column existed carries the
+    // default, and anything unrecognised falls back rather than throwing.
+    category: isBusinessCategory(r.category) ? r.category : DEFAULT_CATEGORY,
     status: r.status,
     score: r.score,
     grade: r.grade,

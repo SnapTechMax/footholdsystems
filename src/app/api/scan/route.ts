@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
       leadId,
       domain,
       url: `https://${domain}`,
+      category: data.category,
       ipAddress: ip,
     });
 
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
       try {
         const result = await subscribeToSequence(resendClient(), {
           email: data.email,
-          source: `ai-visibility-scan:${domain}`,
+          source: `ai-visibility-scan:${data.category}:${domain}`,
         });
         if (result.notes.length > 0) {
           // Never thrown. The scan is already accepted and a failure to enrol

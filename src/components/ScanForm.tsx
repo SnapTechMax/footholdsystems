@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  CATEGORIES,
+  DEFAULT_CATEGORY,
+  type BusinessCategory,
+} from "@/lib/scan/categories";
 import { CONSENT_TEXT } from "@/lib/site";
 import { HONEYPOT_FIELD } from "@/lib/spam";
 
@@ -17,12 +22,21 @@ import { HONEYPOT_FIELD } from "@/lib/spam";
  * between "fix this" and "something went wrong".
  */
 
-type FieldName = "url" | "email" | "consent";
+type FieldName = "url" | "email" | "consent" | "category";
 
 export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [email, setEmail] = useState("");
+  /**
+   * Preselected rather than left empty.
+   *
+   * The check set has to be decided one way or another, and most people
+   * arriving from a cold ad are a service business. An empty select is one more
+   * decision between a visitor and a conversion, and the cost of a wrong
+   * default is a slightly generic report rather than a broken one.
+   */
+  const [category, setCategory] = useState<BusinessCategory>(DEFAULT_CATEGORY);
   const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +96,7 @@ export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
         body: JSON.stringify({
           url,
           email,
+          category,
           consent,
           consentText: CONSENT_TEXT,
           attribution: attribution.current,
@@ -168,6 +183,42 @@ export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
                 : "border-[var(--line)]"
             }`}
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="scan-category"
+            className="mb-2 block font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--dim)]"
+          >
+            What kind of business
+          </label>
+          <select
+            id="scan-category"
+            name="category"
+            required
+            value={category}
+            onChange={(e) => setCategory(e.target.value as BusinessCategory)}
+            aria-describedby="scan-category-hint"
+            className={`${fieldBase} appearance-none bg-[image:var(--select-caret)] bg-[length:12px] bg-[position:right_1rem_center] bg-no-repeat pr-12 ${
+              errorField === "category"
+                ? "border-[var(--danger)]"
+                : "border-[var(--line)]"
+            }`}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          {/* The hint changes with the selection rather than listing all three,
+              so the field stays one line tall and still disambiguates. */}
+          <p
+            id="scan-category-hint"
+            className="mt-2 text-[13px] leading-snug text-[var(--dim)]"
+          >
+            {CATEGORIES.find((c) => c.value === category)?.hint}
+          </p>
         </div>
 
         <div>

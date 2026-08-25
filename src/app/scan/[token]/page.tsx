@@ -98,6 +98,14 @@ function ScoreHeader({ report }: { report: ScanReport }) {
           Grade {report.grade}
         </span>
       </div>
+      {/* Says what the score was measured against. A number with no stated
+          basis invites the obvious comparison against a raw Ora score, which is
+          computed over a different set of checks entirely. */}
+      <div className="mt-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
+          Scored as: {report.categoryLabel}
+        </span>
+      </div>
       <p className="mt-6 max-w-[42ch] font-display text-xl font-extrabold uppercase leading-[1.15] tracking-[-0.01em] text-[var(--text)] sm:text-2xl">
         {report.verdict}
       </p>

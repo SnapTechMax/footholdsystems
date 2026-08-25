@@ -167,6 +167,9 @@ export function buildReportEmail(args: {
               <p style="margin:8px 0 0;font:700 15px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
                 ${escapeHtml(report.domain)} &middot; Grade ${escapeHtml(report.grade)}
               </p>
+              <p style="margin:6px 0 0;font:400 12px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
+                Scored as: ${escapeHtml(report.categoryLabel)}
+              </p>
             </td>
           </tr>
 
@@ -280,6 +283,7 @@ export function buildReportEmail(args: {
     ``,
     `${report.domain}`,
     `Score: ${report.score}/100 (grade ${report.grade})`,
+    `Scored as: ${report.categoryLabel}`,
     ``,
     report.verdict,
     ``,

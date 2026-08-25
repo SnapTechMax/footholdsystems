@@ -1,4 +1,5 @@
 import "server-only";
+import { checksFor, type BusinessCategory } from "./categories";
 import type { OraCheckTier } from "./types";
 
 /**
@@ -43,7 +44,7 @@ export interface CheckCopy {
   fix?: string;
 }
 
-export const RELEVANT_CHECKS: Record<string, CheckCopy> = {
+export const CHECK_COPY: Record<string, CheckCopy> = {
   /* ── Can an AI find you at all? ─────────────────────────────────────────── */
   "brand-search-accuracy": {
     title: "Your own name doesn't bring up your website",
@@ -197,6 +198,120 @@ export const RELEVANT_CHECKS: Record<string, CheckCopy> = {
     consequence: "Anything gated is invisible. If your best material is behind a form, it isn't working for you here.",
     fix: "Move at least a substantial preview of gated material into the open. You can still capture the lead on the deeper version.",
   },
+  /* ── eCommerce only. Agentic commerce protocols. ────────────────────────── */
+  "acp-support": {
+    title: "An AI cannot actually buy from you",
+    consequence:
+      "Assistants are starting to complete purchases, not just recommend them. A shop an agent can reach but not check out from gets replaced at the last step by one it can.",
+    fix: "Agentic Commerce Protocol is the emerging standard for letting an assistant complete a purchase on a customer's behalf. Ask whoever runs your store platform whether they support it or have it on the roadmap. If you are on Shopify or a major host this is likely to arrive as a platform feature rather than something you build, and knowing to ask for it is most of the advantage right now.",
+  },
+  "ucp-support": {
+    title: "No universal commerce endpoint",
+    consequence:
+      "Nothing tells an agent how to enquire about stock, price or delivery without a human loading your site.",
+    fix: "Universal Commerce Protocol exposes catalogue, availability and pricing in a form an agent can query directly. Platform-level for most shops. Raise it with your host; it is a support ticket rather than a project.",
+  },
+  "ap2-support": {
+    title: "No agent payment support",
+    consequence:
+      "The payment step is where an agent-led purchase ends if it cannot be automated.",
+    fix: "Agent Payments Protocol handles authorising a payment made by an agent for a person. Your payment provider owns this, not you. Ask Stripe, Shopify Payments or whoever processes for you what their timeline is.",
+  },
+  "mpp-support": {
+    title: "No machine payment protocol",
+    consequence: "One more route by which an automated purchase cannot complete.",
+    fix: "Another emerging machine-payment standard. Same answer as the others: your payment processor implements it. The useful move is asking all of them at once rather than one at a time.",
+  },
+  "x402-support": {
+    title: "No x402 support",
+    consequence: "Machine-to-machine payment over HTTP is not available on your site.",
+    fix: "x402 revives the long-dormant HTTP 402 status for pay-per-request. Niche today and mostly relevant if you sell digital goods or API access. Worth knowing it exists rather than acting on it this quarter.",
+  },
+  "chatgpt-app-listed": {
+    title: "Not listed as a ChatGPT app",
+    consequence:
+      "Being inside the assistant rather than a name it mentions is a different level of visibility, and the directory is not crowded yet.",
+    fix: "Check OpenAI's current developer requirements and submit. For a shop the case is straightforward: browsing, availability and ordering. This is the single highest-ceiling item on an eCommerce list and it is the one almost nobody has done.",
+  },
+
+  /* ── SaaS only. The developer surface. ──────────────────────────────────── */
+  "openapi-spec": {
+    title: "No OpenAPI specification published",
+    consequence:
+      "This is the big one for a software company. An OpenAPI spec is how an agent learns what your API can do without a human reading your docs. Without it you are a product an assistant can describe but not operate.",
+    fix: "Publish your OpenAPI spec at a stable, unauthenticated URL, conventionally /openapi.json. Generate it from your code rather than maintaining it by hand, so it cannot drift from the API it describes. Include auth, every endpoint, request and response schemas, and real examples. Link it from your docs homepage.",
+  },
+  "public-api": {
+    title: "No reachable public API",
+    consequence:
+      "Agents integrate through APIs. A product that can only be driven through a web interface can be recommended, but it cannot be used, and increasingly those are the same question.",
+    fix: "Expose a public REST or GraphQL API with at least the core actions a customer would want automated. It does not have to be your whole surface. Start with reading data and the two or three writes that matter most, documented and authenticated properly.",
+  },
+  "public-api-docs": {
+    title: "API documentation is not discoverable",
+    consequence:
+      "You may well have docs. If they are not linked from your homepage at a predictable path, a crawler has no way to find them.",
+    fix: "Put documentation at /docs, /api or /developers and link it from your main navigation in plain HTML. Predictable paths matter more than pretty ones here.",
+  },
+  "developer-portal": {
+    title: "No developer portal",
+    consequence:
+      "Nowhere for a developer, or an agent acting for one, to get a key and start without talking to sales.",
+    fix: "A portal is API keys, a quickstart, reference docs and ideally a sandbox, all self-serve. The self-serve part is what matters: a gate with a human behind it is a gate an agent cannot pass.",
+  },
+  "mcp-server": {
+    title: "No MCP server",
+    consequence:
+      "Model Context Protocol is how an assistant uses a product as a set of tools rather than reading about it. For a software company in 2026 this is fast becoming the difference between being integrated and being described.",
+    fix: "Build an MCP server exposing your core actions as named tools with clear descriptions and typed parameters. Use Streamable HTTP transport. Start with five or six tools that cover the jobs customers actually automate rather than mirroring your whole API. The tool descriptions are the part people underinvest in and they are what decides whether a model picks the right one.",
+  },
+  "mcp-registry-listed": {
+    title: "Not listed in any MCP registry",
+    consequence: "A server nobody can discover is a server nobody connects to.",
+    fix: "Once the server exists, list it in the public MCP registries. Cheap, quick, and the discovery surface is small enough that being on it still stands out.",
+  },
+  "oauth-support": {
+    title: "No OAuth 2.0",
+    consequence:
+      "Without a standard auth flow, an agent acting for a customer has no safe way to get access. The usual workaround is asking people to paste API keys around, which is the thing security teams block.",
+    fix: "Implement OAuth 2.0 with PKCE and publish your authorization server metadata at /.well-known/oauth-authorization-server. Declare scopes that map to real permissions so an agent can request the narrow access it needs rather than everything.",
+  },
+  "json-error-responses": {
+    title: "Errors come back as HTML",
+    consequence:
+      "An agent that gets an HTML error page cannot tell what went wrong or whether retrying would help, so it gives up and reports that your product did not work.",
+    fix: "Return structured JSON on every error path with a stable machine-readable code, a human message, and where possible a hint at the resolution. Never an HTML page from an API route, including on 500s and rate limits.",
+  },
+  "api-error-model": {
+    title: "No consistent error shape",
+    consequence:
+      "Errors that differ in shape between endpoints cannot be handled generically, which means every integration is bespoke.",
+    fix: "Define one error envelope and use it everywhere. RFC 9457 problem details is a reasonable default and saves the argument. Document the full code list alongside the endpoints.",
+  },
+  "agentic-search-specific": {
+    title: "Your developer resources are not findable by name",
+    consequence:
+      "An agent searching for your API docs, your spec or your MCP server finds nothing relevant, so none of the work above gets used.",
+    fix: "Publish at predictable paths and name them plainly: /docs, /openapi.json, /developers, /mcp. Reference them from your homepage and from llms.txt. Discoverability is a separate problem from existence and it is the one usually left undone.",
+  },
+  "rest-sdk-packages": {
+    title: "No SDK packages",
+    consequence:
+      "An agent writing integration code reaches for a published client library first. With none, it writes raw HTTP calls and gets your API wrong more often.",
+    fix: "Publish official clients to npm and PyPI at minimum, generated from your OpenAPI spec so they cannot drift. Two ecosystems done properly beats six half-maintained.",
+  },
+  "webmcp": {
+    title: "No in-page tools for browser agents",
+    consequence:
+      "Agents working inside a browser have no declared actions on your pages, so they resort to guessing at your interface.",
+    fix: "WebMCP is the draft standard for exposing in-page tools. Add toolname and tooldescription attributes to your key forms and actions. Early, and cheap enough that being early costs you very little.",
+  },
+  "ard-catalog": {
+    title: "No agent resource catalog",
+    consequence:
+      "There is no single file telling an agent what you offer it, so each one has to discover your API, docs and MCP server separately or not at all.",
+    fix: "Publish an Agentic Resource Discovery catalog at /.well-known/ai-catalog.json listing your MCP servers, APIs, agents and skills, each with an identifier, a display name and a working target. It is the index for everything else on this list.",
+  },
 };
 
 /** Ranking weight by tier. Required failures lead the report. */
@@ -206,6 +321,17 @@ export function tierWeight(tier: OraCheckTier | undefined): number {
   return 1;
 }
 
-export function isRelevant(checkId: string): boolean {
-  return Object.hasOwn(RELEVANT_CHECKS, checkId);
+/**
+ * Whether a check belongs in this category's report.
+ *
+ * Both conditions have to hold: the category has to claim the check, and we
+ * have to have written copy for it. A check in a category list with no copy
+ * would otherwise reach a customer as Ora's own engineer-facing wording, which
+ * is the exact failure this file exists to prevent.
+ */
+export function isRelevant(
+  checkId: string,
+  category: BusinessCategory
+): boolean {
+  return checksFor(category).has(checkId) && Object.hasOwn(CHECK_COPY, checkId);
 }

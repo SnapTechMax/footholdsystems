@@ -56,7 +56,7 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
   let raw;
   try {
     raw = await scanDomain(scan.domain);
-    report = buildReport(raw);
+    report = buildReport(raw, scan.category);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     await failScan(scanId, reason);

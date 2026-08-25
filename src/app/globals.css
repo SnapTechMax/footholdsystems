@@ -33,6 +33,11 @@
   /* Reserved for loss/pain framing — the "you are invisible" callouts and the
      red column of the comparison table. Used sparingly; it stops working the
      moment it becomes decoration. */
+  /* Caret for the one <select> on the site. Inline SVG as a data URI because
+     a native select arrow cannot be recoloured, and the default renders almost
+     black on the dark field. */
+  --select-caret: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%238a877f' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+
   --danger: #ff4d3d;
   --danger-dim: #3a1a16;
 
