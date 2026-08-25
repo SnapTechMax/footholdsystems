@@ -42,14 +42,31 @@ export interface CheckCopy {
    * report falls back to Ora's wording, which is correct but colder.
    */
   fix?: string;
+  /**
+   * Copy for a `warning` result, where one differs meaningfully from a `fail`.
+   *
+   * Ora distinguishes "we could not find this at all" from "this is partly
+   * there", and collapsing the two produced a report that told a real customer
+   * his business name did not bring up his website when Ora had actually said
+   * it appeared at position four. Anything whose failure wording would be false
+   * of a partial pass needs an entry here.
+   */
+  warning?: Partial<Pick<CheckCopy, "title" | "consequence" | "fix">>;
 }
 
 export const CHECK_COPY: Record<string, CheckCopy> = {
   /* ── Can an AI find you at all? ─────────────────────────────────────────── */
   "brand-search-accuracy": {
-    title: "Your own name doesn't bring up your website",
+    title: "An AI can't find your site from your business name",
     consequence:
-      "This is the one that matters most. When an assistant goes looking for you by name and your own site isn't what comes back, it has no way to confirm you're real, let alone recommend you. Everything else on this list is downstream of this.",
+      "This is the one that matters most. When something looks you up by name and your own site is not in the results at all, it has no way to confirm you are real, let alone recommend you. Everything else on this list is downstream of this. Measured on a plain search with no personalisation and no location, so it is deliberately harsher than what you see searching from your own desk.",
+    // The failure wording above is false of a site that does appear, just not
+    // at the top, which is what Ora reports far more often than absence.
+    warning: {
+      title: "You are not the top result for your own name",
+      consequence:
+        "Your site does come up, but below other pages. Whatever outranks you is shaping the answer an assistant gives about your business, and being second-hand about yourself is a weak position to negotiate from. Worth knowing this is measured on a plain search with no personalisation and no location, so it will look better when you search it yourself, logged in and nearby.",
+    },
     fix: "Two jobs. First, make your homepage state plainly and in text who you are, what you do and where you do it: business name, category and service area in the title tag, the H1 and the first paragraph. Models match on the words that are actually there, not on what the design implies. Second, get that exact business name spelled identically across your Google Business Profile, your directory listings and your social profiles. Inconsistent naming is the single most common reason a brand search fails to resolve to the right site.",
   },
   "agentic-search-usecase": {
@@ -144,6 +161,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "Thin page metadata",
     consequence:
       "Titles and descriptions are the first thing read and often the only thing quoted. Generic ones give a model nothing worth repeating.",
+    warning: {
+      title: "Page metadata is nearly complete",
+      consequence:
+        "Most of the signals are there and one or two are not. A small gap, and the cheapest kind to close.",
+    },
     fix: "Write a specific title and meta description for every page: the service, the area, the differentiator. No \"Home | Company Name\". Add Open Graph and canonical tags so the same page isn't read as several.",
   },
   "pricing-info": {
@@ -156,6 +178,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "Missing trust pages",
     consequence:
       "About, contact, terms and privacy pages are how anything verifies a business is real. Missing them reads as thin, and thin reads as risky.",
+    warning: {
+      title: "Some trust pages are missing",
+      consequence:
+        "You have some of them. The ones that are absent are the ones anything verifying you would look for first, which is why a partial set counts for less than it feels like it should.",
+    },
     fix: "Publish a real About page with the actual history and the people, a Contact page with a physical address and phone number in text (not in an image), plus privacy and terms. Boring pages, and they carry disproportionate weight in whether you get recommended.",
   },
   "agent-instruction": {

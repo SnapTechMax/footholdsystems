@@ -7,7 +7,7 @@ import {
   SOLUTIONS_PRICE,
   checkoutUrl,
 } from "@/lib/scan/pricing";
-import { toPublicReport } from "@/lib/scan/report";
+import { buildReport, toPublicReport } from "@/lib/scan/report";
 import type { ReportFinding, ScanReport } from "@/lib/scan/types";
 import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
 
@@ -414,7 +414,29 @@ export default async function ScanReportPage({
     );
   }
 
-  const report = scan.report;
+  /**
+   * Rebuilt from the stored Ora payload rather than read from the stored report.
+   *
+   * The report JSON is a rendering of the raw scan, and rendering it fresh means
+   * a correction to the copy reaches every report ever produced, including ones
+   * already sent. That is not theoretical: a wording bug told a customer his
+   * business name did not bring up his website when the scan had actually
+   * recorded it appearing at position four, and a frozen snapshot would have
+   * left that live on his link forever.
+   *
+   * Falls back to the stored report for any row written before `raw` was kept,
+   * and if rebuilding ever throws, because a slightly stale report is a far
+   * better outcome than an error page.
+   */
+  const report = (() => {
+    if (!scan.raw) return scan.report;
+    try {
+      return buildReport(scan.raw, scan.category);
+    } catch {
+      return scan.report;
+    }
+  })();
+  if (!report) notFound();
   const unlocked = await isPaid(scan.id, "solutions").catch(() => false);
 
   // The paid text is selected here and nowhere else. When locked, `fix` and

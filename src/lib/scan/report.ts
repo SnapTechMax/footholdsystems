@@ -299,18 +299,26 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
 
   const found = tidyDetails(check.details);
 
+  // A warning is not a failure, and saying so matters: the failure wording for
+  // some checks is flatly untrue of a partial pass. Falls back to the failure
+  // copy where no distinct wording is needed.
+  const variant = check.status === "warning" && copy.warning ? copy.warning : {};
+  const title = variant.title ?? copy.title;
+  const consequence = variant.consequence ?? copy.consequence;
+  const fix = variant.fix ?? copy.fix;
+
   return {
     checkId: check.id,
-    title: copy.title,
+    title,
     // What we found on their site, stated before the interpretation. Ora's own
     // observation is more convincing than our paraphrase of it, because it is
     // specific to them.
     problem: found ?? copy.title,
-    consequence: copy.consequence,
+    consequence,
     // Our wording where we have it; Ora's as the floor. Never empty — an empty
     // fix is the one thing the paid half cannot be.
     fix:
-      copy.fix ??
+      fix ??
       check.recommendation ??
       "Get in touch and we'll walk you through this one directly.",
     pointsBack: check.estScoreGain ?? 0,
