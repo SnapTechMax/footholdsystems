@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getScanByToken } from "@/lib/scan/db";
-import { reportUrl, siteUrl } from "@/lib/scan/pricing";
+import { reportUrl, siteUrl, upsellUrl } from "@/lib/scan/pricing";
 import { createCheckout } from "@/lib/scan/whop";
 import { cleanRecipient, knownKey, recordClick } from "@/lib/tracking";
 
@@ -64,8 +64,12 @@ export async function GET(request: NextRequest) {
       domain: scan.domain,
       ...(campaign ? { email_key: campaign } : {}),
     },
-    // Back to their own report, which is where the unlocked fixes appear.
-    redirectUrl: reportUrl(scan.token),
+    // A $49 buyer goes to the upsell page, which opens with the link to the
+    // fixes they just bought and then makes the case for the build. Anyone who
+    // has already bought the build has nothing left to be sold, so they go
+    // straight back to the report.
+    redirectUrl:
+      product === "solutions" ? upsellUrl(scan.token) : reportUrl(scan.token),
   });
 
   if (!checkout.ok) {

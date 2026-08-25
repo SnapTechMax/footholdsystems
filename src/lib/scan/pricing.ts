@@ -39,6 +39,19 @@ export function reportUrl(token: string): string {
   return `${siteUrl()}/scan/${token}`;
 }
 
+/**
+ * Where a buyer lands once the SOLUTIONS payment clears.
+ *
+ * A separate page rather than the report, because the moment after paying is
+ * the only one where the reader is committed, the problem is fresh and the work
+ * has not started yet — the single best position the DONE_FOR_YOU offer is ever
+ * in. The page leads with the link to what they just bought, so this redirect
+ * costs them nothing; see the page's own note.
+ */
+export function upsellUrl(token: string): string {
+  return `${siteUrl()}/scan/${token}/next`;
+}
+
 export function unsubscribeUrl(email: string): string {
   return `${siteUrl()}/api/scan/unsubscribe?email=${encodeURIComponent(email)}`;
 }
