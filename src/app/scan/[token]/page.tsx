@@ -340,14 +340,21 @@ function DoneForYou({ token, domain }: { token: string; domain: string }) {
           hand.
         </p>
         <p className="font-semibold text-[var(--text)]">
-          {DONE_FOR_YOU_PRICE}. We implement every fix on your list, then do the
-          work the scanner can&apos;t: rewrite {domain} so a model can tell what
-          you are for, and go build the third-party consensus that makes it
-          believe you.
+          {DONE_FOR_YOU_PRICE}. We implement every fix on your list and rewrite{" "}
+          {domain} so a model can tell what you are for.
         </p>
         <p>
-          Then we re-run the scan every month and show you the same scoreboard.
-          Named or not named. That is the only number that matters.
+          Then we build you a second site, on its own domain, separate from this
+          one. {domain} has a job already: it has to sell to people, carry your
+          brand, look right. All of that pulls against being maximally readable
+          to a model, which is why fixing it is always a compromise between two
+          audiences.
+        </p>
+        <p>
+          The second domain has one audience. It sits where models go looking,
+          structured the way they want, saying what they need in order to
+          recommend you, with none of the compromises. It does not have to look
+          like anything. It has to be findable and unambiguous.
         </p>
       </div>
 

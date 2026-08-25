@@ -104,13 +104,8 @@ const PHASES = [
   },
   {
     n: "03",
-    label: "Seed",
-    body: "We go and build the consensus. Your business represented accurately and consistently across the sources these models actually pull from: the directories, profiles, listings and citations a model checks to decide whether you are real. Same name, same claims, same specifics, everywhere, so there is nothing for a model to be uncertain about.",
-  },
-  {
-    n: "04",
-    label: "Re-run",
-    body: "Every month we run the same prompts again and hand you the same scoreboard. Named or not named. More often or less often. Above or below the competitor you care about. No vanity metrics, because there is only one question in this channel and we report the answer to it.",
+    label: "Build",
+    body: "Then we build you a second site, on its own domain, separate from your main one. Your website already has a job: sell to people, carry your brand, look the way you want it to look. Every one of those pulls against being maximally readable to a machine, which is why fixing an existing site is always a compromise between two audiences. The second domain has one audience. It sits where models go looking, structured the way they want, saying what they need in order to recommend you, with none of the compromises. It does not have to look like anything. It has to be findable and unambiguous.",
   },
 ];
 
@@ -123,8 +118,8 @@ const COMPARE = [
   { row: "Shows up when AI is asked who to hire", no: false, seo: "By luck", aeo: true },
   { row: "Tells you what AI says about you today", no: false, seo: false, aeo: true },
   { row: "Fixes how machines read your site", no: false, seo: "Partly", aeo: true },
-  { row: "Builds third-party consensus", no: false, seo: "Links only", aeo: true },
-  { row: "Monthly proof you are being named", no: false, seo: false, aeo: true },
+  { row: "Builds a site aimed at machines, not people", no: false, seo: false, aeo: true },
+  { row: "Puts you where models actually look", no: false, seo: "Partly", aeo: true },
   { row: "Works before your competitors do it", no: false, seo: false, aeo: true },
 ];
 
@@ -203,7 +198,7 @@ const FAQS = [
   },
   {
     q: "How long does it take to see movement?",
-    a: "The site-side work shows up fastest, because retrieval picks up changes to a page far quicker than a model’s training does. Consensus building is the slower half and the more durable one. We report monthly either way, so you are never guessing about progress.",
+    a: "The site-side work shows up fastest, because retrieval picks up changes to a page far quicker than a model’s training does. The second domain takes a little longer to be found and is the more durable half. Nobody honest will give you a date, because nobody controls when a model next looks.",
   },
   {
     q: "Do I have to stop doing SEO?",
@@ -561,9 +556,8 @@ export default function SalesPage() {
         <H2>The FootHold AEO system.</H2>
 
         <P>
-          Four phases. No retainer for &ldquo;strategy&rdquo;, no ninety-page
-          audit you will never open, and no month where you cannot tell what we
-          did.
+          Three phases. No retainer for &ldquo;strategy&rdquo;, and no
+          ninety-page audit you will never open.
         </P>
 
         <div className="mt-14 space-y-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
@@ -584,7 +578,7 @@ export default function SalesPage() {
           ))}
         </div>
 
-        <Punch>The scoreboard is one question: did it say your name?</Punch>
+        <Punch>There is only one question here: did it say your name?</Punch>
       </Section>
 
       {/* ========================================================= COMPARE == */}
