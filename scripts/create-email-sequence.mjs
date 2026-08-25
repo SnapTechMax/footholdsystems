@@ -250,7 +250,10 @@ async function main() {
     // Dated, because this script creates a new automation on every run rather
     // than editing the live one, and three untitled copies in the dashboard is
     // how you end up enabling the wrong one.
-    name: `FootHold AEO nurture (${new Date().toISOString().slice(0, 10)})`,
+    name: `FootHold AEO nurture (${new Date()
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", " ")})`,
     // Disabled on purpose: an automation is easy to create and awkward to unsend.
     status: "disabled",
     steps,
