@@ -315,6 +315,7 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
     // specific to them.
     problem: found ?? copy.title,
     consequence,
+    caveat: copy.caveat,
     // Our wording where we have it; Ora's as the floor. Never empty — an empty
     // fix is the one thing the paid half cannot be.
     fix:
@@ -491,6 +492,7 @@ export function toPublicReport(report: ScanReport): PublicReport {
       title: f.title,
       problem: f.problem,
       consequence: f.consequence,
+      caveat: f.caveat,
       pointsBack: f.pointsBack,
       layer: f.layer,
       tier: f.tier,

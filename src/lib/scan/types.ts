@@ -84,6 +84,15 @@ export interface ReportFinding {
   problem: string;
   /** Why it costs them. Free. */
   consequence: string;
+  /**
+   * How the result was measured, where that changes how it should be read.
+   *
+   * Free, deliberately. It qualifies a claim made in the free half, so putting
+   * it behind the paywall would mean charging someone to find out that the
+   * thing we alarmed them with was measured differently from how they would
+   * check it.
+   */
+  caveat?: string;
   /** How to fix it. PAID — never serialise this to an unpaid client. */
   fix: string;
   /** Points back on the board. */

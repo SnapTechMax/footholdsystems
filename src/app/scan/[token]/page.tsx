@@ -188,6 +188,15 @@ function Finding({
         {finding.consequence}
       </p>
 
+      {/* Set apart rather than appended. A reader who checks this in their own
+          browser and sees a different answer concludes the report is wrong, so
+          the explanation has to be impossible to skim past. */}
+      {finding.caveat && (
+        <p className="mt-4 border-l-2 border-[var(--line)] py-1 pl-4 text-[13px] leading-[1.6] text-[var(--dim)]">
+          {finding.caveat}
+        </p>
+      )}
+
       <div className="mt-5 border-t border-[var(--line)] pt-5">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
           How to fix it

@@ -52,24 +52,46 @@ export interface CheckCopy {
    * of a partial pass needs an entry here.
    */
   warning?: Partial<Pick<CheckCopy, "title" | "consequence" | "fix">>;
+  /**
+   * How the result was arrived at, for checks whose answer depends on how you
+   * ask.
+   *
+   * Rendered as its own block rather than as a trailing sentence, because the
+   * trailing sentence is where people stop reading. Anything measured by
+   * running a search needs one: the reader will check it in their own browser,
+   * see a different answer, and conclude the whole report is wrong. Which is
+   * what happened.
+   */
+  caveat?: string;
 }
+
+/**
+ * Shared caveat for every check whose result comes from running a search.
+ *
+ * One constant rather than three copies, so the explanation cannot drift
+ * between the checks that need it.
+ */
+const COLD_SEARCH_CAVEAT =
+  "How this was measured: a cold search. No login, no history, no location, no personalisation. That is how a model looks you up when a stranger asks about you. Search your own name in your own browser and you will very likely see yourself first, because your browser already knows who and where you are. Both results are real. This is the one an AI sees.";
 
 export const CHECK_COPY: Record<string, CheckCopy> = {
   /* ── Can an AI find you at all? ─────────────────────────────────────────── */
   "brand-search-accuracy": {
     title: "An AI can't find your site from your business name",
     consequence:
-      "This is the one that matters most. When something looks you up by name and your own site is not in the results at all, it has no way to confirm you are real, let alone recommend you. Everything else on this list is downstream of this. Measured on a plain search with no personalisation and no location, so it is deliberately harsher than what you see searching from your own desk.",
+      "This is the one that matters most. When something looks you up by name and your own site is not in the results at all, it has no way to confirm you are real, let alone recommend you. Everything else on this list is downstream of this.",
+    caveat: COLD_SEARCH_CAVEAT,
     // The failure wording above is false of a site that does appear, just not
     // at the top, which is what Ora reports far more often than absence.
     warning: {
       title: "You are not the top result for your own name",
       consequence:
-        "Your site does come up, but below other pages. Whatever outranks you is shaping the answer an assistant gives about your business, and being second-hand about yourself is a weak position to negotiate from. Worth knowing this is measured on a plain search with no personalisation and no location, so it will look better when you search it yourself, logged in and nearby.",
+        "Your site does come up, but below other pages. Whatever outranks you is shaping the answer an assistant gives about your business, and being second-hand about yourself is a weak position to negotiate from.",
     },
     fix: "Two jobs. First, make your homepage state plainly and in text who you are, what you do and where you do it: business name, category and service area in the title tag, the H1 and the first paragraph. Models match on the words that are actually there, not on what the design implies. Second, get that exact business name spelled identically across your Google Business Profile, your directory listings and your social profiles. Inconsistent naming is the single most common reason a brand search fails to resolve to the right site.",
   },
   "agentic-search-usecase": {
+    caveat: COLD_SEARCH_CAVEAT,
     title: "You don't come up for the thing you actually sell",
     consequence:
       "Being findable by name only helps people who already know you. This is whether you surface when somebody describes their problem instead of typing your name, which is how nearly every new customer arrives.",
@@ -316,6 +338,7 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     fix: "Define one error envelope and use it everywhere. RFC 9457 problem details is a reasonable default and saves the argument. Document the full code list alongside the endpoints.",
   },
   "agentic-search-specific": {
+    caveat: COLD_SEARCH_CAVEAT,
     title: "Your developer resources are not findable by name",
     consequence:
       "An agent searching for your API docs, your spec or your MCP server finds nothing relevant, so none of the work above gets used.",

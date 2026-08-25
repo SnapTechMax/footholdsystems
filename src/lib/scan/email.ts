@@ -90,6 +90,11 @@ export function buildReportEmail(args: {
                 <p style="margin:0;font:400 15px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                   ${escapeHtml(f.consequence)}
                 </p>
+                ${
+                  f.caveat
+                    ? `<p style="margin:14px 0 0;padding:0 0 0 12px;border-left:2px solid ${LINE};font:400 13px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">${escapeHtml(f.caveat)}</p>`
+                    : ""
+                }
               </td>
             </tr>
             <tr>
@@ -284,6 +289,7 @@ export function buildReportEmail(args: {
         `${i + 1}. ${f.title}${f.tier === "required" ? " (CRITICAL)" : ""}\n` +
         `   What we found: ${f.problem}\n` +
         `   ${f.consequence}\n` +
+        (f.caveat ? `   (${f.caveat})\n` : "") +
         `   How to fix it: [locked]`
     )
     .join("\n\n");
