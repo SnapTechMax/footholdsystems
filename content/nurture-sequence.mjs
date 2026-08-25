@@ -550,6 +550,7 @@ const emails = [
       p("For the ones who will not, because it is a fortnight of work and the phone keeps ringing, I do it for them."),
       p("<strong>Every technical fix from the last three weeks, implemented.</strong> Schema, sameAs, crawler access, llms.txt, metadata, trust pages, title tags. On your actual site, properly."),
       p("<strong>Your pages rewritten.</strong> Positioning decided first, then the homepage and your main service pages rewritten the way yesterday's example was. In your voice, checked with you, not generated and pasted."),
+      p("<strong>Your listings made consistent.</strong> Google Business Profile, the directories that matter in your trade, the profiles you already have. Same name, same address format, same phone, same claims, everywhere. Not new mentions, the ones you have already got, made to agree with each other. That is the day-five problem, and it is mostly an afternoon of unglamorous checking."),
       p("<strong>And then the part I have not mentioned once in three weeks.</strong> I build you a second site, on its own domain, separate from your main one."),
       p("That needs explaining, because it sounds like busywork and it is the opposite."),
       p("Your website has a job already. It has to sell to people, look right, carry your brand, survive whatever your last designer decided. Every one of those pulls against being maximally readable to a model, which is why the rewrite is always a compromise between two audiences."),

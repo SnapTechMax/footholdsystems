@@ -340,8 +340,9 @@ function DoneForYou({ token, domain }: { token: string; domain: string }) {
           hand.
         </p>
         <p className="font-semibold text-[var(--text)]">
-          {DONE_FOR_YOU_PRICE}. We implement every fix on your list and rewrite{" "}
-          {domain} so a model can tell what you are for.
+          {DONE_FOR_YOU_PRICE}. We implement every fix on your list, rewrite{" "}
+          {domain} so a model can tell what you are for, and make your existing
+          listings agree with each other.
         </p>
         <p>
           Then we build you a second site, on its own domain, separate from this
