@@ -25,6 +25,11 @@ const BASE_URL = process.env.ORA_API_BASE_URL || "https://ora.ai";
  * whole deployment, so those are effectively *our* global limits, not
  * per-customer ones. Never send `force` from the request path — it would let
  * thirty visitors exhaust a day's budget before lunch.
+ *
+ * These limits are why this is no longer the first provider tried. The public
+ * form goes through Is Agentic, which proxies the same scanner without a daily
+ * ceiling; Ora is the fallback underneath it. See source.ts for the order and
+ * is-agentic.ts for why the swap was possible at all.
  */
 const SCAN_TIMEOUT_MS = 60_000;
 
@@ -290,15 +295,8 @@ export async function getCachedScore(domain: string): Promise<OraScan | null> {
   }
 }
 
-/**
- * Cache first, scan second.
- *
- * Every cache hit is a scan we did not spend against the 30/day ceiling, and
- * for a report that is emailed rather than watched live the freshness
- * difference is not something the customer can perceive.
+/*
+ * Provider selection used to live here as `scanDomain`. It moved to source.ts
+ * once Ora stopped being the only provider — this file is now just "how to talk
+ * to Ora", and which provider to talk to first is a separate decision.
  */
-export async function scanDomain(domain: string): Promise<OraScan> {
-  const cached = await getCachedScore(domain).catch(() => null);
-  if (cached && cached.analysisStatus !== "stuck") return cached;
-  return runScan(domain);
-}
