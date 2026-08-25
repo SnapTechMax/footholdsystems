@@ -219,7 +219,7 @@ export function buildReportEmail(args: {
                       For ${SOLUTIONS_PRICE} you get the exact fix for every problem on this list: what to change, where, in what order, written so you or whoever runs your website can just do it. A checklist, in the order it should be done.
                     </p>
                     <p style="margin:0 0 20px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
-                      ${SOLUTIONS_PRICE} is less than an hour of most people's billable time. The competitor who fixes this first stops sharing the answer with you.
+                      ${SOLUTIONS_PRICE} is less than an hour of most people's billable time. The answer only has room for one name, and right now it is not spoken for.
                     </p>
                     ${payButton}
                     <p style="margin:0;font:400 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">

@@ -293,8 +293,8 @@ function Paywall({
         </a>
         <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
           One payment. Instant access on this page. {SOLUTIONS_PRICE} is less than
-          an hour of most people&apos;s billable time, and the competitor who
-          fixes this first stops sharing the answer with you.
+          an hour of most people&apos;s billable time, and the answer only has
+          room for one name.
         </p>
       </div>
     </div>
