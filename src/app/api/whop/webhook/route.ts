@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 import {
   findLatestScanForEmail,
   getScanByToken,
@@ -111,6 +112,30 @@ function extract(payload: unknown): {
   return { token, email, product, reference, amountCents };
 }
 
+/**
+ * Flags the Resend contact so the automation's condition step ends their run.
+ *
+ * The property name has to match CONVERTED_PROPERTY in
+ * scripts/create-email-sequence.mjs. Resend contact properties are string or
+ * number only, hence "yes" rather than a boolean.
+ */
+async function markConverted(email: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const property = process.env.SEQUENCE_CONVERTED_PROPERTY || "converted";
+  try {
+    const { error } = await new Resend(apiKey).contacts.update({
+      email,
+      properties: { [property]: "yes" },
+    });
+    if (error) {
+      console.error(`[whop] could not mark ${email} converted:`, error.message);
+    }
+  } catch (error) {
+    console.error("[whop] contact update threw:", error);
+  }
+}
+
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
@@ -172,6 +197,18 @@ export async function POST(request: NextRequest) {
       // if a payload arrives without an id.
       providerRef: reference ?? `whop:${token ?? email}:${product}`,
     });
+
+    // End the nurture sequence for this person. Every remaining email pitches
+    // the thing they have just bought, and the fastest way to turn a new
+    // customer into an unsubscribe is to keep selling to them.
+    //
+    // Best-effort and after the payment is recorded: the money is the part that
+    // must not be lost, and a contact update failing is an annoyance rather
+    // than a loss. Only for the done-for-you tier, because buying the $49
+    // report is not a reason to stop making the case for the upgrade.
+    if (product === "done_for_you" && !alreadyPaid) {
+      await markConverted(scan.email);
+    }
 
     return NextResponse.json({ ok: true, alreadyPaid });
   } catch (error) {

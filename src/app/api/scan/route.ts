@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
+import { Resend } from "resend";
 import {
   createScan,
   initScanSchema,
@@ -10,6 +11,7 @@ import {
 import { normaliseDomain } from "@/lib/scan/ora";
 import { runScanJob } from "@/lib/scan/run";
 import { ScanRequestSchema } from "@/lib/scan/schema";
+import { subscribeToSequence } from "@/lib/subscribe";
 import { CONSENT_TEXT, CONTACT_EMAIL } from "@/lib/site";
 import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
 
@@ -41,6 +43,17 @@ const MAX_SCANS_PER_IP_PER_HOUR = 3;
 
 /** Leaves headroom under Ora's 30/day so a burst never hits a hard 429. */
 const DAILY_SCAN_BUDGET = 25;
+
+/**
+ * Resend client for the enrolment call.
+ *
+ * Built per request rather than at module scope so that an unset key surfaces
+ * as an enrolment note inside the try, instead of throwing while the module is
+ * being evaluated and taking the whole capture route down with it.
+ */
+function resendClient(): Resend {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 function clientIp(request: NextRequest): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -169,6 +182,31 @@ export async function POST(request: NextRequest) {
       domain,
       url: `https://${domain}`,
       ipAddress: ip,
+    });
+
+    // Enrolment and the scan are two independent background jobs, deliberately
+    // not chained. The sequence should start whether or not Ora cooperates, and
+    // a scan should still run if Resend is having a bad day.
+    //
+    // Enrolment runs even on a reused scan. `subscribeToSequence` treats an
+    // already-present contact as success, and the automation's own trigger
+    // handles someone who is already enrolled, so a repeat request is a no-op
+    // rather than a double enrolment.
+    after(async () => {
+      try {
+        const result = await subscribeToSequence(resendClient(), {
+          email: data.email,
+          source: `ai-visibility-scan:${domain}`,
+        });
+        if (result.notes.length > 0) {
+          // Never thrown. The scan is already accepted and a failure to enrol
+          // must not become an error for the person who asked for it, but a
+          // silent one would mean a sequence quietly stops enrolling anybody.
+          console.warn("[scan] enrolment notes:", result.notes.join("; "));
+        }
+      } catch (error) {
+        console.error("[scan] enrolment failed:", error);
+      }
     });
 
     // Already scanned this domain today — hand back the existing report rather

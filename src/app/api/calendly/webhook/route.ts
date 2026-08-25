@@ -152,7 +152,12 @@ export async function POST(request: NextRequest) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.contacts.update({
       email,
-      properties: { booked },
+      // Both properties, because two sequences are listening for different
+      // things. `booked` is the guide automation's exit rule and is left alone.
+      // `converted` is the AEO sequence's, and a booked call counts there too:
+      // with Whop unconfigured the upgrade link falls back to the booking page,
+      // so this is the same conversion arriving by the other door.
+      properties: { booked, converted: booked },
     });
     if (error) {
       console.error(`Calendly webhook: contact update failed for ${email}:`, error.message);

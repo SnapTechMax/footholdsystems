@@ -20,7 +20,16 @@ import { Resend } from "resend";
 import { SEQUENCE } from "../content/nurture-sequence.mjs";
 
 const DRY = process.argv.includes("--dry-run");
-const TRIGGER_EVENT = "guide.downloaded";
+/**
+ * Automation trigger. Must match EVENT_NAME in src/lib/subscribe.ts, which is
+ * the only thing that sends it. If they drift, the automation simply never
+ * fires and nothing reports that it did not.
+ *
+ * A different event from the guide sequence's `guide.downloaded`, on purpose:
+ * the old automation is still listening to that one, so anybody mid-way through
+ * the guide flow carries on undisturbed while new scan requesters land here.
+ */
+const TRIGGER_EVENT = "scan.requested";
 
 // Which HTML shell to push.
 //
@@ -35,15 +44,27 @@ const TRIGGER_EVENT = "guide.downloaded";
 const PLAIN_STYLE = process.env.SEQUENCE_STYLE !== "designed";
 const bodyHtml = (email) => (PLAIN_STYLE ? email.plainHtml : email.html);
 
-// Contact property set by the Calendly webhook in app/api/calendly/webhook.
-// Resend contact properties are string or number only, so this holds "yes"/"no"
-// rather than a boolean.
-const BOOKED_PROPERTY = "booked";
+/**
+ * Contact property that ends the run for someone who has already converted.
+ *
+ * Set in two places: the Whop webhook when a done-for-you purchase lands, and
+ * the Calendly webhook when a call is booked. Both count, because with Whop
+ * unconfigured the upgrade link falls back to the booking page, so a booking is
+ * the same conversion arriving by the other door.
+ *
+ * Deliberately NOT the guide sequence's `booked` property. That one is still
+ * doing its job for the old automation, and reusing it would mean a change to
+ * one sequence's exit rule silently altering the other's.
+ *
+ * Resend contact properties are string or number only, so this holds "yes"/"no"
+ * rather than a boolean.
+ */
+const CONVERTED_PROPERTY = process.env.SEQUENCE_CONVERTED_PROPERTY || "converted";
 
 // Check that property before every send and end the run for anyone who has
-// booked. Turning this off drops the checks and roughly a third of the steps,
-// which is the fallback if the automation is ever rejected for size.
-const SUPPRESS_AFTER_BOOKING = process.env.SUPPRESS_AFTER_BOOKING !== "0";
+// converted. Turning this off drops the checks and roughly a third of the
+// steps, which is the fallback if the automation is ever rejected for size.
+const SUPPRESS_AFTER_CONVERSION = process.env.SUPPRESS_AFTER_CONVERSION !== "0";
 
 // A person, not a brand. These emails are signed by Max and several of them ask
 // for a reply, so a noreply@ sender would be working against the copy. The
@@ -100,12 +121,12 @@ async function main() {
     );
   }
 
-  // The condition steps read contact.booked, so the property has to exist before
-  // the automation referencing it does. Safe to re-run: an existing property is
+  // The condition steps read that property, so it has to exist before the
+  // automation referencing it does. Safe to re-run: an existing property is
   // treated as success.
-  if (SUPPRESS_AFTER_BOOKING && !DRY) {
+  if (SUPPRESS_AFTER_CONVERSION && !DRY) {
     const { error } = await resend.contactProperties.create({
-      key: BOOKED_PROPERTY,
+      key: CONVERTED_PROPERTY,
       type: "string",
       fallbackValue: "no",
     });
@@ -114,10 +135,10 @@ async function main() {
     // already a contact property with this key", which an "already exists" check
     // does not catch. Status codes are the contract; the prose is not.
     if (error && error.statusCode !== 409) {
-      throw new Error(`contact property ${BOOKED_PROPERTY}: ${error.message}`);
+      throw new Error(`contact property ${CONVERTED_PROPERTY}: ${error.message}`);
     }
     console.log(
-      `  contact property ready: ${BOOKED_PROPERTY}${error ? " (already existed)" : ""}\n`
+      `  contact property ready: ${CONVERTED_PROPERTY}${error ? " (already existed)" : ""}\n`
     );
   }
 
@@ -163,12 +184,13 @@ async function main() {
     console.log(`  created + published  ${email.name}  (${created.id})`);
   }
 
-  // trigger → delay → check booked → email → delay → check booked → email → ...
+  // trigger → delay → check converted → email → delay → check converted → ...
   //
   // The check sits before every send rather than at a few checkpoints because a
-  // booking can land at any point across the 38 days, and the whole purpose of
-  // the sequence is to get that booking. Once it exists, every remaining email
-  // is asking for something the reader has already done.
+  // purchase can land at any point across the 38 days, and the whole purpose of
+  // the sequence is to get one. Once it exists, every remaining email is
+  // pitching something the reader has already bought, which is the fastest way
+  // to turn a customer back into an unsubscribe.
   //
   // The condition_met branch is left with no outgoing connection, which ends the
   // run for that contact.
@@ -189,13 +211,13 @@ async function main() {
       config: { duration: email.delay },
     });
 
-    if (SUPPRESS_AFTER_BOOKING) {
+    if (SUPPRESS_AFTER_CONVERSION) {
       steps.push({
         key: checkKey,
         type: "condition",
         config: {
           type: "rule",
-          field: `contact.${BOOKED_PROPERTY}`,
+          field: `contact.${CONVERTED_PROPERTY}`,
           operator: "eq",
           value: "yes",
         },
@@ -214,7 +236,7 @@ async function main() {
     });
 
     connections.push({ from: previous, to: delayKey });
-    if (SUPPRESS_AFTER_BOOKING) {
+    if (SUPPRESS_AFTER_CONVERSION) {
       connections.push({ from: delayKey, to: checkKey });
       // Booked: no connection out of condition_met, so the run stops here.
       connections.push({ from: checkKey, to: sendKey, type: "condition_not_met" });

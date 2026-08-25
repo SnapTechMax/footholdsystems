@@ -1,8 +1,7 @@
 import type { Resend } from "resend";
 
 /**
- * Adds a lead-magnet subscriber to the mailing list and kicks off the nurture
- * sequence.
+ * Adds a scan requester to the mailing list and kicks off the nurture sequence.
  *
  * Two separate things, deliberately:
  *
@@ -11,15 +10,26 @@ import type { Resend } from "resend";
  *     and there is no list to mail when you want to send a one-off.
  *  2. An event is sent, which is what an Automation triggers on.
  *
- * Both are best-effort. The guide has already been delivered by the time this
- * runs, and failing to enrol someone must never turn a successful download into
- * an error for the person who asked for it.
+ * Both are best-effort, and deliberately so. The scan has already been accepted
+ * by the time this runs, and a Resend outage must never turn a successful scan
+ * request into an error for the person who asked for it. Every failure is
+ * collected in `notes` for the caller to log rather than thrown.
  *
- * The sequence itself lives in scripts/email-sequence.mjs and is pushed to
- * Resend by scripts/create-email-sequence.mjs.
+ * The sequence itself lives in content/nurture-sequence.mjs and is pushed to
+ * Resend by scripts/create-email-sequence.mjs. The event name below has to
+ * match TRIGGER_EVENT in that script or the automation never fires, and nothing
+ * anywhere will report that it did not.
  */
 
-const EVENT_NAME = "guide.downloaded";
+/**
+ * Automation trigger.
+ *
+ * Renamed from `guide.downloaded` when the offer changed. The old event still
+ * exists in Resend and the old automation is still listening to it, which is
+ * what keeps anyone mid-sequence on the guide flow undisturbed: they are on a
+ * different trigger, so nothing sent from here reaches them.
+ */
+const EVENT_NAME = "scan.requested";
 
 export interface SubscribeInput {
   email: string;
