@@ -299,6 +299,28 @@ export async function completeScan(args: {
     WHERE id = ${args.id}`;
 }
 
+/**
+ * Changes the business type a scan is scored against.
+ *
+ * For when somebody picked the wrong one. That is not a hypothetical: before
+ * the types were split five ways, a web developer with no product API had
+ * nowhere to put himself except "SaaS" and got a report demanding an OpenAPI
+ * spec, and the same shape catches anyone who mis-picks in a hurry.
+ *
+ * Only the column moves here. The report page rebuilds from `raw` on every
+ * view, so this alone corrects what the customer sees on the URL they already
+ * have — no new token, no second email. The caller is expected to follow with
+ * `completeScan` to bring the stored report, score and grade back in step,
+ * because those are what the admin views and the emails read.
+ */
+export async function setScanCategory(
+  id: number,
+  category: BusinessCategory
+): Promise<void> {
+  const db = sql();
+  await db`UPDATE scans SET category = ${category} WHERE id = ${id}`;
+}
+
 export async function failScan(id: number, error: string): Promise<void> {
   const db = sql();
   // Truncated: this is third-party error text of unbounded length and it is
