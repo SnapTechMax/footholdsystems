@@ -9,12 +9,13 @@ import {
   type ScanRow,
 } from "./db";
 import { buildReportEmail } from "./email";
-import { OraError, isRetryable, runScan, scanDomain } from "./ora";
+import { OraError, isRetryable } from "./ora";
 import { buildReport } from "./report";
+import { rescanDomain, scanDomain } from "./source";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
- * Runs one queued scan end to end: call Ora, build the report, store it, email it.
+ * Runs one queued scan end to end: scan, build the report, store it, email it.
  *
  * Called from two places — `after()` on the request that created the scan, and
  * the cron sweeper that picks up anything the first attempt dropped. Both can
@@ -43,7 +44,7 @@ export type RunOutcome =
 
 export async function runScanJob(scanId: number): Promise<RunOutcome> {
   // Claim first. If another worker already has it, stop — doing the work twice
-  // means two Ora calls against a 30-a-day ceiling and two identical emails.
+  // means two live crawls and two identical emails.
   const claimed = await claimScan(scanId);
   if (!claimed) {
     return { status: "skipped", reason: "already claimed or complete" };
@@ -60,7 +61,8 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     await failScan(scanId, reason);
-    // A 4xx from Ora will fail identically forever; a 429 or a 5xx will not.
+    // Reaching here means every provider failed, so the error is whichever one
+    // spoke last. A 4xx will fail identically forever; a 429 or a 5xx will not.
     return { status: "failed", reason, retryable: isRetryable(error) };
   }
 
@@ -135,7 +137,7 @@ export async function sendReportEmail(
 }
 
 /**
- * Re-runs Ora for a scan that has already completed, updating the row in place.
+ * Re-scans a domain whose report has already completed, updating the row in place.
  *
  * The point is that the token does not change. A customer has the report link
  * already, quite possibly bookmarked or forwarded, and minting a new row would
@@ -147,8 +149,10 @@ export async function sendReportEmail(
  * their inbox is a worse outcome than a quietly updated page. `sendEmail` is
  * there for the case where the numbers really have moved.
  *
- * Calls Ora directly rather than through `scanDomain`, which is cache-first: a
- * refresh that returns the data we already hold is not a refresh.
+ * Goes through `rescanDomain` rather than `scanDomain`, because the latter is
+ * allowed to hand back a stored result: a refresh that returns the data we
+ * already hold is not a refresh. Passing `force` also flips the provider order
+ * to put the one that documents cache-bypass first — see source.ts.
  */
 export async function refreshScanJob(
   scanId: number,
@@ -163,7 +167,7 @@ export async function refreshScanJob(
   let raw;
   let report;
   try {
-    raw = await runScan(scan.domain, { force: options.force });
+    raw = await rescanDomain(scan.domain, { force: options.force });
     report = buildReport(raw, scan.category);
   } catch (error) {
     // Deliberately does not call failScan. The existing report is still good
