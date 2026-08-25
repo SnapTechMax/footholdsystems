@@ -406,6 +406,32 @@ export async function findUnemailedScans(limit = 10): Promise<ScanRow[]> {
   return rows.map(toScanRow);
 }
 
+/**
+ * The most recent scan belonging to an email address.
+ *
+ * Purchases made from the nurture sequence carry no scan token: the link is in
+ * an email, not on a report page, so all it can pass is who clicked it. Orders
+ * still have to hang off a scan, because that is what `scan_orders` references
+ * and what the unlock is granted against.
+ *
+ * Most recent rather than first: someone who scanned two sites and then bought
+ * is far more likely to mean the one they looked at last.
+ */
+export async function findLatestScanForEmail(
+  email: string
+): Promise<ScanRow | null> {
+  const db = sql();
+  const rows = (await db.query(
+    `SELECT ${SCAN_SELECT}
+       FROM scans s JOIN scan_leads l ON l.id = s.lead_id
+      WHERE lower(l.email) = $1
+      ORDER BY s.created_at DESC
+      LIMIT 1`,
+    [email.trim().toLowerCase()]
+  )) as RawScanRow[];
+  return rows[0] ? toScanRow(rows[0]) : null;
+}
+
 /* ── orders ───────────────────────────────────────────────────────────────── */
 
 /** Has this scan paid for this product? The paywall's only question. */

@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
+  findLatestScanForEmail,
   getScanByToken,
   initScanSchema,
   recordPayment,
@@ -69,6 +70,7 @@ function verifySignature(rawBody: string, request: NextRequest): boolean {
 /** Digs the values we need out of a payload whose exact shape is Whop's business. */
 function extract(payload: unknown): {
   token: string | null;
+  email: string | null;
   product: OrderProduct;
   reference: string | null;
   amountCents: number | null;
@@ -80,6 +82,14 @@ function extract(payload: unknown): {
 
   const token =
     typeof metadata.scan_token === "string" ? metadata.scan_token : null;
+
+  // Purchases from the nurture sequence carry no token, because the link lives
+  // in an email rather than on a report page. All they can pass is who clicked,
+  // which is enough to find the scan the order belongs to.
+  const email =
+    typeof metadata.email === "string" && metadata.email.includes("@")
+      ? metadata.email
+      : null;
 
   const product: OrderProduct =
     metadata.product === "done_for_you" ? "done_for_you" : "solutions";
@@ -98,7 +108,7 @@ function extract(payload: unknown): {
         Math.round(rawAmount * 100)
       : null;
 
-  return { token, product, reference, amountCents };
+  return { token, email, product, reference, amountCents };
 }
 
 export async function POST(request: NextRequest) {
@@ -115,21 +125,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Malformed payload." }, { status: 400 });
   }
 
-  const { token, product, reference, amountCents } = extract(payload);
+  const { token, email, product, reference, amountCents } = extract(payload);
 
-  if (!token) {
-    // 200, not 4xx: this is a real Whop event for something that isn't a scan
-    // (or an event type we don't handle), and a non-2xx would have Whop retry
-    // it forever.
-    console.warn("[whop] event with no scan_token metadata — ignoring");
-    return NextResponse.json({ ok: true, ignored: "no scan_token" });
+  if (!token && !email) {
+    // 200, not 4xx: this is a real Whop event for something that isn't one of
+    // ours (or an event type we don't handle), and a non-2xx would have Whop
+    // retry it forever.
+    console.warn("[whop] event with neither scan_token nor email — ignoring");
+    return NextResponse.json({ ok: true, ignored: "nothing to match on" });
   }
 
   try {
     await initScanSchema();
-    const scan = await getScanByToken(token);
+
+    // Token first, because it names one exact scan. Email is the fallback for
+    // sequence purchases and resolves to that person's most recent scan.
+    const scan = token
+      ? await getScanByToken(token)
+      : await findLatestScanForEmail(email as string);
+
     if (!scan) {
-      console.warn(`[whop] no scan for token ${token.slice(0, 8)}…`);
+      // Loud, because somebody has paid and we cannot say what for. This needs
+      // a human, so it is a warning with enough detail to go and find them.
+      console.warn(
+        `[whop] payment recorded nowhere: no scan for ${
+          token ? `token ${token.slice(0, 8)}…` : `email ${email}`
+        }, product ${product}, ref ${reference ?? "unknown"}`
+      );
       return NextResponse.json({ ok: true, ignored: "unknown scan" });
     }
 
@@ -148,7 +170,7 @@ export async function POST(request: NextRequest) {
       provider: "whop",
       // Falls back to a deterministic reference so the row is still traceable
       // if a payload arrives without an id.
-      providerRef: reference ?? `whop:${token}:${product}`,
+      providerRef: reference ?? `whop:${token ?? email}:${product}`,
     });
 
     return NextResponse.json({ ok: true, alreadyPaid });

@@ -2,9 +2,7 @@
  * The sequence, flattened for the dashboard.
  *
  * Generated from content/nurture-sequence.mjs by scripts/build-sequence-steps.mjs.
- * The content file is plain JS and the app is TypeScript, so rather than import
- * across that boundary the shape the dashboard needs is written out here.
- * Regenerate after changing the copy or the cadence.
+ * Do not edit by hand.
  */
 export interface SequenceStep {
   key: string;
@@ -15,26 +13,26 @@ export interface SequenceStep {
 }
 
 export const SEQUENCE_STEPS: SequenceStep[] = [
-  { key: "context", subject: "The habit that fixes most bad AI answers", day: 1, delay: "1 day" },
-  { key: "draft", subject: "Stop asking it to write things", day: 2, delay: "1 day" },
-  { key: "explain", subject: "How to catch it making things up", day: 3, delay: "1 day" },
-  { key: "documents", subject: "Feed it your actual paperwork", day: 4, delay: "1 day" },
-  { key: "questions", subject: "Make it ask you questions", day: 5, delay: "1 day" },
-  { key: "shorter", subject: "Say make it shorter three times", day: 6, delay: "1 day" },
-  { key: "voice", subject: "Talk instead of typing", day: 7, delay: "1 day" },
-  { key: "inbox", subject: "Use it on your inbox, but not to write", day: 8, delay: "1 day" },
-  { key: "onepage", subject: "The one page that pays for itself", day: 9, delay: "1 day" },
-  { key: "quotes", subject: "Quotes take longer than they should", day: 10, delay: "1 day" },
-  { key: "repeat", subject: "The email you have written 200 times", day: 11, delay: "1 day" },
-  { key: "needtoknow", subject: "What would you need to know", day: 12, delay: "1 day" },
-  { key: "notouch", subject: "Where I would not let it near", day: 13, delay: "1 day" },
+  { key: "entity", subject: "You are not a website any more", day: 1, delay: "1 day" },
+  { key: "askit", subject: "Go and ask it about yourself", day: 2, delay: "1 day" },
+  { key: "schema", subject: "The block that does the most work", day: 3, delay: "1 day" },
+  { key: "sameas", subject: "The one line that ties you together", day: 4, delay: "1 day" },
+  { key: "specifics", subject: "Why quality work never gets recommended", day: 5, delay: "1 day" },
+  { key: "questions", subject: "Write the question, not the service", day: 6, delay: "1 day" },
+  { key: "crawlers", subject: "You might be blocking them without knowing", day: 7, delay: "1 day" },
+  { key: "javascript", subject: "Turn JavaScript off and look", day: 8, delay: "1 day" },
+  { key: "pricing", subject: "Publish a number, any number", day: 9, delay: "1 day" },
+  { key: "whennot", subject: "Say what you do not do", day: 10, delay: "1 day" },
+  { key: "llmstxt", subject: "The file almost nobody has yet", day: 11, delay: "1 day" },
+  { key: "trust", subject: "The boring pages carry more weight than you think", day: 12, delay: "1 day" },
+  { key: "consensus", subject: "It does not trust you about you", day: 13, delay: "1 day" },
   { key: "checkpoint", subject: "Two weeks in. Where are you?", day: 14, delay: "1 day" },
-  { key: "leveltool", subject: "What a Level 3 tool actually looks like", day: 16, delay: "2 days" },
-  { key: "firstbuild", subject: "How to pick the first thing to build", day: 18, delay: "2 days" },
-  { key: "whyfail", subject: "Why most of these projects die", day: 20, delay: "2 days" },
-  { key: "cost", subject: "What you actually get for the money", day: 22, delay: "2 days" },
-  { key: "data", subject: "Where your customer data is actually going", day: 24, delay: "2 days" },
-  { key: "handover", subject: "The question to ask anyone who builds for you", day: 26, delay: "2 days" },
-  { key: "standingstill", subject: "The cost of leaving this alone", day: 31, delay: "5 days" },
+  { key: "retrieval", subject: "Being known is not the same as being fetched", day: 16, delay: "2 days" },
+  { key: "yourname", subject: "When your own name does not find you", day: 18, delay: "2 days" },
+  { key: "competitor", subject: "Find out who is getting your call", day: 20, delay: "2 days" },
+  { key: "ceiling", subject: "What the checklist cannot do", day: 22, delay: "2 days" },
+  { key: "rewrite", subject: "What a rewritten page actually looks like", day: 24, delay: "2 days" },
+  { key: "whatyouget", subject: "What $1,500 actually buys", day: 26, delay: "2 days" },
+  { key: "cost", subject: "The number nobody can show you", day: 31, delay: "5 days" },
   { key: "last", subject: "Last one from me", day: 38, delay: "7 days" },
 ];

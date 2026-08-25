@@ -1,12 +1,19 @@
 /**
- * The nurture sequence sent after someone downloads The 5 Levels of AI and The
- * Prompts That Get You There.
+ * The nurture sequence sent after someone requests a free AI visibility scan.
  *
- * The guide prints the Level 1 and Level 2 prompts in full and leaves Levels 3
- * to 5 as frameworks. That split is the spine of this sequence: the early
- * emails sharpen a prompt the reader already has, the later ones are about the
- * three they cannot paste. Anything here that cites the guide has to match what
- * is actually in the PDF, so check a claim against the file before adding one.
+ * The scan report tells them what is wrong and hands them the free half: the
+ * diagnosis. This sequence is the follow-up, and its job is to give away the
+ * fixes, in full, one a day, until the reader is in no doubt that we know how
+ * this works.
+ *
+ * That is the strategy, not a mistake. Everything a checklist can express is
+ * given away here, because a checklist is not what the offer is. What the
+ * $1,500 tier buys is the half that has no checklist: deciding what this
+ * business should be positioned as, rewriting the pages so a model can tell
+ * what it is for, going and building third-party corroboration, and re-running
+ * the prompts every month to prove it moved. Emails 1 to 17 hand over the
+ * tactics. 18 to 20 name the ceiling those tactics hit. The offer is the way
+ * through it.
  *
  * Content only. Resend owns the sequence, as templates plus an automation. This
  * file is the source of truth for the copy: edit here, then run
@@ -18,13 +25,19 @@
  * RESEND_AUTOMATION_ID. Editing this file alone changes nothing that is
  * currently being sent.
  *
+ * After changing the copy or the cadence, run
+ * `node scripts/build-sequence-steps.mjs` as well. The dashboard and the click
+ * attribution both read the generated key list, and a key that exists in the
+ * emails but not there is a click that gets dropped.
+ *
  * Nothing on the website reads this file.
  *
- * Shape: 22 emails over 38 days. Daily for the first fortnight, then every
- * other day for six, then a 5 day and a 7 day gap to close.
+ * Shape: 22 emails over 38 days, matching the cadence this replaced. Daily for
+ * the first fortnight, then every other day for six, then a 5 day and a 7 day
+ * gap to close.
  *
  * Every email carries one usable tip and one ask. The ratio moves across the
- * sequence: early emails are almost all tip with the calendar mentioned in
+ * sequence: early emails are almost all tip with the offer mentioned in
  * passing, later ones lead with the ask. The `ask` field is the dial:
  *
  *   1-4    the link exists, no pressure applied
@@ -35,13 +48,14 @@
  *
  * House style: short sentences, plain English, no hype, no exclamation marks.
  * No em-dashes anywhere. Assume a busy owner reading on a phone between jobs.
+ * Anything technical has to be copy-pasteable or it does not belong here.
  */
 
-export const BOOKING_URL =
-  "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call";
-export const GUIDE_URL =
-  "https://www.footholdsystems.com/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf";
+export const SCAN_URL = "https://www.footholdsystems.com/#scan";
 export const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
+
+/** What the human tier costs. Stated in the copy often enough to be worth a constant. */
+export const UPGRADE_PRICE = "$1,500";
 
 export function tagged(url, campaign, content = "cta") {
   const target = new URL(url);
@@ -54,48 +68,46 @@ export function tagged(url, campaign, content = "cta") {
   return target.toString();
 }
 
-export const BOOKING_TRACKER = "https://www.footholdsystems.com/api/go/book";
+export const UPGRADE_TRACKER = "https://www.footholdsystems.com/api/go/upgrade";
 
 /**
- * The booking button, pointed at our own redirect rather than at Calendly.
+ * The upgrade button, pointed at our own redirect rather than at Whop.
  *
  * That hop is what makes per-email attribution possible: the click is logged
- * server-side before the visitor is handed on, and the redirect re-applies the
- * UTM parameters so Calendly still echoes the email's key back through the
- * webhook when a call is actually booked. Clicks and bookings then join on that
- * key, which is how "which email did this call come from" gets an answer.
+ * server-side before the visitor is handed on, and the redirect attaches the
+ * campaign as Whop metadata so a completed purchase can be traced back to the
+ * email that caused it. Clicks and sales then join on that key, which is how
+ * "which email sold this" gets an answer.
  *
  * Built by hand rather than with URL, on purpose. `new URL().toString()`
  * percent-encodes the braces in the merge tag, and Resend only substitutes a
- * tag it can still recognise — encoded, `{{{EMAIL}}}` would be delivered
+ * tag it can still recognise. Encoded, `{{{EMAIL}}}` would be delivered
  * literally to every recipient. The redirect discards any value still carrying
  * braces, so if this tag is ever wrong the attribution degrades to anonymous
  * counts instead of inventing a contact.
  */
-function booking(campaign, content = "cta-button") {
+function upgrade(campaign, content = "cta-button") {
   const params = new URLSearchParams({ e: campaign, c: content });
-  return `${BOOKING_TRACKER}?${params}&r={{{EMAIL}}}`;
+  return `${UPGRADE_TRACKER}?${params}&r={{{EMAIL}}}`;
 }
-
 
 /**
  * Tag every link in an email body, not just the button.
  *
- * Written before the campaign existed, so the inline links, the guide download
- * in email one and anything added later, arrive in analytics as untagged direct
- * traffic and cannot be told apart from someone finding the site on their own.
- * Resend reports no opens or clicks through its API, so these parameters are the
- * only click data there is.
+ * Inline links would otherwise arrive in analytics as untagged direct traffic
+ * and could not be told apart from someone finding the site on their own.
+ * Resend reports no opens or clicks through its API, so these parameters are
+ * the only click data there is.
  */
 function tagLinks(html, campaign) {
   let index = 0;
   return html.replace(/href="(https?:\/\/[^"]+)"/g, (_match, url) => {
     index += 1;
-    // A booking link written inline in body copy goes through the tracker too,
-    // otherwise it would be the one Calendly link in the sequence that produces
-    // no click record and no attribution.
-    if (url.includes("calendly.com")) {
-      return `href="${booking(campaign, `body-link-${index}`)}"`;
+    // An upgrade link written inline in body copy goes through the tracker too,
+    // otherwise it would be the one offer link in the sequence that produces no
+    // click record and no attribution.
+    if (url.includes("/api/go/upgrade")) {
+      return `href="${upgrade(campaign, `body-link-${index}`)}"`;
     }
     return `href="${tagged(url, campaign, `body-link-${index}`)}"`;
   });
@@ -104,22 +116,37 @@ function tagLinks(html, campaign) {
 const p = (text) => `      <p style="margin:0 0 16px;">${text}</p>`;
 
 /**
- * Shared shell. Deliberately plainer than the guide delivery email. A nurture
+ * A copy-pasteable block.
+ *
+ * Half this sequence hands over snippets the reader is meant to paste into
+ * their own site. In a proportional font with normal line height they read as
+ * prose and get skimmed past, so they are set in mono on a tinted panel: it
+ * signals "this is the thing, take it" without a word of instruction.
+ *
+ * `pre-wrap` rather than `pre`, because these are read on phones and a code
+ * block that scrolls sideways inside an email client is a code block nobody
+ * copies.
+ */
+const code = (text) =>
+  `      <pre style="margin:0 0 16px;padding:14px 16px;background:#e2dfd4;border-radius:8px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:#1f1f1d;">${text}</pre>`;
+
+/**
+ * Shared shell. Deliberately plainer than a marketing template. A nurture
  * message that looks like a newsletter gets read like one.
  */
 function shell({ body, ask, cta, campaign }) {
   return `<div style="background:#eae8e1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:28px 16px;">
   <div style="max-width:520px;margin:0 auto;">
-    <p style="margin:0 0 20px;color:#7a786f;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;">Foothold Systems</p>
+    <p style="margin:0 0 20px;color:#7a786f;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;">FootHold AEO</p>
     <div style="color:#1f1f1d;font-size:16px;line-height:1.65;">
 ${body}
 ${p(ask)}
 ${p("Max")}
     </div>
-    <a href="${booking(campaign)}" style="display:inline-block;margin-top:8px;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">${cta} &rarr;</a>
+    <a href="${upgrade(campaign)}" style="display:inline-block;margin-top:8px;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">${cta} &rarr;</a>
     <hr style="border:none;border-top:1px solid #d4d1c6;margin:28px 0 16px;">
     <p style="margin:0;color:#7a786f;font-size:12px;line-height:1.6;">
-      Foothold Systems &middot; ${BRAND_ADDRESS}<br>
+      FootHold Systems &middot; ${BRAND_ADDRESS}<br>
       <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a786f;">Unsubscribe</a>. One click, no hard feelings.
     </p>
   </div>
@@ -130,36 +157,36 @@ ${p("Max")}
  * The same email with every marketing marker stripped out.
  *
  * Gmail's tab classifier is not reading your reputation when it files something
- * under Promotions — that decision is made on mail it has already accepted into
- * the inbox, on what the message looks like. `shell()` above, restrained as it
- * is, still carries five things personal email never has: a coloured canvas, a
- * fixed-width column, an uppercase letterspaced masthead, a horizontal rule, and
- * an `inline-block` anchor with padding and a border radius. That last one is
- * the loudest. A button exists in exactly one kind of email.
+ * under Promotions. That decision is made on mail it has already accepted, on
+ * what the message looks like. `shell()` above, restrained as it is, still
+ * carries five things personal email never has: a coloured canvas, a
+ * fixed-width column, an uppercase letterspaced masthead, a horizontal rule,
+ * and an `inline-block` anchor with padding and a border radius. That last one
+ * is the loudest. A button exists in exactly one kind of email.
  *
  * This shell has none of them. One font declaration, paragraphs, and the CTA as
- * an ordinary inline link left in the client's default styling — deliberately
- * not brand-coloured, because a restyled link is a designed link. What is left
- * is close to what the text part already says, which is the point.
+ * an ordinary inline link left in the client's default styling, deliberately
+ * not brand-coloured, because a restyled link is a designed link.
  *
- * Two things stay, because they are not optional: the postal address, which
+ * The code blocks stay monospaced here, because that is not decoration. A
+ * schema snippet reflowed as prose is a snippet nobody can use.
+ *
+ * Two things stay because they are not optional: the postal address, which
  * CAN-SPAM requires, and the unsubscribe link, which Gmail requires of bulk
  * senders. `List-Unsubscribe` is itself a Promotions signal and there is no
- * version of this that removes it. That is the ceiling on how far this can go,
- * and it is worth being honest that the ceiling is real.
+ * version of this that removes it. That is the ceiling on how far this can go.
  *
- * Not wired up by default. `SEQUENCE_STYLE=plain` selects it at push time, so
- * the two can be compared before either reaches a recipient — and reverted by
- * dropping the variable rather than by editing anything.
+ * `SEQUENCE_STYLE=designed` selects the shell above instead, so the two can be
+ * compared before either reaches a recipient.
  */
 function bareShell({ body, ask, cta, campaign }) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#1f1f1d;">
 ${body}
 ${p(ask)}
-${p(`<a href="${booking(campaign)}">${cta}</a>`)}
+${p(`<a href="${upgrade(campaign)}">${cta}</a>`)}
 ${p("Max")}
       <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#7a786f;">
-        Foothold Systems &middot; ${BRAND_ADDRESS}<br>
+        FootHold Systems &middot; ${BRAND_ADDRESS}<br>
         <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#7a786f;">Unsubscribe</a>. One click, no hard feelings.
       </p>
 </div>`;
@@ -172,12 +199,10 @@ ${p("Max")}
  * is, and this domain publishes DMARC p=reject, so there is no margin for
  * anything that costs reputation. It also covers the readers who never see the
  * HTML at all: text-only clients, screen readers, and the preview pane of a
- * client that has images and styling switched off.
+ * client with images and styling switched off.
  *
  * Derived from the already-tagged HTML rather than written twice, so the two
- * parts cannot drift and the tracked booking link is identical in both. Only the
- * tags this file's own `p()` and `shell()` produce are handled — `<p>`, `<em>`
- * and `<a>`, plus the two entities used — because that is the whole vocabulary.
+ * parts cannot drift and the tracked link is identical in both.
  *
  * Merge tags pass through untouched: `{{{FIRST_NAME}}}` and
  * `{{{RESEND_UNSUBSCRIBE_URL}}}` are substituted by Resend in the text part
@@ -188,14 +213,26 @@ function textify(html) {
     // Links become "label: url", so the destination is readable rather than lost.
     .replace(/<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, "$2: $1")
     .replace(/<\/p>/g, "\n")
+    .replace(/<\/pre>/g, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&rarr;/g, "")
     .replace(/&middot;/g, "·")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    // &amp; last, so an escaped entity inside a snippet does not get
+    // double-decoded into a tag by the replacements above.
     .replace(/&amp;/g, "&")
     .replace(/&nbsp;/g, " ")
-    // Collapse the indentation the HTML template carries, then trim each line.
     .split("\n")
-    .map((line) => line.trim())
+    // Strip exactly the six spaces the HTML template indents each p() and
+    // code() with, and nothing deeper. A blanket trim() would also flatten the
+    // indentation *inside* a code block, which is the one place here where
+    // leading whitespace is load-bearing: an unindented JSON-LD snippet is
+    // still valid but it is markedly harder to read, and these blocks exist to
+    // be copied. Worth knowing if a future snippet is ever indented six or more
+    // spaces at its own top level, which none currently are.
+    .map((line) => line.replace(/^ {6}/, "").trimEnd())
     .join("\n")
     // No more than one blank line anywhere.
     .replace(/\n{3,}/g, "\n\n")
@@ -211,320 +248,378 @@ function plainShell({ body, ask, cta, campaign }) {
     "",
     "Max",
     "",
-    `${cta}: ${booking(campaign)}`,
+    `${cta}: ${upgrade(campaign)}`,
     "",
     "--",
-    `Foothold Systems · ${BRAND_ADDRESS}`,
+    `FootHold Systems · ${BRAND_ADDRESS}`,
     "Unsubscribe (one click, no hard feelings): {{{RESEND_UNSUBSCRIBE_URL}}}",
   ].join("\n");
 }
 
 const emails = [
-  /* ── Days 1-14: daily. Almost all value, the ask barely present. ────────── */
+  /* ── Days 1-14: daily. Almost all value, the offer barely present. ─────── */
   {
-    key: "context",
+    key: "entity",
     delay: "1 day",
-    subject: "The one block everyone skips",
-    cta: "Book a call",
+    subject: "You are not a website any more",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("You have the guide now. If you only ever use one part of it, use the Context block on page four."),
-      p("Most people open with the question. <em>Write me a follow up email.</em> What comes back sounds like everybody else's follow up email, because nothing in that sentence told it a single thing about you."),
-      p("Open with the facts instead. <em>I run a 12 person HVAC company. This customer got a quote three weeks ago for $4,200 and has gone quiet. We have worked with them twice before. Write the follow up.</em>"),
-      p("Same tool, same thirty seconds of typing, completely different answer. It had the ability all along. What it was missing was anything at all about your business, and you are the only one who can hand it that."),
-      // The link lands at the end of the sentence on purpose: in the text part
-      // this becomes "label: url", and a URL in the middle of a sentence leaves
-      // the rest of it stranded after forty characters of query string.
-      p(`Try it today on something real. If the guide has already gone missing in your inbox, <a href="${GUIDE_URL}">here it is again</a>`),
+      p("Your scan has landed by now. Before you touch any of it, the one idea that makes the rest make sense."),
+      p("Google ranks pages. It asks which URL best matches a string of words, and twenty years of advice is built on winning that."),
+      p("An AI assistant does not rank pages. It recommends <em>entities</em>. Businesses. Named things it has formed an opinion about from everything it has ever read."),
+      p("That is why a site can sit at number one on Google and never once get named by ChatGPT. They are not the same question. One is document matching. The other is closer to reputation."),
+      p("Every email in this sequence is one thing you can do to make that opinion exist and be correct. Most of them take under an hour. None of them need me."),
     ],
-    ask: "Prompts 1 and 2 are yours to use this afternoon. Levels 3 to 5 are the ones that get built rather than pasted, and that is what the call is for.",
+    ask: "Twenty one more of these coming, one a day. If you would rather skip to the end and have it done for you, that is what the button is.",
   },
   {
-    key: "draft",
+    key: "askit",
     delay: "1 day",
-    subject: "Stop asking it to write things",
-    cta: "Book a call",
+    subject: "Go and ask it about yourself",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Ask one of these tools to write something from nothing and you get prose that sounds like everybody else's. Hand it your own raw material and ask it to shape that, and you get something you can actually send."),
-      p("Your rough notes. Your last three emails to that customer. The messy voice note you dictated in the van. Paste any of it in and ask for the tidy version."),
-      p("What comes back is yours. Your pricing is in it, your tone, your history with that client. All it was ever missing was punctuation and a bit of structure."),
+      p("Five minutes, and it will tell you more than any dashboard."),
+      p("Open ChatGPT. Ask it three things, in this order:"),
+      code("1. What do you know about [your business name] in [your town]?\n2. Who would you recommend for [the thing you do] in [your area]?\n3. Why did you pick those?"),
+      p("The first tells you whether you exist. The second tells you who is taking the call you wanted. The third is the useful one, because it tells you what the model is actually weighing, and it is almost never what owners expect."),
+      p("Do it in Gemini and Perplexity too. They read different sources and they disagree more than you would think."),
+      p("Write the answers down somewhere. In six weeks you will want to compare."),
     ],
-    ask: "That distinction is most of Level 2 in the guide. The calendar link is below if it is easier to just ask me.",
+    ask: "If question two comes back with three competitors and not you, that is the exact problem we fix.",
   },
   {
-    key: "explain",
+    key: "schema",
     delay: "1 day",
-    subject: "How to catch it making things up",
-    cta: "Book a call",
+    subject: "The block that does the most work",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("AI will tell you something wrong with complete confidence, and for a business using it on real work that is the risk worth taking seriously."),
-      p('The cheapest defence costs you one line. After any answer that matters, send back: <em>walk me through how you worked that out, and tell me which parts you are unsure about.</em>'),
-      p("One that is working from real information will show you its reasoning. One that invented something goes vague, or corrects itself on the spot. It takes about ten seconds, and it catches most of what would otherwise have reached a customer."),
+      p("If you only do one technical thing from this sequence, do this one."),
+      p("Structured data is the only part of your page that states facts without ambiguity. Everything else is prose a model has to interpret. This it can simply read."),
+      p("Paste this into the &lt;head&gt; of your homepage and fill in your details. It is the same shape whatever trade you are in."),
+      code("&lt;script type=\"application/ld+json\"&gt;\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"LocalBusiness\",\n  \"name\": \"Your Business Name\",\n  \"description\": \"What you do, where, for whom.\",\n  \"url\": \"https://yoursite.com\",\n  \"telephone\": \"+1-555-555-5555\",\n  \"email\": \"you@yoursite.com\",\n  \"address\": {\n    \"@type\": \"PostalAddress\",\n    \"streetAddress\": \"123 Example St\",\n    \"addressLocality\": \"Your Town\",\n    \"addressRegion\": \"CA\",\n    \"postalCode\": \"91773\",\n    \"addressCountry\": \"US\"\n  },\n  \"areaServed\": \"Your county or metro\",\n  \"priceRange\": \"$$\",\n  \"openingHours\": \"Mo-Fr 08:00-17:00\"\n}\n&lt;/script&gt;"),
+      p("Swap LocalBusiness for the specific type if one fits you: Plumber, HVACBusiness, RoofingContractor, Electrician, Dentist, Attorney. Schema.org lists them all and the specific one is always better than the general one."),
+      p("Then check it at Google's Rich Results Test. If it validates, you are done."),
     ],
-    ask: "Worth knowing before you trust it with anything that touches money. Happy to talk through where the real risks sit.",
+    ask: "That block alone moves most of the sites we scan. It is also the easiest thing on the list, which tells you something about how much room there is.",
   },
   {
-    key: "documents",
+    key: "sameas",
     delay: "1 day",
-    subject: "Feed it your actual paperwork",
-    cta: "Book a call",
+    subject: "The one line that ties you together",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("These tools will read a file, and hardly anybody uses them that way."),
-      p("Upload the 40 page supplier contract and ask what your termination notice period is. Upload last quarter's numbers and ask what changed. Upload the manual and ask where the fault code is listed."),
-      p("That is the point where it stops being a novelty, because the answers coming back are about your business rather than about the world in general."),
-      p("Pick the longest document on your desk right now and ask it one question."),
+      p("Yesterday's block, plus one array, and it does something the rest of it cannot."),
+      p("Right now your website, your Google Business Profile, your Facebook page and your trade directory listings look to a model like four unrelated things that happen to share a name. sameAs collapses them into one entity."),
+      code("\"sameAs\": [\n  \"https://www.google.com/maps/place/your-listing\",\n  \"https://www.facebook.com/yourbusiness\",\n  \"https://www.linkedin.com/company/yourbusiness\",\n  \"https://www.yelp.com/biz/yourbusiness\",\n  \"https://www.bbb.org/us/ca/your-listing\"\n]"),
+      p("Drop it inside the same JSON-LD block, after openingHours. Every profile you actually control, nothing you do not."),
+      p("This is the cheapest corroboration there is. You are telling the model where to go and check, and a claim it can verify is worth more than a claim it cannot."),
     ],
-    ask: "This is the doorway to Level 2. If you want to know which of your paperwork is worth pointing it at, that is a short conversation.",
+    ask: "Two days in and you have done the two things most of your competitors have not heard of.",
+  },
+  {
+    key: "specifics",
+    delay: "1 day",
+    subject: "Why quality work never gets recommended",
+    cta: "See the full fix",
+    body: [
+      p("Hi {{{FIRST_NAME}}},"),
+      p("Go and read your homepage as if you had never seen it. Count how many sentences would still be true if a competitor put their name on them."),
+      p("<em>Quality workmanship. Customer first. Family owned and operated since 1998. Free estimates.</em> All fine. All completely unusable to something deciding who to recommend, because they match everyone and therefore no one."),
+      p("Now the version that works:"),
+      p("<em>We replace commercial rooftop HVAC units under 25 tons across Riverside and San Bernardino counties, usually within five business days. Most jobs land between $8,000 and $22,000.</em>"),
+      p("That is not better writing. It is a machine-readable trigger. The moment somebody describes that exact situation to an assistant, you are the obvious answer, because you are the only one who said so."),
+      p("Pick your top three services. Write one specific sentence for each. What, for whom, where, how fast, roughly what it costs."),
+    ],
+    ask: "Vague businesses are not disliked. They are unrecommendable. That distinction is most of the job.",
   },
   {
     key: "questions",
     delay: "1 day",
-    subject: "Make it ask you questions",
-    cta: "Book a call",
+    subject: "Write the question, not the service",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Before it answers, make it interview you. Almost nobody does this and it changes the output more than any other single habit."),
-      p("Add this line to the bottom of the 5-block prompt: <em>before you answer, ask me up to five questions you need answered to do this well.</em>"),
-      p("It will ask about things you forgot to mention. Your margins, your usual turnaround, whether this customer is price sensitive. Answer those and then let it run."),
-      p("You get a better result out of it, and about half the time you notice you had not thought the job through properly either."),
+      p("Your services page is probably organised the way your business is organised. That is the wrong axis."),
+      p("Nobody types <em>commercial HVAC services</em> into ChatGPT. They type <em>our rooftop unit keeps tripping the breaker, who do we call in Riverside and what will it cost.</em>"),
+      p("So make the page the question. Literally: put it in the heading, and answer it in the first two sentences before any preamble."),
+      code("H1: How much does it cost to replace a rooftop HVAC unit in Riverside County?\n\nFirst line: Most commercial rooftop replacements under 25 tons run\n$8,000 to $22,000 installed, and we usually complete them within\nfive business days.\n\nThen: what changes the price, what is included, how to get a number\nfor your building.")
+      ,
+      p("One page per real question. Three good ones beat thirty thin ones. The answer goes first because retrieval grabs the top of the page, and a page that buries the answer under a paragraph about your values gets skipped."),
     ],
-    ask: "If you would rather have that conversation with a person who knows businesses, that is what the call is.",
+    ask: "This is the highest-value writing you will do all year, and it is also the part owners put off longest.",
   },
   {
-    key: "shorter",
+    key: "crawlers",
     delay: "1 day",
-    subject: "Say make it shorter three times",
-    cta: "Book a call",
+    subject: "You might be blocking them without knowing",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("First drafts out of an AI are almost always too long and too polished. Padded, corporate, faintly desperate."),
-      p("Reply with: <em>make it shorter.</em> Then do it again. Then once more."),
-      p("By the third pass it usually sounds like a person. The filler burns off and what is left is the actual point. Most customers read the short version and ignore the long one anyway."),
-      p("Works on emails, quotes, proposals, and your website copy."),
+      p("This is the one that catches good sites. Everything is right, and nobody can read it, because the security tooling cannot tell an AI assistant from a scraper and turns both away."),
+      p("Open yoursite.com/robots.txt and look. Then add these explicitly:"),
+      code("User-agent: GPTBot\nAllow: /\n\nUser-agent: OAI-SearchBot\nAllow: /\n\nUser-agent: ChatGPT-User\nAllow: /\n\nUser-agent: PerplexityBot\nAllow: /\n\nUser-agent: ClaudeBot\nAllow: /\n\nUser-agent: Google-Extended\nAllow: /\n\nUser-agent: Applebot-Extended\nAllow: /"),
+      p("Being explicit is worth more than a permissive wildcard, because it is unambiguous to a crawler deciding whether it has permission."),
+      p("Then check your firewall. If you are behind Cloudflare, the bot fight settings will block most of these regardless of what robots.txt says. Allow those user agents there too, or the file is decoration."),
+      p("Allowing them is not the same as allowing scrapers. These are documented, published agents with names."),
     ],
-    ask: "Small habit, real difference. There is a bigger conversation about what to automate rather than shorten, whenever you want it.",
+    ask: "We find this on maybe a fifth of the sites we scan, and every one of them was invisible for a reason nobody had ever looked for.",
   },
   {
-    key: "voice",
+    key: "javascript",
     delay: "1 day",
-    subject: "Talk instead of typing",
-    cta: "Book a call",
+    subject: "Turn JavaScript off and look",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("If you are typing up your notes, you are doing the slow version of that job."),
-      p("Ramble into your phone for two minutes after a site visit, then hand the transcript over and ask for a structured job note, a customer summary and the three follow up actions."),
-      p("Owners talk faster than they type and think better out loud, and it does not matter that what comes out is a mess. Tidying up a mess is the thing these tools are genuinely good at."),
-      p("Try it after your next call, before you have forgotten half of it."),
+      p("Two minute test, and it is the one that makes people wince."),
+      p("In Chrome: Settings, Privacy and security, Site settings, JavaScript, Don't allow. Then load your homepage."),
+      p("Whatever is still on the screen is roughly what a lot of AI crawlers get. Many of them do not run JavaScript at all."),
+      p("If your site is built on a page builder, a heavy theme, or anything React-based, there is a decent chance you are looking at a mostly empty page right now. Your prices, your service area, your phone number, all painted in after load, all invisible."),
+      p("The fix depends on your stack, but the rule does not: the facts that decide whether you fit a question have to be in the HTML that arrives, not added afterwards. Server-side rendering, static pages, or at minimum the key facts hard-coded into the initial markup."),
+      p("Turn it back on afterwards or the rest of the internet will annoy you."),
     ],
-    ask: "Most of the time saved in a business hides in jobs like this. Worth twenty minutes to find yours.",
+    ask: "If your page came back blank, nothing else in this sequence matters until that is fixed. Reply and tell me what you are built on.",
   },
   {
-    key: "inbox",
+    key: "pricing",
     delay: "1 day",
-    subject: "Use it on your inbox, but not to write",
-    cta: "Book a call",
+    subject: "Publish a number, any number",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Everybody points AI at their inbox to write the replies. Triage is where it actually earns its keep."),
-      p("Paste in the morning's unread subject lines and senders and ask which three genuinely need you today, and why."),
-      p("The writing was never what cost you the morning. Working out what deserves your attention is, and that is the decision the day disappears into. Once it is made, the reply takes you ninety seconds and it sounds like you."),
+      p("Call for a quote is the most expensive four words on most trade websites."),
+      p("Not because customers hate it, though some do. Because it is a dead end for anything trying to compare options. An assistant that cannot tell whether you fit somebody's budget will recommend one that can, and you never find out you were in the running."),
+      p("You do not have to publish a rate card. Any of these work:"),
+      code("Starting at $X for the most common version of the job.\nMost jobs land between $X and $Y.\n$X per unit, per hour, per square foot.\nA worked example: a 3,000 sq ft single storey came to $X last month.")
+      ,
+      p("A band beats silence. Silence removes you from every comparison before it starts, and it is not even protecting you, because the customer is getting a number from somewhere. It is just somebody else's."),
+      p("Put it on the service page, in text, not in an image or a PDF."),
     ],
-    ask: "If your inbox is the bottleneck, say so on a call and I will tell you what I would do about it.",
+    ask: "This one costs nothing and owners resist it more than anything else on the list. Worth asking yourself why.",
   },
   {
-    key: "onepage",
+    key: "whennot",
     delay: "1 day",
-    subject: "The one page that pays for itself",
-    cta: "Book a call",
+    subject: "Say what you do not do",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Pick the job your business does most often and write down how it gets done, start to finish, on one page. Roughly what you would hand a new hire on their first morning."),
-      p("The Level 4 page in the guide puts it in one line: you cannot automate a job you have never written down. This is that hour."),
-      p("Two things come out of it. You find steps nobody can justify any more, which you then delete. And you end up holding the document that makes automating that job possible later, because a process that only exists in somebody's head cannot be automated by anyone. Everything above Level 2 depends on having done this once."),
+      p("Counterintuitive one. Naming what you will not take on makes you get recommended more, not less."),
+      p("A model deciding whether to name you is doing a matching job. Every boundary you state makes the match sharper. <em>We handle commercial only, no residential. Units under 25 tons. Riverside and San Bernardino counties, we do not travel to LA.</em>"),
+      p("Three sentences, and you have just told it exactly when you are the right answer and when you are not. Without them it has to guess, and guessing is where you get dropped in favour of someone who was clear."),
+      p("There is a business reason too. The enquiries you lose from this are the ones you were going to turn down anyway, after two calls and a site visit."),
+      p("Add it to your about page or the top of your services page. Plain sentences, no hedging."),
     ],
-    ask: "Write it, then book twenty minutes and I will tell you what I would build from it.",
+    ask: "Nine days in. If you have done all of these, you are already ahead of nearly everyone in your category.",
   },
   {
-    key: "quotes",
+    key: "llmstxt",
     delay: "1 day",
-    subject: "Quotes take longer than they should",
-    cta: "Book a call",
+    subject: "The file almost nobody has yet",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Quoting is where businesses lose hours without ever noticing it happen. The same shapes, different numbers, every single time."),
-      p("Take your last ten quotes, paste them in, and ask what structure they share and where you tend to be inconsistent."),
-      p("It usually turns up something uncomfortable: wildly different margins on similar jobs, line items you forget half the time, wording vague enough to cost you an argument later. Fixing that is worth money on its own, before you automate anything at all."),
+      p("This one is new enough that having it is still unusual. That will not last."),
+      p("llms.txt is a plain markdown file at the root of your site that tells a model what you are and which pages matter. Here is a whole one:"),
+      code("# Riverside Commercial HVAC\n\n&gt; Commercial rooftop HVAC replacement and repair across Riverside\n&gt; and San Bernardino counties. Units under 25 tons. Same-week\n&gt; service on most jobs.\n\n## Services\n- [Rooftop unit replacement](https://site.com/rooftop-replacement):\n  $8,000-$22,000 installed, usually within five business days.\n- [Emergency repair](https://site.com/emergency): 24 hour response\n  for existing service customers.\n\n## About\n- [Who we are](https://site.com/about): Family owned since 1998,\n  14 technicians, NATE certified.\n- [Service area](https://site.com/area): Riverside and San\n  Bernardino counties. Commercial only.\n\n## Contact\n- Phone: (555) 555-5555\n- [Get a quote](https://site.com/quote)"),
+      p("Save it as llms.txt, upload it to the root so it sits at yoursite.com/llms.txt, done. Keep it to what you would tell somebody in thirty seconds."),
+      p("Nobody can promise you what weight this carries yet. It costs an afternoon and the sites that get read tend to be the ones that made themselves easy to read."),
     ],
-    ask: "Quoting is the most common first build I do for people. Ask me what that looks like for your trade.",
+    ask: "Ten emails, ten things you can do yourself. The offer at the bottom is for when you would rather it was just done.",
   },
   {
-    key: "repeat",
+    key: "trust",
     delay: "1 day",
-    subject: "The email you have written 200 times",
-    cta: "Book a call",
+    subject: "The boring pages carry more weight than you think",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("There is an email you write most weeks. The chase, the booking confirmation, the one explaining your terms again."),
-      p("Find your last five versions of it, hand them over, and ask for a single template with the variable bits marked out."),
-      p("What comes back is better than any of the five, because it is drawing on the versions where you explained it well rather than the one you rushed on a Friday afternoon. After that it stops being a writing job and becomes filling in three blanks."),
+      p("About, contact, privacy, terms. Nobody reads them and they matter more than your homepage for this."),
+      p("They are how anything verifies a business is real. Missing them reads as thin, and thin reads as risky, and risky does not get recommended to somebody asking for help."),
+      p("What actually helps:"),
+      code("About: the real history, the actual people, how many of you\nthere are, what you are certified in. Not a mission statement.\n\nContact: a physical address and a phone number as TEXT, not\nin an image. A model cannot read a phone number in a JPEG.\n\nPrivacy and terms: they just need to exist and be linked.")
+      ,
+      p("The address and phone in text is the part people get wrong most. Designers love putting contact details in a graphic. It looks tidy and it is invisible."),
+      p("While you are there, check they match your Google Business Profile exactly. Same suite number, same abbreviations, same phone format."),
     ],
-    ask: "This is Level 2 done properly. Level 3 is when the blanks fill themselves in. Book a call and I will show you the difference.",
+    ask: "Consistency across those is worth more than any single one of them being perfect.",
   },
   {
-    key: "needtoknow",
+    key: "consensus",
     delay: "1 day",
-    subject: "What would you need to know",
-    cta: "Book a call",
+    subject: "It does not trust you about you",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("When an answer comes back thin, most people give up and decide the tool is overrated."),
-      p("Try one more message before you do: <em>what would you need to know about my business to answer that properly?</em>"),
-      p("It will tell you. Your pricing model, your customer type, your capacity, whatever it was short of. Now you know what context to hand it rather than guessing at it, and most of what looks like a bad answer turns out to have been a missing information problem."),
+      p("Everything so far has been your own website. Here is the uncomfortable part: a model does not take your word for your own business."),
+      p("It weighs consensus. What independent sources say about you. Directories, review platforms, industry bodies, local press, forums, other people's pages. If the internet is quiet about you, it has nothing to form an opinion from."),
+      p("Silence does not read as neutral. It reads as unproven."),
+      p("The unglamorous fix, in order of value:"),
+      code("1. Google Business Profile: claimed, complete, categories correct.\n2. The two or three directories that actually matter in YOUR trade,\n   not the fifty generic ones.\n3. Your trade association or licensing body listing.\n4. Chamber of commerce, local business associations.\n5. Wikidata, if you can support an entry.")
+      ,
+      p("Same business name, same address format, same phone, everywhere. Inconsistency is worse than absence, because it makes the model less sure rather than more."),
     ],
-    ask: "Same is true of advice generally. The call is twenty minutes because that is how long it takes to get the context.",
-  },
-  {
-    key: "notouch",
-    delay: "1 day",
-    subject: "Where I would not let it near",
-    cta: "Book a call",
-    body: [
-      p("Hi {{{FIRST_NAME}}},"),
-      p("Most of what you read about AI is selling you something, so it is worth saying where I would not use it myself."),
-      p("I would not hand it final pricing decisions. I would not let it send anything to a customer unread. I would not use it for anything involving an employee's performance or personal circumstances. And I would not put customer data into a free consumer account, which is the one that catches people out."),
-      p("None of that is because it cannot produce an answer. It is because the consequences of those decisions land on you rather than on a model, so the judgment has to stay where it is. Everything that happens before the judgment is fair game."),
-    ],
-    ask: "If you are not sure which side of that line something sits on, that is a good question for a call.",
+    ask: "This is the half that takes weeks rather than an afternoon, and it is the half that decides most outcomes.",
   },
   {
     key: "checkpoint",
     delay: "1 day",
     subject: "Two weeks in. Where are you?",
-    cta: "Book a call",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("That is a fortnight of tips. So: has anything actually changed in how you work?"),
-      p("If it has, you are on Level 2 or heading there. You hand it real work, with your own material, and you use what comes back. That is both of the prompts in the guide doing their job, and it is further than most owners get."),
-      p("If nothing has changed, that is worth knowing too, and it is the normal outcome. Reading about something and doing it are different activities, and you have a business to run."),
-      p("Either way, the guide runs out here. Levels 3, 4 and 5 print as frameworks rather than something you paste, because there is nothing to paste. They get built."),
+      p("Halfway. Here is everything so far, so you can see what you have actually done:"),
+      code("[ ] JSON-LD block on the homepage\n[ ] sameAs array listing your profiles\n[ ] One specific sentence per top service\n[ ] At least one page written as a real customer question\n[ ] AI crawlers allowed in robots.txt and the firewall\n[ ] Checked the site with JavaScript off\n[ ] A price, a range, or a worked example published\n[ ] What you do not do, stated plainly\n[ ] llms.txt at the root\n[ ] About and contact with real details in text\n[ ] Google Business Profile claimed and consistent")
+      ,
+      p("If you have done six or more, you are genuinely ahead. Go back and re-run the three questions from email two and see whether anything has shifted."),
+      p("If you have done none, that is also useful information, and it is the most common answer. These are all easy and none of them are urgent, which is exactly why they never get done."),
     ],
-    ask: "Which of the three is yours, and what it is worth once it is running, is the whole of the call.",
+    ask: "The honest question is not whether you can do this list. It is whether you will, and when.",
   },
 
-  /* ── Days 16-26: every other day. Ask gets direct. ──────────────────────── */
+  /* ── Days 16-26: every other day. The ceiling of DIY starts showing. ───── */
   {
-    key: "leveltool",
+    key: "retrieval",
     delay: "2 days",
-    subject: "What a Level 3 tool actually looks like",
-    cta: "Book a call",
+    subject: "Being known is not the same as being fetched",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("You saw the four headings of the build brief in the guide and not much else, so here is what actually sits under them. Level 3 tools are always smaller than people expect."),
-      p("A form your team fills in on site that writes the customer report itself. A sheet that reads your supplier's price list and reprices your quotes. Something that watches an inbox and files what arrives against the right job."),
-      p("None of those is a product or a platform. Each one is a small, ugly, specific thing that does a job your business does constantly, built around the way you already work. That is the level almost nobody reaches, and it is the one that pays."),
+      p("There are two ways a model can know about you and they behave completely differently."),
+      p("Training is what it absorbed months ago. Slow to change, and you cannot edit it. Retrieval is what it goes and fetches mid-answer, live, when it needs current information."),
+      p("Almost everything in this sequence is aimed at retrieval, because that is the half you control and the half that responds this month rather than next year."),
+      p("Which means a site that is stale, thin or slow gets skipped at the moment of retrieval even when the brand is already known. Being in the training data is a start. It is not a seat you keep."),
+      p("Practically: keep your key pages updated and dated, keep them fast, do not hide them behind interstitials or cookie walls that a fetcher will not get past."),
+      p("Training data gets you known. Retrieval gets you named. You need both and only one of them is available to you this quarter."),
     ],
-    ask: "Twenty minutes and I will tell you which one I would build for you first. No charge for that either way.",
+    ask: "Everything on the list so far is retrieval work. The training side is slower and it is mostly what the consensus building buys you.",
   },
   {
-    key: "firstbuild",
+    key: "yourname",
     delay: "2 days",
-    subject: "How to pick the first thing to build",
-    cta: "Book a call",
+    subject: "When your own name does not find you",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Owners almost always reach for the biggest problem first, and that is the one I would leave alone."),
-      p("Pick the thing that irritates you every single week, not the thing that blew up last month. Usually it is something small you have stopped noticing, because you have always done it that way."),
-      p("Big problems are big because they are tangled up in people, money and judgment. Weekly irritations are small, well understood and repetitive, which is precisely what a tool is good at."),
-      p("Fix one of those and you get the time back every week from then on. Then you do the next one."),
+      p("The single most common critical failure we see, and the one owners find hardest to believe."),
+      p("Search your exact business name. Not your service, your name. If your own website is not what comes back, an assistant looking you up has no way to confirm you are real, let alone recommend you."),
+      p("It usually comes down to one of three things:"),
+      code("1. Your name is generic. \"Foothold Systems\" competes with every\n   other Foothold. Anchor it: name plus town, name plus trade,\n   in the title tag and the H1 and the first paragraph.\n\n2. Your name is spelled differently in different places. Ltd vs\n   Limited, & vs and, with or without the LLC. Pick one and make\n   every profile match it exactly.\n\n3. Nothing links to you under that name, so there is nothing to\n   associate it with.")
+      ,
+      p("Fix the title tag today. It is one line and it is the highest-leverage line on your site."),
+      code("&lt;title&gt;Riverside Commercial HVAC | Rooftop Unit Replacement, Riverside County&lt;/title&gt;"),
+      p("Name, what you do, where. Not Home. Not Welcome."),
     ],
-    ask: "Bring me your weekly irritation and I will tell you if it is buildable. That is a twenty minute conversation.",
+    ask: "Everything else on this list is downstream of this one. If your name does not resolve, nothing else gets a chance to matter.",
   },
   {
-    key: "whyfail",
+    key: "competitor",
     delay: "2 days",
-    subject: "Why most of these projects die",
-    cta: "Book a call",
+    subject: "Find out who is getting your call",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("It is nearly always the same cause: a skipped level."),
-      p("Someone reads about autonomous agents, jumps from Level 1 to Level 4, and tries to automate a whole job that nobody had ever written down. It half works, produces something wrong at a bad moment, and everybody drifts back to doing it by hand."),
-      p("The technology gets the blame. What actually went wrong is that it was built on a process nobody had documented, by a team that had never used the tools on anything small."),
-      p("Going one level at a time looks slower on paper. It is the only version of this I have watched arrive anywhere."),
+      p("Worth doing properly, once, with a notepad."),
+      p("Write down the ten questions a customer would actually ask before hiring you. Real ones, in their words, not your service names. Then put each one to ChatGPT, Gemini and Perplexity and record who gets named."),
+      p("You are looking for three things. Who comes up most. What the model says <em>about</em> them, in its own words. And whether the reason it gives is something you could also be true of."),
+      p("That last one is the useful column. Nine times out of ten the winner is not the better operator. They are the better documented one. They published a price, they named their service area, they answered the question on a page instead of in a brochure."),
+      p("Which is good news, because documentation is something you can go and change this week. Being genuinely better takes years."),
+      p("Do it once a month. Same ten questions, same notepad. That series is the only real measure of whether any of this is working."),
     ],
-    ask: "If you have already had one of these die on you, tell me what happened. I can usually spot which level got skipped.",
+    ask: "If you would rather not run that by hand every month, it is the thing we do for clients and it is the only number we report.",
   },
   {
-    key: "cost",
+    key: "ceiling",
     delay: "2 days",
-    subject: "What you actually get for the money",
-    cta: "Get your price",
+    subject: "What the checklist cannot do",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("People ask what this costs before they ask what it does. Fair enough, though the price only means something once you know what is attached to it."),
-      p("What you get is a written plan you keep whether or not you work with me: every job in your business ranked by hours saved with a go or no-go on each, tool picks with real pricing, a map of where your customer data is going today, and the payback math so you can see what the first build returns before you commit to it."),
-      p("Then the tools themselves get built, documented and handed over. If you stop working with me you keep all of it, and somebody else can pick it up."),
-      p("I will not put a figure in an email, because a figure without your context is a number I made up. What it costs depends on how many jobs are worth building and how tangled your setup is, and I cannot know that from here."),
-      p("Twenty minutes on the phone and I can tell you exactly. Nothing to buy on that call."),
+      p("Seventeen emails and I have given you the whole technical list. I want to be straight with you about what it gets you."),
+      p("Everything so far is detectable. A scanner can find it, which means every competitor who runs the same scan gets the same list. Do all of it and you are level with the best prepared business in your category."),
+      p("Level is a good place to be. It is not the same as being the one that gets named."),
+      p("Three things decide that last part and none of them appear on a checklist."),
+      p("<strong>Positioning.</strong> Not what you do, but what you should be known for. Most businesses are three things and would be recommended far more often as one. Deciding which one is judgement, and it is the highest-value hour anyone spends on this."),
+      p("<strong>The language.</strong> Whether the words on your pages are the words your customers actually use when describing the problem to an assistant. Those are usually not the words the industry uses, and never the words on the average website."),
+      p("<strong>The corroboration.</strong> Getting the rest of the web to agree, which is outreach and relationships and takes weeks."),
+      p("You can do all three yourself. They are just slow, and they are the ones that need someone to make a call rather than follow an instruction."),
     ],
-    ask: "Book the call and ask me the price directly. You will get a straight answer, and the call itself is free either way.",
+    ask: "That is the honest line between what you can do from a list and what needs a person. The offer is the second half.",
   },
   {
-    key: "data",
+    key: "rewrite",
     delay: "2 days",
-    subject: "Where your customer data is actually going",
-    cta: "Book a call",
+    subject: "What a rewritten page actually looks like",
+    cta: "See the full fix",
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Ask your team which AI tools they use and on what accounts. Most owners are surprised by the answer."),
-      p("Personal accounts. Free tiers. Customer names and addresses pasted into a chat box that trains on whatever it is given. Nobody did anything malicious, they were trying to get through the day faster."),
-      p("It is one of the three things the guide asks you to do this week, and it is there because I have never looked at a business and found nothing. The fix is usually simple and cheap once you know, which makes the finding out the only hard part."),
+      p("Since I have been saying the rewrite is the hard part, here is the before and after so it is not abstract."),
+      p("Before, and this is close to verbatim from a real site:"),
+      // The exclamation mark is the one in the sequence and it is deliberate.
+      // This is quoted copy being held up as the thing not to write, and
+      // sanding it off would blunt the example.
+      code("Welcome to our website\n\nWith over 25 years of experience, we pride ourselves on quality\nworkmanship and outstanding customer service. Our team of highly\ntrained professionals is dedicated to exceeding your expectations\non every project, large or small. Contact us today for a free\nestimate!")
+      ,
+      p("Nothing there is false. Nothing there is usable either. Not one fact a model could match to a question."),
+      p("After:"),
+      code("Commercial rooftop HVAC replacement in Riverside County\n\nWe replace commercial rooftop units under 25 tons across\nRiverside and San Bernardino counties. Most replacements run\n$8,000 to $22,000 installed and take five business days from\napproval. We are commercial only and we do not travel to LA.\n\n14 technicians, NATE certified, family owned since 1998.")
+      ,
+      p("Same business, same truth, same length. The difference is that the second one can be matched to a question and the first one cannot."),
+      p("Now do that for every page. That is the bit that takes a fortnight and the bit almost nobody finishes, because writing about yourself specifically is genuinely hard and there is always something more urgent."),
     ],
-    ask: "You can do that one without me. If you would rather have someone go through it with you, that is twenty minutes.",
+    ask: "This is the work. Doing it for you across the whole site, properly, is what the upgrade is.",
   },
   {
-    key: "handover",
+    key: "whatyouget",
     delay: "2 days",
-    subject: "The question to ask anyone who builds for you",
-    cta: "Book a call",
+    subject: `What ${UPGRADE_PRICE} actually buys`,
+    cta: `Start the full fix, ${UPGRADE_PRICE}`,
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("Ask them this: if you disappear tomorrow, what do I still have?"),
-      p("If the answer is a login to their platform, you are renting. When they put the price up or fold, your process walks out with them."),
-      p("My answer is that you get the tool and the written documentation of how it works, in language you could hand to somebody else. If you sack me you keep all of it, and the next person can pick it up without ringing me."),
-      p("Ask me that question. Ask it of everyone else you talk to as well."),
+      p("Straight answer, since I have been pointing at a button for three weeks without spelling it out."),
+      p("<strong>Every technical fix on your scan, implemented.</strong> The schema, the sameAs, the crawler access, the llms.txt, the metadata, the trust pages. Everything in emails one to thirteen, done properly, on your actual site."),
+      p("<strong>Your pages rewritten.</strong> Positioning decided first, then the homepage and your top service pages rewritten the way yesterday's example was. In your voice, checked with you, not generated and pasted."),
+      p("<strong>The consensus work.</strong> Your listings claimed, corrected and made consistent across the directories that matter in your trade. Same name, same details, everywhere."),
+      p("<strong>A monthly re-run.</strong> The same prompts, the same competitors, every month, so you can see it move. Named or not named. That is the whole scoreboard."),
+      p(`${UPGRADE_PRICE}, once, not a retainer. Two to three weeks. You keep everything, including the documentation of what was changed and why, so if you never speak to me again the next person can pick it up.`),
+      p("What it is not: a guarantee that ChatGPT will recommend you. Nobody controls a model's output and anybody who says otherwise is selling you something. What I control is every input it uses, and I will show you the movement month by month."),
     ],
-    ask: "Book the call and ask it to my face. The answer is the same either way.",
+    ask: `${UPGRADE_PRICE} against one commercial job is the calculation most people run. If one new customer a year covers it, it is not really a decision.`,
   },
 
   /* ── Days 31 and 38: closing. Hard ask. ────────────────────────────────── */
   {
-    key: "standingstill",
+    key: "cost",
     delay: "5 days",
-    subject: "The cost of leaving this alone",
-    cta: "Get your number",
+    subject: "The number nobody can show you",
+    cta: `Start the full fix, ${UPGRADE_PRICE}`,
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("In a business that already works, going from Level 1 to Level 3 usually frees five to fifteen hours a week across the team."),
-      p("Your number will not be that number, because it depends on your jobs and your people. The shape of it holds though, and the hours are not dramatic ones. They are the same small tasks, done by hand, every week, for as long as you carry on."),
-      p("The cost that gets less attention is that what lives in somebody's head stays there. If that person leaves, the process leaves with them. If you sell, you are selling a business that runs on people rather than systems, and it gets priced that way."),
-      p("Doing nothing is a decision with a price on it, and most owners have simply never seen the figure."),
+      p("Here is what makes this channel different from every other marketing problem you have had."),
+      p("When your ads underperform, you see it. When your rankings slip, you see it. There is a number, it goes down, you react."),
+      p("There is no number here. Nobody asks an assistant, gets told about your competitor, and leaves a trace on anything you own. No impression, no bounce, no line in Analytics that says lost to an AI recommendation. The lead simply never becomes a lead and your reporting looks exactly the same as last month."),
+      p("It is the first channel in the history of marketing that is completely invisible to the business losing it."),
+      p("Which is why the question is not what is this costing me. You cannot know that. The question is how many months of it you are willing to buy before you find out."),
+      p("The businesses being recommended today are the ones being written into the consensus these models keep learning from. That compounds, and it is slow to displace once somebody else owns it. That is the whole argument for moving now rather than when it is obvious."),
     ],
-    ask: "Twenty minutes and you would have your figure. That is the entire purpose of the call, and it costs you nothing.",
+    ask: `Two to three weeks of work and ${UPGRADE_PRICE}, or another quarter of not knowing. Those are genuinely the options.`,
   },
   {
     key: "last",
     delay: "7 days",
     subject: "Last one from me",
-    cta: "Book the call",
+    cta: `Start the full fix, ${UPGRADE_PRICE}`,
     body: [
       p("Hi {{{FIRST_NAME}}},"),
-      p("This is the last email in this sequence. No more from me after today unless you ask."),
-      p("If the timing is wrong, that is genuinely fine. The three tasks on the last page of the guide cost nothing and you do not need me for any of them. Pin the 5-block prompt where you work. Find out which AI accounts your team is using. Name the one job that keeps coming back."),
-      p("If it is not timing but something else, reply and tell me. Wrong fit, wrong size, wrong problem, too expensive. I would rather know, and I will take the answer without arguing."),
-      p("And if you have been meaning to book this for five weeks and it keeps sliding down the list, this is the nudge. It is twenty minutes and it is free."),
+      p("This is the last email in this sequence. Nothing more from me after today unless you ask."),
+      p("You have had twenty two of these and every technical fix I know is in them. That was deliberate. If you take the list and do it yourself and never spend a penny with me, that is a completely fine outcome and you will be better off than you were five weeks ago."),
+      p("If the timing is wrong, that is fine too. Start with the three that cost an afternoon: the schema block, the crawler permissions, and one page rewritten as a real customer question. Those three alone move most sites."),
+      p("If it is not timing but something else, reply and tell me. Wrong fit, wrong size, too expensive, you tried it and it did not work. I would rather know, and I will take the answer without arguing."),
+      p("And if you have been meaning to deal with this for five weeks and it keeps sliding down the list behind things that are shouting louder, this is the nudge. It is a fortnight of my time and you keep all of it."),
     ],
     ask: "Last chance to take me up on it without having to remember I exist. The link stays open.",
   },
