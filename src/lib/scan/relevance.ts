@@ -102,6 +102,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Models lean on independent sources to decide whether a business is real and worth naming. With nothing outside your own website, you're a claim rather than a fact.",
     fix: "You almost certainly don't qualify for a Wikipedia article, and chasing one is a waste of your time. Wikidata is the achievable half: a structured entity record you can create, linked to your site, your Google Business Profile and your industry listings. Pair it with consistent presence on the directories that matter in your trade. The goal is corroboration from somewhere that isn't you.",
+    warning: {
+      title: "You have a Wikidata entry but no Wikipedia article",
+      consequence:
+        "An independent record of you exists, which is the harder half. What is missing is the fuller entry that carries more weight, so you are corroborated but thinly.",
+    },
   },
 
   /* ── Can a crawler read the site? ───────────────────────────────────────── */
@@ -110,18 +115,33 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Many AI crawlers don't run JavaScript. If the words only exist after the page boots, the crawler sees an empty shell and leaves with nothing to quote.",
     fix: "Server-render the content that matters: who you are, what you do, where, pricing, contact details. View your own page with JavaScript disabled: whatever survives is what a model gets. Anything that vanishes needs to move into the initial HTML.",
+    warning: {
+      title: "There is very little text on the page",
+      consequence:
+        "This is a different problem from JavaScript. The page renders, there is just not much on it for a model to read, and often no H1 telling it what the page is even about. A model cannot quote what is not written.",
+    },
   },
   "bot-detection": {
     title: "Bot protection is blocking AI crawlers",
     consequence:
       "Your security tooling can't tell an AI assistant from a scraper, so it turns both away. You are invisible for the most defensible reason there is, and nobody tells you.",
     fix: "In Cloudflare (or whichever WAF you run), allow the assistant crawlers explicitly: GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended, Bingbot. These are documented, published user agents. Allowing them is not the same as allowing scrapers, and blocking them by default is the most common own-goal we find.",
+    warning: {
+      title: "Some AI crawlers are being blocked",
+      consequence:
+        "Not all of them, but the ones turned away simply never see you. Partial blocking is the awkward case, because your visibility depends on which assistant the customer happens to be using.",
+    },
   },
   "agent-crawler-reachability": {
     title: "AI crawlers can't reliably reach your pages",
     consequence:
       "Something between the request and your content, whether a redirect chain, a challenge page or a slow response, is costing you crawls you never see.",
     fix: "Test your key pages with the assistant user agents directly and watch for challenges, redirect chains and timeouts. Every hop is a chance to be dropped, and a crawler that gets a challenge page does not retry.",
+    warning: {
+      title: "Some AI crawlers cannot reach your pages",
+      consequence:
+        "Others get through. That means you are visible in some assistants and absent in others, for a reason that has nothing to do with how good your business is.",
+    },
   },
   "sitemap": {
     title: "No sitemap",
@@ -140,6 +160,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Every extra hop between the requested URL and the real page is a chance for a crawler to give up before it arrives.",
     fix: "Collapse redirect chains to a single hop. Pick one canonical host, www or apex but not both, and make everything else 308 straight to it rather than through it.",
+    warning: {
+      title: "Some redirects are untidy",
+      consequence:
+        "Not everywhere, but on enough pages to cost crawls. Meta refreshes and redirect chains are the usual culprits, and each hop is a chance for a crawler to give up before it arrives.",
+    },
   },
   "page-token-budget": {
     title: "Pages are too heavy to read whole",
@@ -152,6 +177,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "A missing page that answers as though it were fine teaches a crawler to distrust everything else it gets from you.",
     fix: "Return a real 404 status for missing pages, not a 200 with an apology on it. Soft 404s pollute the crawler's picture of which of your pages actually exist.",
+    warning: {
+      title: "Missing pages return the wrong status",
+      consequence:
+        "They are not returning 200, which is the worst case, but they are not returning a clean 404 either. A 401 or a redirect where a 404 belongs muddies a crawler's picture of which pages you actually have.",
+    },
   },
 
   /* ── Does the site say anything a model can use? ────────────────────────── */
@@ -160,6 +190,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Structured data is the only part of your page that states facts unambiguously: who you are, what you sell, where you work, what it costs. Without it a model has to infer all of that from prose, and inference is where you get dropped in favour of a competitor who spelled it out.",
     fix: "Add JSON-LD to your homepage using the type that fits: LocalBusiness (or the specific subtype for your trade) for a service business, Organization otherwise. Populate name, description, url, telephone, address, areaServed, openingHours and sameAs. Add Service schema on each service page and FAQPage on anything question-shaped. This is the single highest-leverage technical change on this list.",
+    warning: {
+      title: "Your structured data is incomplete",
+      consequence:
+        "You have JSON-LD, which puts you ahead of most. What is there is missing the fields or the identity type that make it useful, so a model can see you have described yourself without being able to use the description.",
+    },
   },
   "json-ld-entity-linking": {
     title: "Your structured data doesn't link to anything else",
@@ -172,12 +207,22 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Half-filled structured data answers some of a model's questions and leaves the rest open. Open questions are how you lose to the business that answered them.",
     fix: "Fill in every field that applies: legal name, logo, address, telephone, email, founding date, area served, opening hours, price range. Sparse schema is treated as weak evidence, not partial credit.",
+    warning: {
+      title: "Your business details are partly filled in",
+      consequence:
+        "Most of the fields are there and some are not. Sparse schema is treated as weak evidence rather than partial credit, and the missing ones tend to be the ones worth having.",
+    },
   },
   "schema-type-breadth": {
     title: "Only one kind of structured data",
     consequence:
       "Different questions are answered by different schema types. One type means you only ever match one shape of question.",
     fix: "Layer the types that fit your business: Service for what you do, FAQPage for common questions, Review or AggregateRating for social proof, BreadcrumbList for structure, Product where you sell things. Each one is another question you can be the answer to.",
+    warning: {
+      title: "You have some extended schema, not the useful ones",
+      consequence:
+        "There is more than one type present, which is a start. The types that answer buying questions, FAQPage, Service, AggregateRating, are the ones still missing.",
+    },
   },
   "metadata-completeness": {
     title: "Thin page metadata",
@@ -212,6 +257,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Your site says what you do. It never says which situations you're the right call for, which is the actual question being asked.",
     fix: "Write the when-to-use case explicitly: who you're for, which problems, which area, what you don't do. \"We handle commercial rooftop units under 25 tons across Riverside County; we don't do residential.\" Naming what you don't do is not a weakness, it makes the match sharper.",
+    warning: {
+      title: "You have an agent file but it doesn't say when to use you",
+      consequence:
+        "The file exists, which most sites cannot claim. What it does not contain is the part that matters: which situations you are the right call for, and which you are not.",
+    },
   },
 
   /* ── The AI-native files ────────────────────────────────────────────────── */
@@ -231,11 +281,21 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "llms.txt isn't formatted correctly",
     consequence: "A malformed file gets skipped, so the work is already done and earning nothing.",
     fix: "Follow the convention: H1 for the site name, a blockquote summary, then H2 sections with markdown link lists and a short description per link. No walls of prose.",
+    warning: {
+      title: "Your llms.txt has a formatting problem",
+      consequence:
+        "The file is there and largely right. Something specific is off, usually a missing heading or a file so long it will be truncated before the useful part is reached.",
+    },
   },
   "llms-txt-links-resolve": {
     title: "llms.txt points at pages that don't load",
     consequence: "Broken links in the file meant to guide a model actively damage its confidence in the rest.",
     fix: "Check every link in llms.txt resolves with a 200 and re-check whenever pages move.",
+    warning: {
+      title: "A few llms.txt links are broken",
+      consequence:
+        "Most of them resolve. The ones that do not damage confidence in the rest, because a file meant to guide a model is being read as unreliable.",
+    },
   },
   "sitemap-lastmod": {
     title: "Sitemap doesn't say what changed when",
@@ -253,12 +313,22 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Assistants are starting to complete purchases, not just recommend them. A shop an agent can reach but not check out from gets replaced at the last step by one it can.",
     fix: "Agentic Commerce Protocol is the emerging standard for letting an assistant complete a purchase on a customer's behalf. Ask whoever runs your store platform whether they support it or have it on the roadmap. If you are on Shopify or a major host this is likely to arrive as a platform feature rather than something you build, and knowing to ask for it is most of the advantage right now.",
+    warning: {
+      title: "Partial agentic commerce signals",
+      consequence:
+        "There are traces of the right thing without the endpoints that make it work. Half-implemented reads to an agent much the same as absent, because it still cannot complete the purchase.",
+    },
   },
   "ucp-support": {
     title: "No universal commerce endpoint",
     consequence:
       "Nothing tells an agent how to enquire about stock, price or delivery without a human loading your site.",
     fix: "Universal Commerce Protocol exposes catalogue, availability and pricing in a form an agent can query directly. Platform-level for most shops. Raise it with your host; it is a support ticket rather than a project.",
+    warning: {
+      title: "Partial universal commerce signals",
+      consequence:
+        "Your site mentions the right concepts without publishing the profile an agent would actually query. The intent is there and the mechanism is not.",
+    },
   },
   "ap2-support": {
     title: "No agent payment support",
@@ -270,6 +340,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "No machine payment protocol",
     consequence: "One more route by which an automated purchase cannot complete.",
     fix: "Another emerging machine-payment standard. Same answer as the others: your payment processor implements it. The useful move is asking all of them at once rather than one at a time.",
+    warning: {
+      title: "Partial machine payment signals",
+      consequence:
+        "Something is documented without being fully in place. Worth confirming with your payment provider what is actually live rather than described.",
+    },
   },
   "x402-support": {
     title: "No x402 support",
@@ -301,6 +376,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "You may well have docs. If they are not linked from your homepage at a predictable path, a crawler has no way to find them.",
     fix: "Put documentation at /docs, /api or /developers and link it from your main navigation in plain HTML. Predictable paths matter more than pretty ones here.",
+    warning: {
+      title: "Your API docs exist but are not linked",
+      consequence:
+        "They are published, which is the work done. Nothing on your homepage points at them, so a crawler has no path to find them and only people who already know the URL ever arrive.",
+    },
   },
   "developer-portal": {
     title: "No developer portal",
@@ -313,6 +393,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Model Context Protocol is how an assistant uses a product as a set of tools rather than reading about it. For a software company in 2026 this is fast becoming the difference between being integrated and being described.",
     fix: "Build an MCP server exposing your core actions as named tools with clear descriptions and typed parameters. Use Streamable HTTP transport. Start with five or six tools that cover the jobs customers actually automate rather than mirroring your whole API. The tool descriptions are the part people underinvest in and they are what decides whether a model picks the right one.",
+    warning: {
+      title: "Your MCP server is registered but not reachable",
+      consequence:
+        "It exists in a registry, and something is wrong with the live endpoint. This is the frustrating version of the problem, because the work is done and the thing still cannot be connected to.",
+    },
   },
   "mcp-registry-listed": {
     title: "Not listed in any MCP registry",
@@ -324,6 +409,11 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "Without a standard auth flow, an agent acting for a customer has no safe way to get access. The usual workaround is asking people to paste API keys around, which is the thing security teams block.",
     fix: "Implement OAuth 2.0 with PKCE and publish your authorization server metadata at /.well-known/oauth-authorization-server. Declare scopes that map to real permissions so an agent can request the narrow access it needs rather than everything.",
+    warning: {
+      title: "OAuth is mentioned but not discoverable",
+      consequence:
+        "You may well support it. Without the standard metadata endpoints an agent cannot find that out, so in practice it assumes you do not.",
+    },
   },
   "json-error-responses": {
     title: "Errors come back as HTML",
@@ -343,12 +433,22 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence:
       "An agent searching for your API docs, your spec or your MCP server finds nothing relevant, so none of the work above gets used.",
     fix: "Publish at predictable paths and name them plainly: /docs, /openapi.json, /developers, /mcp. Reference them from your homepage and from llms.txt. Discoverability is a separate problem from existence and it is the one usually left undone.",
+    warning: {
+      title: "Your developer resources are hard to find by name",
+      consequence:
+        "Some of them surface, most do not. An agent that knows your name should be able to find your docs and your spec without being handed the URLs.",
+    },
   },
   "rest-sdk-packages": {
     title: "No SDK packages",
     consequence:
       "An agent writing integration code reaches for a published client library first. With none, it writes raw HTTP calls and gets your API wrong more often.",
     fix: "Publish official clients to npm and PyPI at minimum, generated from your OpenAPI spec so they cannot drift. Two ecosystems done properly beats six half-maintained.",
+    warning: {
+      title: "You have an SDK in one ecosystem only",
+      consequence:
+        "One is genuinely better than none. An agent writing integration code in any other language falls back to raw HTTP calls and gets your API wrong more often.",
+    },
   },
   "webmcp": {
     title: "No in-page tools for browser agents",
@@ -379,6 +479,41 @@ export function tierWeight(tier: OraCheckTier | undefined): number {
  * would otherwise reach a customer as Ora's own engineer-facing wording, which
  * is the exact failure this file exists to prevent.
  */
+/**
+ * Checks that warn without needing distinct wording, and why.
+ *
+ * Ora uses `warning` for these when the score is a flat zero and the detail
+ * literally reads "No AP2 signals detected", so the failure copy is already
+ * accurate. Listed rather than left silent so the next audit can tell a
+ * deliberate omission from an oversight, and so `assertWarningCopy` below does
+ * not cry wolf about them.
+ */
+const WARNING_COPY_NOT_NEEDED = new Set(["ap2-support", "x402-support"]);
+
+/**
+ * Flags a check that started warning without wording for it.
+ *
+ * A guard rather than a test, because the trigger is Ora changing what it
+ * returns rather than anyone changing this file: a check that has only ever
+ * failed can start warning at any time, and the first sign would otherwise be
+ * a customer reading that he has no structured data when the report also shows
+ * the structured data he has.
+ *
+ * Logged, never thrown. A wording gap should not cost somebody their report.
+ */
+export function assertWarningCopy(checkId: string, status: string): void {
+  if (status !== "warning") return;
+  if (WARNING_COPY_NOT_NEEDED.has(checkId)) return;
+  const copy = CHECK_COPY[checkId];
+  if (copy && !copy.warning) {
+    console.warn(
+      `[scan] ${checkId} returned "warning" and has no warning copy, so the ` +
+        `failure wording will be shown for a partial pass. Add a warning ` +
+        `variant in relevance.ts.`
+    );
+  }
+}
+
 export function isRelevant(
   checkId: string,
   category: BusinessCategory

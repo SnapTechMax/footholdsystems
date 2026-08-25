@@ -1,5 +1,10 @@
 import "server-only";
-import { CHECK_COPY, isRelevant, tierWeight } from "./relevance";
+import {
+  assertWarningCopy,
+  CHECK_COPY,
+  isRelevant,
+  tierWeight,
+} from "./relevance";
 import {
   categoryLabel,
   isCategoryExtra,
@@ -302,6 +307,7 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
   // A warning is not a failure, and saying so matters: the failure wording for
   // some checks is flatly untrue of a partial pass. Falls back to the failure
   // copy where no distinct wording is needed.
+  assertWarningCopy(check.id, check.status);
   const variant = check.status === "warning" && copy.warning ? copy.warning : {};
   const title = variant.title ?? copy.title;
   const consequence = variant.consequence ?? copy.consequence;
