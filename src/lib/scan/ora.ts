@@ -258,10 +258,19 @@ async function request(path: string, init: RequestInit): Promise<unknown> {
  * mean the seventh visitor of the day gets an error instead of a report. A
  * cached result that is a few hours old is a perfectly good report.
  */
-export async function runScan(domain: string): Promise<OraScan> {
+export async function runScan(
+  domain: string,
+  options: { force?: boolean } = {}
+): Promise<OraScan> {
   const raw = await request("/api/scan", {
     method: "POST",
-    body: JSON.stringify({ url: domain }),
+    // `force` bypasses Ora's own freshness cache and is capped at six per
+    // rolling 24 hours across our whole deployment. Never set from the request
+    // path; the admin refresh is the only caller allowed to ask for it, and it
+    // still has to be asked for explicitly.
+    body: JSON.stringify(
+      options.force ? { url: domain, force: true } : { url: domain }
+    ),
   });
   return parseOraScan(raw);
 }

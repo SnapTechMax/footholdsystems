@@ -9,7 +9,7 @@ import {
   type ScanRow,
 } from "./db";
 import { buildReportEmail } from "./email";
-import { OraError, isRetryable, scanDomain } from "./ora";
+import { OraError, isRetryable, runScan, scanDomain } from "./ora";
 import { buildReport } from "./report";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -132,6 +132,65 @@ export async function sendReportEmail(
 
   await markReportEmailed(scan.id);
   return { ok: true };
+}
+
+/**
+ * Re-runs Ora for a scan that has already completed, updating the row in place.
+ *
+ * The point is that the token does not change. A customer has the report link
+ * already, quite possibly bookmarked or forwarded, and minting a new row would
+ * leave them looking at the old data on the old URL while the fresh version sat
+ * somewhere they had never seen.
+ *
+ * Does not email by default. A refresh is usually us correcting something on
+ * our side rather than news for them, and a second identical report landing in
+ * their inbox is a worse outcome than a quietly updated page. `sendEmail` is
+ * there for the case where the numbers really have moved.
+ *
+ * Calls Ora directly rather than through `scanDomain`, which is cache-first: a
+ * refresh that returns the data we already hold is not a refresh.
+ */
+export async function refreshScanJob(
+  scanId: number,
+  options: { force?: boolean; sendEmail?: boolean } = {}
+): Promise<
+  | { status: "done"; before: number | null; after: number; emailed: boolean }
+  | { status: "failed"; reason: string }
+> {
+  const scan = await getScanById(scanId);
+  if (!scan) return { status: "failed", reason: "no such scan" };
+
+  let raw;
+  let report;
+  try {
+    raw = await runScan(scan.domain, { force: options.force });
+    report = buildReport(raw, scan.category);
+  } catch (error) {
+    // Deliberately does not call failScan. The existing report is still good
+    // and still being served; a refresh that could not reach Ora is no reason
+    // to mark a completed scan failed and have the sweeper redo it.
+    return {
+      status: "failed",
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const before = scan.score;
+  await completeScan({
+    id: scanId,
+    score: report.score,
+    grade: report.grade,
+    report,
+    raw,
+  });
+
+  let emailed = false;
+  if (options.sendEmail) {
+    const sent = await sendReportEmail({ ...scan, report });
+    emailed = sent.ok;
+  }
+
+  return { status: "done", before, after: report.score, emailed };
 }
 
 /** Whether an error should be shown to a visitor or swallowed into a generic message. */
