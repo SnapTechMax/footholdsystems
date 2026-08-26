@@ -531,6 +531,26 @@ export async function isPaid(
 }
 
 /**
+ * Removes a SIMULATED payment, so a test can be re-run.
+ *
+ * Scoped to provider = 'simulated' in the query itself rather than checked in
+ * the caller: this deletes a row that grants paid access, and the guarantee
+ * that it can never touch a real Whop order should live where it cannot be
+ * forgotten. A caller passing a real order's ids simply deletes nothing.
+ */
+export async function removeSimulatedPayment(
+  scanId: number,
+  product: OrderProduct
+): Promise<boolean> {
+  const db = sql();
+  const rows = (await db`
+    DELETE FROM scan_orders
+    WHERE scan_id = ${scanId} AND product = ${product} AND provider = 'simulated'
+    RETURNING id`) as { id: number }[];
+  return rows.length > 0;
+}
+
+/**
  * Records a completed payment.
  *
  * Idempotent by design — payment providers retry webhooks, and Whop is no
