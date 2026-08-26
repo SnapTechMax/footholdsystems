@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookKickoff } from "@/components/BookKickoff";
+import { BuildOffer } from "@/components/BuildOffer";
 import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
 import {
-  DONE_FOR_YOU_PRICE,
   PURCHASE_MARKER,
   SOLUTIONS_PRICE_CENTS,
-  checkoutUrl,
 } from "@/lib/scan/pricing";
 import { buildReport } from "@/lib/scan/report";
 import { CONTACT_EMAIL } from "@/lib/site";
@@ -55,28 +54,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** One line of what the engagement actually includes. */
-function Deliverable({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="flex gap-3.5">
-      <span
-        aria-hidden="true"
-        className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
-      />
-      <span className="text-[16px] leading-[1.7] text-[var(--muted)]">
-        <span className="font-semibold text-[var(--text)]">{title}.</span>{" "}
-        {children}
-      </span>
-    </li>
-  );
-}
-
 export default async function ScanNextPage({
   params,
   searchParams,
@@ -111,7 +88,6 @@ export default async function ScanNextPage({
 
   const domain = report.domain;
   const findingCount = report.findings.length;
-  const pay = checkoutUrl(scan.token, "done_for_you");
 
   return (
     <Shell>
@@ -144,7 +120,7 @@ export default async function ScanNextPage({
               {findingCount === 1
                 ? "one fix is"
                 : `${findingCount} fixes are`}{" "}
-              unlocked on your report now — what to change, where, and which one
+              unlocked on your report now. What to change, where, and which one
               to do first. The link never expires, and it&apos;s in your inbox
               too.
             </p>
@@ -161,7 +137,7 @@ export default async function ScanNextPage({
               <span className="font-semibold text-[var(--text)]">
                 Your payment went through.
               </span>{" "}
-              We&apos;re unlocking the fixes on your report — it takes a few
+              We&apos;re unlocking the fixes on your report. It takes a few
               seconds and this page will update on its own. Nothing else is
               needed from you.
             </p>
@@ -179,113 +155,11 @@ export default async function ScanNextPage({
         <BookKickoff domain={domain} />
       ) : (
         <>
-          <div className="mt-16">
-            <Eyebrow>Before you start</Eyebrow>
-            <h2 className="mt-4 text-balance font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-              That list gets you level. It doesn&apos;t get you ahead.
-            </h2>
-
-            <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-              <p>
-                Be straight with yourself about what you just bought. Every fix
-                on it is something a scanner can detect, which means every
-                competitor who runs the same scan gets the same list. Do all of
-                it and you are level with the best-prepared business in your
-                category.
-              </p>
-              <p>
-                Level is a good place to be. It is not the same as being the one
-                that gets named.
-              </p>
-              <p>
-                The things that decide that last part are the things no scanner
-                sees. Whether your specifics are sharp enough for a model to
-                match you to a situation rather than a category. Whether the rest
-                of the web corroborates what your site claims. Whether the words
-                on your service pages are the words your customers actually use
-                when they describe the problem to an assistant. That is
-                judgement, and it is the half we do by hand.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-12 rounded-xl border-2 border-[var(--accent)]/40 bg-[var(--panel)] p-7 sm:p-10">
-            <Eyebrow>We do it for you &mdash; {DONE_FOR_YOU_PRICE}</Eyebrow>
-            <h2 className="mt-4 text-balance font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-              You send us the keys. We hand back two sites.
-            </h2>
-
-            <ul className="mt-8 space-y-5">
-              <Deliverable title="Every fix on your list, implemented">
-                All{" "}
-                {findingCount === 1 ? "one of them" : `${findingCount} of them`}
-                , done on {domain} itself. You don&apos;t brief a developer, you
-                don&apos;t check whether it was done right, and you don&apos;t
-                find out in six months that half of it was skipped.
-              </Deliverable>
-              <Deliverable title="Your pages rewritten">
-                Positioning decided first, then the words. In your voice, saying
-                what you actually do and who for, specific enough that a model
-                can match you to a situation instead of filing you under a
-                category.
-              </Deliverable>
-              <Deliverable title="Your listings made to agree">
-                Google Business Profile, the trade directories and the profiles
-                you already own, lined up so the name, address, phone and claims
-                match. Contradictions between them are the cheapest reason to get
-                dropped, and the easiest to miss from the inside.
-              </Deliverable>
-              <Deliverable title="A second site, on its own domain">
-                Built for machines only. {domain} has a job already — it has to
-                sell to people, carry your brand, look right. All of that pulls
-                against being maximally readable to a model, which is why fixing
-                it is always a compromise between two audiences. The second
-                domain has one audience and none of the compromises. It
-                doesn&apos;t have to look like anything. It has to be findable
-                and unambiguous.
-              </Deliverable>
-              <Deliverable title="You keep all of it">
-                Both domains, and a written record of everything that changed and
-                why. If you never speak to us again, none of it stops working.
-              </Deliverable>
-            </ul>
-
-            <div className="mt-9 border-t border-[var(--line)] pt-7">
-              <p className="text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-                <span className="font-semibold text-[var(--text)]">
-                  {DONE_FOR_YOU_PRICE}, once. Two to three weeks.
-                </span>{" "}
-                Not a retainer, not a monthly, not a contract you have to get out
-                of later. One payment, the work gets done, you keep everything.
-                For most businesses this is built for, it is less than what one
-                commercial job is worth.
-              </p>
-            </div>
-
-            {/* One button, deliberately. A "book a call first" option next to a
-                buy button converts the people who would have bought into people
-                who have to be sold again on a call — the call is scheduling,
-                and it belongs after the money, not in front of it. */}
-            <div className="mt-8">
-              <a
-                href={pay}
-                className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
-              >
-                Start now &mdash; {DONE_FOR_YOU_PRICE}
-                <span
-                  aria-hidden="true"
-                  className="transition-transform duration-150 group-hover:translate-x-1"
-                >
-                  &rarr;
-                </span>
-              </a>
-            </div>
-
-            <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-              One payment, then you pick a time with us and we start. No call to
-              sit through before you can buy, and nothing to negotiate.
-            </p>
-          </div>
+          <BuildOffer
+            token={scan.token}
+            domain={domain}
+            findingCount={findingCount}
+          />
 
           <p className="mt-10 text-[15px] leading-relaxed text-[var(--dim)]">
             Not now? Nothing happens. Your list stays on{" "}

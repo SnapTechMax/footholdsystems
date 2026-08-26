@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookKickoff } from "@/components/BookKickoff";
+import { BuildOffer } from "@/components/BuildOffer";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
-import {
-  DONE_FOR_YOU_PRICE,
-  SOLUTIONS_PRICE,
-  checkoutUrl,
-} from "@/lib/scan/pricing";
+import { SOLUTIONS_PRICE, checkoutUrl } from "@/lib/scan/pricing";
 import { buildReport, toPublicReport } from "@/lib/scan/report";
 import type { ReportFinding, ScanReport } from "@/lib/scan/types";
 import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
@@ -302,90 +299,6 @@ function Paywall({
   );
 }
 
-/**
- * The $1,497 offer, shown only after the fixes are unlocked.
- *
- * Deliberately not on the unpaid page. Someone who has not bought the
- * {SOLUTIONS_PRICE} report has no reason to believe a {DONE_FOR_YOU_PRICE}
- * engagement, and stacking both offers in front of a cold visitor devalues the
- * cheap one.
- */
-function DoneForYou({ token, domain }: { token: string; domain: string }) {
-  const pay = checkoutUrl(token, "done_for_you");
-
-  return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--ink)] p-7 sm:p-10">
-      <Eyebrow>One more thing</Eyebrow>
-      <h2 className="mt-4 text-balance font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-        That list gets you level. It doesn&apos;t get you ahead.
-      </h2>
-
-      <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-        <p>
-          Be straight with yourself about what you just bought. Every fix above
-          is something a scanner can detect, which means every competitor who
-          runs the same scan gets the same list. Do all of it and you are level
-          with the best-prepared business in your category.
-        </p>
-        <p>
-          Level is a good place to be. It is not the same as being the one that
-          gets named.
-        </p>
-        <p>
-          The things that decide that last part are the things no scanner sees.
-          Whether your specifics are sharp enough for a model to match you to a
-          situation rather than a category. Whether the rest of the web
-          corroborates what your site claims. Whether the words on your service
-          pages are the words your customers actually use when they describe the
-          problem to an assistant. That is judgement, and it is the half we do by
-          hand.
-        </p>
-        <p className="font-semibold text-[var(--text)]">
-          {DONE_FOR_YOU_PRICE}. We implement every fix on your list, rewrite{" "}
-          {domain} so a model can tell what you are for, and make your existing
-          listings agree with each other.
-        </p>
-        <p>
-          Then we build you a second site, on its own domain, separate from this
-          one. {domain} has a job already: it has to sell to people, carry your
-          brand, look right. All of that pulls against being maximally readable
-          to a model, which is why fixing it is always a compromise between two
-          audiences.
-        </p>
-        <p>
-          The second domain has one audience. It sits where models go looking,
-          structured the way they want, saying what they need in order to
-          recommend you, with none of the compromises. It does not have to look
-          like anything. It has to be findable and unambiguous.
-        </p>
-      </div>
-
-      {/* One button. The call used to sit here as the primary action, which
-          turned a ready buyer into someone who had to be sold again on a call.
-          Scheduling belongs after the payment — see BookKickoff, which is what
-          replaces this block once the build is bought. */}
-      <div className="mt-8">
-        <a
-          href={pay}
-          className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
-        >
-          Start now &mdash; {DONE_FOR_YOU_PRICE}
-          <span
-            aria-hidden="true"
-            className="transition-transform duration-150 group-hover:translate-x-1"
-          >
-            &rarr;
-          </span>
-        </a>
-      </div>
-      <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
-        One payment, then you pick a time with us and we start. Two to three
-        weeks from that day, and you keep everything.
-      </p>
-    </div>
-  );
-}
-
 /* ── page ─────────────────────────────────────────────────────────────────── */
 
 export default async function ScanReportPage({
@@ -542,7 +455,11 @@ export default async function ScanReportPage({
             {boughtBuild ? (
               <BookKickoff domain={report.domain} />
             ) : unlocked ? (
-              <DoneForYou token={scan.token} domain={report.domain} />
+              <BuildOffer
+                token={scan.token}
+                domain={report.domain}
+                findingCount={findings.length}
+              />
             ) : (
               <Paywall
                 token={scan.token}

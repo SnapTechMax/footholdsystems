@@ -33,7 +33,7 @@ export function BookKickoff({ domain }: { domain: string }) {
           the only thing setting that day is this call.
         </p>
         <p>
-          Thirty minutes, and it is not a pitch — you have already bought. We go
+          Thirty minutes, and it is not a pitch. You have already bought. We go
           through what you actually sell and who for, which of your listings we
           need access to, and what your second domain should be called. Bring
           logins for your website and your Google Business Profile if you have
@@ -66,7 +66,7 @@ export function BookKickoff({ domain }: { domain: string }) {
         >
           {CONTACT_EMAIL}
         </a>{" "}
-        and we&apos;ll find a time by hand. Your slot is held either way — the
+        and we&apos;ll find a time by hand. Your slot is held either way. The
         work is paid for and it is not going anywhere.
       </p>
     </div>

@@ -96,8 +96,8 @@ export default async function ScanBookedPage({
           <>
             <p className="mt-7 max-w-[52ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
               We have your {DONE_FOR_YOU_PRICE} and {domain} is on the board.
-              Everything from here is us doing the work — except one thing, and
-              it is the thing that sets your start date.
+              Everything from here is us doing the work, except one thing, and it
+              is the thing that sets your start date.
             </p>
             <BookKickoff domain={domain} />
           </>
@@ -119,8 +119,8 @@ export default async function ScanBookedPage({
               >
                 {CONTACT_EMAIL}
               </a>{" "}
-              and we&apos;ll confirm by hand. Your payment is safe either way —
-              it is recorded on our side before this page ever changes.
+              and we&apos;ll confirm by hand. Your payment is safe either way. It
+              is recorded on our side before this page ever changes.
             </p>
           </div>
         )}
