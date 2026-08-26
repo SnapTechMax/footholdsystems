@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookKickoff } from "@/components/BookKickoff";
-import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
 import {
   DONE_FOR_YOU_PRICE,
-  DONE_FOR_YOU_PRICE_CENTS,
-  PURCHASE_MARKER,
   SOLUTIONS_PRICE,
   checkoutUrl,
 } from "@/lib/scan/pricing";
@@ -396,16 +393,13 @@ export default async function ScanReportPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ checkout?: string; [PURCHASE_MARKER]?: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const { token } = await params;
   // Set by /api/go/checkout when Whop could not be reached, so the buyer lands
   // back on the button they pressed rather than on an error page.
   const query = await searchParams;
   const checkoutFailed = query.checkout === "failed";
-  // Set by the checkout redirect. Only the build lands back here — a $49 buyer
-  // is sent to the upsell page, which fires its own conversion.
-  const justBoughtBuild = query[PURCHASE_MARKER] === "1";
   const scan = await getScanByToken(token).catch(() => null);
 
   // Same 404 for a bad token and a missing one. Distinguishing them would let
@@ -493,17 +487,6 @@ export default async function ScanReportPage({
 
   return (
     <Shell>
-      {/* The conversion still needs both: a payment on record AND the marker
-          from the checkout redirect, so revisiting cannot re-fire it. */}
-      {boughtBuild && justBoughtBuild && (
-        <PurchasePixel
-          token={scan.token}
-          product="done_for_you"
-          value={DONE_FOR_YOU_PRICE_CENTS / 100}
-          justPurchased
-        />
-      )}
-
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Eyebrow>AI visibility report</Eyebrow>
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">

@@ -68,16 +68,27 @@ export function unsubscribeUrl(email: string): string {
  */
 export const PURCHASE_MARKER = "purchased";
 
+/**
+ * Confirmation page for a build purchase.
+ *
+ * Its own page rather than the report, because the report opens with a score
+ * and eight findings and buries the one thing a new customer needs. See the
+ * page itself for the full reasoning.
+ */
+export function bookedUrl(token: string): string {
+  return `${siteUrl()}/scan/${token}/booked`;
+}
+
 /** Where a buyer is sent once the payment clears. */
 export function checkoutReturnUrl(
   token: string,
   product: "solutions" | "done_for_you"
 ): string {
-  // A $49 buyer goes to the upsell page, which opens with the link to the fixes
-  // they just bought and then makes the case for the build. Anyone who has
-  // bought the build has nothing left to be sold, so they go to the report.
-  const base =
-    product === "solutions" ? upsellUrl(token) : reportUrl(token);
+  // Each tier gets a page that opens with what it just bought: the $49 buyer
+  // gets their fixes and then the case for the build, the build buyer gets a
+  // confirmation and the one action left. Neither lands on the report, which is
+  // a reference document rather than a next step.
+  const base = product === "solutions" ? upsellUrl(token) : bookedUrl(token);
   return `${base}?${PURCHASE_MARKER}=1`;
 }
 
