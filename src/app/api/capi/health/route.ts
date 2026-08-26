@@ -30,6 +30,27 @@ export const dynamic = "force-dynamic";
 // One round trip to Meta, on an admin's click.
 export const maxDuration = 30;
 
+/**
+ * Reads Meta's error code and says what it actually means.
+ *
+ * The first version asserted "code 190 is a bad token" on every failure,
+ * including a 100 that had nothing to do with the credentials. A diagnostic
+ * that guesses confidently is worse than one that says it does not know.
+ */
+function hintFor(error: string | undefined): string {
+  if (!error) return "No detail returned. Check the function logs.";
+  if (error.includes('"code":190')) {
+    return "Code 190 is a bad or expired token. Regenerate it against this pixel: tokens are pixel-specific.";
+  }
+  if (error.includes("2804050")) {
+    return "Meta needs customer information parameters to match an event. Real Lead and Purchase events send a hashed email and Meta's cookies, so this affects the health check only.";
+  }
+  if (error.includes('"code":100')) {
+    return "Code 100 is a malformed parameter rather than a credentials problem. The message above names the field.";
+  }
+  return "See the error above. It is Meta's verbatim response.";
+}
+
 export async function GET(request: NextRequest) {
   if (!isAdminAuthorised(request.headers.get("authorization"))) {
     return new NextResponse("Unauthorized", {
@@ -60,12 +81,23 @@ export async function GET(request: NextRequest) {
 
   const testEventCode = request.nextUrl.searchParams.get("test_event_code")?.trim();
 
+  // Meta rejects an event it cannot match to anybody: code 100, subcode
+  // 2804050, "no customer information parameters". This check used to send an
+  // empty user object and so always failed, which made a working token look
+  // broken — the opposite of what a health check is for.
+  //
+  // The admin's own IP and user agent are real parameters and are what the
+  // request already carries. No email is sent: hashing a made-up address to
+  // satisfy a validator would put a fictional person into the match pool.
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip = forwarded ? forwarded.split(",")[0]?.trim() || null : null;
+
   const result = await sendCapiEvent({
     eventName: "HealthCheck",
     // Timestamped so repeated checks are distinct events rather than Meta
     // deduplicating them against each other and reporting a false success.
     eventId: `healthcheck:${Date.now()}`,
-    userData: {},
+    userData: { ip, userAgent: request.headers.get("user-agent") },
     ...(testEventCode ? { testEventCode } : {}),
   });
 
@@ -82,7 +114,7 @@ export async function GET(request: NextRequest) {
       ...(result.error ? { error: result.error } : {}),
       hint: result.ok
         ? "eventsReceived 1 means Meta accepted it. Lead and Purchase use the same credentials and transport."
-        : "Check the error above. Code 190 is a bad or expired token; regenerate it against this pixel, since tokens are pixel-specific.",
+        : hintFor(result.error),
     },
     { status: result.ok ? 200 : 502, headers: { "Cache-Control": "no-store" } }
   );
