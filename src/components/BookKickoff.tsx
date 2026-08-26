@@ -1,5 +1,5 @@
 import { DONE_FOR_YOU_PRICE } from "@/lib/scan/pricing";
-import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
+import { CONTACT_EMAIL, calendlyKickoffUrl } from "@/lib/site";
 
 /**
  * What a build customer sees once the money has cleared.
@@ -33,7 +33,7 @@ export function BookKickoff({ domain }: { domain: string }) {
           the only thing setting that day is this call.
         </p>
         <p>
-          Twenty minutes, and it is not a pitch — you have already bought. We go
+          Thirty minutes, and it is not a pitch — you have already bought. We go
           through what you actually sell and who for, which of your listings we
           need access to, and what your second domain should be called. Bring
           logins for your website and your Google Business Profile if you have
@@ -43,7 +43,7 @@ export function BookKickoff({ domain }: { domain: string }) {
 
       <div className="mt-8">
         <a
-          href={calendlyUrl("dfy-kickoff")}
+          href={calendlyKickoffUrl()}
           target="_blank"
           rel="noopener noreferrer"
           className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"

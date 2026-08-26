@@ -10,8 +10,21 @@
 export const SCAN_ANCHOR = "#scan";
 
 // The dedicated event type carrying the rolling 7-day / 1–4pm Pacific window.
+// This is the PRE-SALE call: twenty minutes, for someone deciding.
 export const CALENDLY_URL =
   "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call";
+
+/**
+ * The POST-SALE kickoff. Thirty minutes, and a different event type entirely.
+ *
+ * Separate because the copy on that page promises "not a pitch — you have
+ * already bought", and sending a customer who paid sixty seconds ago to a page
+ * headed "20 Minute AI Strategy Call" reads as exactly the sales call the
+ * sentence just said it was not. It is also longer, because it is real work:
+ * positioning, which listings we need, what the second domain is called.
+ */
+export const CALENDLY_KICKOFF_URL =
+  "https://calendly.com/maximilian-footholdsystems/30min";
 
 /**
  * Where lead capture sends people once delivery has happened.
@@ -102,7 +115,23 @@ export const GUIDE_PATH =
  *                   delivery email and the report pass their own.
  */
 export function calendlyUrl(entryPoint: string, medium = "website"): string {
-  const url = new URL(CALENDLY_URL);
+  return withCampaign(CALENDLY_URL, entryPoint, medium);
+}
+
+/**
+ * Booking link for a customer who has already paid for the build.
+ *
+ * Same tagging, different event type — see CALENDLY_KICKOFF_URL.
+ */
+export function calendlyKickoffUrl(
+  entryPoint = "dfy-kickoff",
+  medium = "website"
+): string {
+  return withCampaign(CALENDLY_KICKOFF_URL, entryPoint, medium);
+}
+
+function withCampaign(base: string, entryPoint: string, medium: string): string {
+  const url = new URL(base);
   url.searchParams.set("utm_source", "footholdsystems");
   url.searchParams.set("utm_medium", medium);
   url.searchParams.set("utm_campaign", entryPoint);
