@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthorised } from "@/lib/admin-auth";
+import type { OrderProduct } from "@/lib/scan/db";
 import { WHOP_CONFIGURED, createCheckout } from "@/lib/scan/whop";
 
 /**
@@ -45,8 +46,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Both products go through identical code, differing only in price and title,
+  // so a passing check on one proves nothing about the other. That is not
+  // hypothetical: the $49 checkout worked while the $1,500 one was failing, and
+  // this endpoint hardcoded the cheap one and reported healthy throughout.
+  const product: OrderProduct =
+    request.nextUrl.searchParams.get("product") === "done_for_you"
+      ? "done_for_you"
+      : "solutions";
+
   const result = await createCheckout({
-    product: "solutions",
+    product,
     metadata: { source: "health-check", note: "not a real purchase" },
   });
 
@@ -55,6 +65,7 @@ export async function GET(request: NextRequest) {
       {
         ok: false,
         env,
+        tested: { product, priceUsd: product === "done_for_you" ? 1500 : 49 },
         error: result.reason,
         // The permission set is the usual cause and the list is not guessable,
         // so it is repeated here rather than left in a commit message.
@@ -74,6 +85,7 @@ export async function GET(request: NextRequest) {
     {
       ok: true,
       env,
+      tested: { product, priceUsd: product === "done_for_you" ? 1500 : 49 },
       created: { configId: result.configId, planId: result.planId },
       checkoutUrl: result.url,
       note: "A real checkout configuration was created and left unpaid. Nothing was charged.",
