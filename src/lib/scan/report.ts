@@ -200,7 +200,7 @@ function capGrade(
  * Written to be true at every band. The temptation on a page selling a fix is
  * to tell everyone they are failing, but a business that genuinely scores well
  * and gets told it is invisible stops believing the rest of the report — and
- * they are the ones most likely to buy the $1,500 engagement.
+ * they are the ones most likely to buy the $1,497 engagement.
  */
 function verdictFor(grade: Grade, domain: string): string {
   switch (grade) {

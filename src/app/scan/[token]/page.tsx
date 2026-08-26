@@ -306,7 +306,7 @@ function Paywall({
 }
 
 /**
- * The $1,500 offer, shown only after the fixes are unlocked.
+ * The $1,497 offer, shown only after the fixes are unlocked.
  *
  * Deliberately not on the unpaid page. Someone who has not bought the
  * {SOLUTIONS_PRICE} report has no reason to believe a {DONE_FOR_YOU_PRICE}

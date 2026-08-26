@@ -8,7 +8,7 @@
  */
 
 export const SOLUTIONS_PRICE_CENTS = 4900;
-export const DONE_FOR_YOU_PRICE_CENTS = 150_000;
+export const DONE_FOR_YOU_PRICE_CENTS = 149_700;
 
 export function formatPrice(cents: number): string {
   // No cents shown when the price is whole dollars — "$49", not "$49.00".

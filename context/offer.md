@@ -1,7 +1,7 @@
 ---
 title: FootHold Offer
 tags: [foothold, context]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # FootHold — Offer
@@ -20,7 +20,7 @@ The prioritised fixes from their own scan. Sold on the report page and in the
 report email, at the moment the fixes are blurred in front of them. Impulse
 purchase at peak context.
 
-**Tier 2 — $1,500, one-off. Two to three weeks.**
+**Tier 2 — $1,497, one-off. Two to three weeks.**
 - Every technical fix from the scan, implemented on the existing site
 - Pages rewritten, positioning decided first, in their voice
 - **Listing consistency**: Google Business Profile, trade directories and
@@ -29,7 +29,7 @@ purchase at peak context.
 - They keep everything, both domains plus a written record of what changed
 
 **Tier 3 — $2,000 up front, then $2,500/month, six-month minimum.**
-Separate funnel. Only sold to existing $1,500 customers.
+Separate funnel. Only sold to existing $1,497 customers.
 - 2x social posts from influencers AI is listening to
 - High-trust `.gov` backlinks
 - Monthly query tracking
@@ -42,15 +42,16 @@ Separate funnel. Only sold to existing $1,500 customers.
 
 - **$49** is priced as an impulse, below the threshold where anyone needs
   approval. Framed as less than an hour of most people's billable time.
-- **$1,500** is one-off on purpose. "Not a retainer" is a selling point against
-  agencies. Framed against the value of a single commercial job.
+- **$1,497** is one-off on purpose. "Not a retainer" is a selling point against
+  agencies. Framed against the value of a single commercial job. Priced at 1497
+  rather than 1500 on charm-pricing grounds — changed 2026-08-26.
 - **Tier 3** is where recurring work lives, because recurring work has recurring
   cost. The guarantee is affordable precisely because it only applies to people
   who already did tier 2.
 
 **The tiers must never be blurred.** Monthly tracking, new content, link
 acquisition and review systems belong to tier 3 only. Putting any of them in the
-$1,500 promises ongoing work for a one-off fee. This has already been caught
+$1,497 promises ongoing work for a one-off fee. This has already been caught
 once in the copy.
 
 ### Proof

@@ -73,7 +73,7 @@ function priceDollarsFor(product: OrderProduct): number {
  * Whop rejects a dynamic plan whose title exceeds this, and says so only in a
  * 400 body that used to reach nothing but a function log.
  *
- * "FootHold AEO — full implementation" was 34 characters. Every $1,500 checkout
+ * "FootHold AEO — full implementation" was 34 characters. Every $1,497 checkout
  * failed on it while the 25-character $49 title went through, so the expensive
  * half of the funnel was dead and the cheap half looked fine — which is exactly
  * the shape of bug that survives a casual test.

@@ -1,7 +1,7 @@
 ---
 title: FootHold Company
 tags: [foothold, context]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # FootHold — Company
@@ -47,12 +47,12 @@ real reviews and history.
 
 ### How it makes money
 
-Three tiers. Detail in `offer.md`. Summary: **$49** for the fix list, **$1,500**
+Three tiers. Detail in `offer.md`. Summary: **$49** for the fix list, **$1,497**
 for implementation plus a purpose-built second domain, **$2,000 + $2,500/month
 on a six-month minimum** for the ongoing retainer.
 
 The retainer is a **separate funnel**, sold only to people who have already
-bought the $1,500. It must not appear in top-of-funnel copy.
+bought the $1,497. It must not appear in top-of-funnel copy.
 
 `[UNSURE]` Whether any tier has been sold yet. No revenue figures, no customer
 count, no delivery-capacity constraints are known.
@@ -80,7 +80,7 @@ These are load-bearing. Most of the copy follows from them.
 
 ### What makes it different
 
-- **The second domain.** The $1,500 builds a separate site whose only audience
+- **The second domain.** The $1,497 builds a separate site whose only audience
   is machines. An existing site has to sell to people and carry a brand, and
   every one of those pulls against machine readability. Max's framing: nobody
   else is doing this.

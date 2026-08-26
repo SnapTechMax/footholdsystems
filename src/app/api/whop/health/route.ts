@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthorised } from "@/lib/admin-auth";
 import type { OrderProduct } from "@/lib/scan/db";
+import {
+  DONE_FOR_YOU_PRICE_CENTS,
+  SOLUTIONS_PRICE_CENTS,
+} from "@/lib/scan/pricing";
 import { WHOP_CONFIGURED, createCheckout } from "@/lib/scan/whop";
 
 /**
@@ -52,12 +56,19 @@ export async function GET(request: NextRequest) {
 
   // Both products go through identical code, differing only in price and title,
   // so a passing check on one proves nothing about the other. That is not
-  // hypothetical: the $49 checkout worked while the $1,500 one was failing, and
+  // hypothetical: the $49 checkout worked while the $1,497 one was failing, and
   // this endpoint hardcoded the cheap one and reported healthy throughout.
   const product: OrderProduct =
     request.nextUrl.searchParams.get("product") === "done_for_you"
       ? "done_for_you"
       : "solutions";
+
+  // Derived, not repeated. A health check that reports a price the code does
+  // not actually charge is worse than one that reports none.
+  const testedPriceUsd =
+    (product === "done_for_you"
+      ? DONE_FOR_YOU_PRICE_CENTS
+      : SOLUTIONS_PRICE_CENTS) / 100;
 
   const result = await createCheckout({
     product,
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
       {
         ok: false,
         env,
-        tested: { product, priceUsd: product === "done_for_you" ? 1500 : 49 },
+        tested: { product, priceUsd: testedPriceUsd },
         error: result.reason,
         // The permission set is the usual cause and the list is not guessable,
         // so it is repeated here rather than left in a commit message.
@@ -89,7 +100,7 @@ export async function GET(request: NextRequest) {
     {
       ok: true,
       env,
-      tested: { product, priceUsd: product === "done_for_you" ? 1500 : 49 },
+      tested: { product, priceUsd: testedPriceUsd },
       mode: result.mode,
       created: { configId: result.configId, planId: result.planId },
       checkoutUrl: result.url,

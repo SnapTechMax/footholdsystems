@@ -1,7 +1,7 @@
 ---
 title: FootHold Customer
 tags: [foothold, context]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # FootHold — Customer
@@ -93,7 +93,7 @@ roofer.
 - Is the number credible? A grade contradicted by their own experience destroys
   trust instantly, which is why the grade cap and the cold-search caveat exist.
 - Do they keep the work? Both domains and a written record of what changed.
-- Is it a retainer? The $1,500 is deliberately one-off.
+- Is it a retainer? The $1,497 is deliberately one-off.
 
 ---
 
