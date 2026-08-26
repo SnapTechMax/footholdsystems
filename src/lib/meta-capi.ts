@@ -137,6 +137,21 @@ export async function sendCapiEvent(event: CapiEvent): Promise<boolean> {
       );
       return false;
     }
+
+    // Logged on success too, deliberately. Silence on the happy path meant a
+    // misconfigured token and a working one looked identical from the outside —
+    // there was no line anywhere that said an event had actually left. Meta
+    // echoes `events_received`, which is the only confirmation that exists
+    // short of opening Events Manager, so it goes in the log.
+    const receipt = (await response.json().catch(() => null)) as {
+      events_received?: number;
+      fbtrace_id?: string;
+    } | null;
+    console.log(
+      `[capi] ${event.eventName} accepted: events_received=${
+        receipt?.events_received ?? "?"
+      } id=${event.eventId}${receipt?.fbtrace_id ? ` trace=${receipt.fbtrace_id}` : ""}`
+    );
     return true;
   } catch (error) {
     console.error(
