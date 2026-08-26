@@ -51,7 +51,14 @@ export interface CheckoutRequest {
 }
 
 export type CheckoutResult =
-  | { ok: true; url: string; configId: string; planId: string | null }
+  | {
+      ok: true;
+      url: string;
+      configId: string;
+      planId: string | null;
+      /** Which shape was used, so a health check can say. */
+      mode: "fixed-plan" | "dynamic-plan";
+    }
   | { ok: false; reason: string };
 
 function priceDollarsFor(product: OrderProduct): number {
@@ -62,10 +69,49 @@ function priceDollarsFor(product: OrderProduct): number {
   return cents / 100;
 }
 
+/**
+ * Whop rejects a dynamic plan whose title exceeds this, and says so only in a
+ * 400 body that used to reach nothing but a function log.
+ *
+ * "FootHold AEO — full implementation" was 34 characters. Every $1,500 checkout
+ * failed on it while the 25-character $49 title went through, so the expensive
+ * half of the funnel was dead and the cheap half looked fine — which is exactly
+ * the shape of bug that survives a casual test.
+ */
+const PLAN_TITLE_MAX = 30;
+
 function titleFor(product: OrderProduct): string {
-  return product === "done_for_you"
-    ? "FootHold AEO — full implementation"
-    : "FootHold AEO — your fixes";
+  const title =
+    product === "done_for_you"
+      ? "FootHold AEO — full build"
+      : "FootHold AEO — your fixes";
+
+  // Belt and braces. A future edit that pushes a title over the limit should
+  // cost a truncated title on a Whop receipt, not a checkout that 400s and a
+  // customer bounced back to the page they came from.
+  return title.length > PLAN_TITLE_MAX
+    ? title.slice(0, PLAN_TITLE_MAX).trimEnd()
+    : title;
+}
+
+/**
+ * A pre-made plan to bill against, when one is configured.
+ *
+ * Without these every click mints a brand new plan and touches a product, so a
+ * dashboard accumulates one plan per checkout and revenue has no stable thing
+ * to group by. With them, checkout just references a product that already
+ * exists — which also drops the need for the plan and access-pass write
+ * permissions, since nothing is being created.
+ *
+ * Optional. Unset, the dynamic path still works, so this can be adopted without
+ * a flag day and rolled back by clearing a variable.
+ */
+function fixedPlanId(product: OrderProduct): string | undefined {
+  const value =
+    product === "done_for_you"
+      ? process.env.WHOP_PLAN_ID_DONE_FOR_YOU
+      : process.env.WHOP_PLAN_ID_SOLUTIONS;
+  return value?.trim() || undefined;
 }
 
 /**
@@ -89,6 +135,8 @@ export async function createCheckout(
     return { ok: false, reason: "WHOP_API_KEY or WHOP_ACCOUNT_ID is not set" };
   }
 
+  const planId = fixedPlanId(request.product);
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -102,15 +150,23 @@ export async function createCheckout(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
+      // Two shapes, and Whop treats them as alternatives: `plan_id` bills
+      // against a product that already exists, `plan` creates one on the fly.
+      // Preferring the first when it is configured is the whole point of the
+      // fixed products — nothing is created, so nothing can fail validation.
       body: JSON.stringify({
         mode: "payment",
-        plan: {
-          company_id: companyId,
-          currency: CURRENCY,
-          plan_type: "one_time",
-          initial_price: priceDollarsFor(request.product),
-          title: titleFor(request.product),
-        },
+        ...(planId
+          ? { plan_id: planId }
+          : {
+              plan: {
+                company_id: companyId,
+                currency: CURRENCY,
+                plan_type: "one_time",
+                initial_price: priceDollarsFor(request.product),
+                title: titleFor(request.product),
+              },
+            }),
         metadata: request.metadata,
         redirect_url: request.redirectUrl ?? siteUrl(),
       }),
@@ -157,6 +213,7 @@ export async function createCheckout(
     ok: true,
     url: absoluteUrl(purchaseUrl),
     configId,
-    planId: typeof plan.id === "string" ? plan.id : null,
+    planId: typeof plan.id === "string" ? plan.id : (planId ?? null),
+    mode: planId ? "fixed-plan" : "dynamic-plan",
   };
 }

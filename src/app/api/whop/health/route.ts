@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
     // Not used by this check, but the thing most likely to be forgotten, and a
     // health endpoint that stays silent about it is doing half a job.
     WHOP_WEBHOOK_SECRET: Boolean(process.env.WHOP_WEBHOOK_SECRET),
+    // Which products are pinned. Unset means that product still mints a plan
+    // per checkout, which is the path with the validation Whop can reject.
+    WHOP_PLAN_ID_SOLUTIONS: Boolean(process.env.WHOP_PLAN_ID_SOLUTIONS),
+    WHOP_PLAN_ID_DONE_FOR_YOU: Boolean(process.env.WHOP_PLAN_ID_DONE_FOR_YOU),
   };
 
   if (!WHOP_CONFIGURED) {
@@ -86,6 +90,7 @@ export async function GET(request: NextRequest) {
       ok: true,
       env,
       tested: { product, priceUsd: product === "done_for_you" ? 1500 : 49 },
+      mode: result.mode,
       created: { configId: result.configId, planId: result.planId },
       checkoutUrl: result.url,
       note: "A real checkout configuration was created and left unpaid. Nothing was charged.",
