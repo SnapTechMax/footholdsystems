@@ -250,12 +250,30 @@ export async function recentScanCountForIp(ip: string): Promise<number> {
   return rows[0]?.n ?? 0;
 }
 
-/** Total scans started today, against Ora's rolling 24-hour budget. */
+/** Total scans started in the last rolling 24 hours. A cost backstop, not a quota. */
 export async function scansStartedToday(): Promise<number> {
   const db = sql();
   const rows = (await db`
     SELECT count(*)::int AS n FROM scans
     WHERE created_at > now() - INTERVAL '24 hours' AND status <> 'failed'`) as {
+    n: number;
+  }[];
+  return rows[0]?.n ?? 0;
+}
+
+/**
+ * Scans started in the last minute, across everybody.
+ *
+ * The scan provider's only real limit is a burst one — 10 a minute for the
+ * whole deployment, since Vercel gives us a single outbound IP. This is what
+ * the request path checks against it. Deliberately global rather than per-IP:
+ * the limit is global, so counting per visitor would measure the wrong thing.
+ */
+export async function scansStartedInLastMinute(): Promise<number> {
+  const db = sql();
+  const rows = (await db`
+    SELECT count(*)::int AS n FROM scans
+    WHERE created_at > now() - INTERVAL '1 minute' AND status <> 'failed'`) as {
     n: number;
   }[];
   return rows[0]?.n ?? 0;

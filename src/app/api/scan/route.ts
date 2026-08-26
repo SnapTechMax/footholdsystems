@@ -5,6 +5,7 @@ import {
   createScan,
   initScanSchema,
   recentScanCountForIp,
+  scansStartedInLastMinute,
   scansStartedToday,
   upsertLead,
 } from "@/lib/scan/db";
@@ -32,17 +33,38 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 90;
 
 /**
- * Per-IP ceiling for an hour.
- *
- * Ora allows 30 scans per rolling 24 hours across our entire deployment, since
- * Vercel presents one outbound IP. So this is not really abuse protection — it
- * is making sure one person cannot take the feature away from everybody else
- * for the rest of the day.
+ * Per-IP ceiling for an hour. Genuine abuse protection: one person refreshing
+ * the form should not be able to occupy the burst allowance below.
  */
 const MAX_SCANS_PER_IP_PER_HOUR = 3;
 
-/** Leaves headroom under Ora's 30/day so a burst never hits a hard 429. */
-const DAILY_SCAN_BUDGET = 25;
+/**
+ * Scans a minute, across everybody, before we stop running them inline.
+ *
+ * This is the only limit that reflects something real. Scans go through Is
+ * Agentic, which allows 10 a minute per IP and Vercel gives us one outbound IP,
+ * so ten a minute is the whole deployment's allowance. Eight leaves room for
+ * the sweeper, which is scanning on the same allowance.
+ *
+ * EXCEEDING THIS DOES NOT REJECT ANYONE. The row is still written and the
+ * visitor still gets the same "we're scanning" page; only the inline run is
+ * skipped, and the sweeper picks the row up within ten minutes. Turning a
+ * traffic spike into an error page would mean paying for a click and then
+ * refusing the lead, which is the worst possible response to being popular.
+ */
+const MAX_SCANS_PER_MINUTE = 8;
+
+/**
+ * Absolute daily ceiling. A backstop against a runaway loop or a scraper, not
+ * a quota.
+ *
+ * It used to be 25, sized to stay under Ora's 30-per-day — which is the limit
+ * the scan pipeline no longer runs against. Left at that value it would have
+ * capped a whole day's advertising at twenty-five leads and shown everyone
+ * after that a "try again tomorrow" page. Now it sits far above any plausible
+ * day so it only ever fires on something genuinely wrong.
+ */
+const DAILY_SCAN_BUDGET = 500;
 
 /**
  * Resend client for the enrolment call.
@@ -167,6 +189,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Read before the row is written, so this request is not counting itself.
+    const burstCount = await scansStartedInLastMinute();
+
     const leadId = await upsertLead({
       email: data.email,
       // The wording actually shown, not the constant, when the client sends it.
@@ -212,7 +237,19 @@ export async function POST(request: NextRequest) {
 
     // Already scanned this domain today — hand back the existing report rather
     // than spending another slot on an answer we have.
-    if (!scan.reused) {
+    //
+    // The burst check is the other reason to skip: over the per-minute
+    // allowance, the row is left queued for the sweeper instead of running now
+    // and getting a 429 from the provider. The customer-facing response is
+    // identical either way, because from their side it is — the report was
+    // always going to arrive by email rather than on this page.
+    const overBurst = burstCount >= MAX_SCANS_PER_MINUTE;
+    if (overBurst) {
+      console.warn(
+        `[scan] ${burstCount} scans in the last minute, over the ${MAX_SCANS_PER_MINUTE} inline limit — leaving ${scan.id} for the sweeper.`
+      );
+    }
+    if (!scan.reused && !overBurst) {
       after(async () => {
         try {
           await runScanJob(scan.id);

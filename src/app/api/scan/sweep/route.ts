@@ -26,8 +26,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-/** Small, so one sweep cannot exhaust the day's Ora budget on retries. */
-const MAX_RESCANS_PER_SWEEP = 3;
+/**
+ * How many scans one sweep will run.
+ *
+ * Was 3, sized so a sweep could not exhaust Ora's 30-a-day on retries. Scans no
+ * longer come off that budget, and 3 every ten minutes is too slow to be a
+ * safety net: it recovers eighteen scans an hour, which a single advertising
+ * spike can outrun. The number is now set by the two things that actually bind.
+ *
+ * Wall clock: maxDuration is 300s, a cold scan measured 13-25s, and the email
+ * pass ahead of this one takes a few seconds. Eight sequential scans is roughly
+ * 200s at the slow end, leaving real headroom.
+ *
+ * Provider burst: 10 a minute for the whole deployment. Run sequentially, eight
+ * scans take about two minutes, so a sweep on its own sits at roughly four a
+ * minute and leaves room for the request path to keep scanning alongside it.
+ */
+const MAX_RESCANS_PER_SWEEP = 8;
 
 function authorised(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
