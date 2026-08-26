@@ -505,8 +505,11 @@ export async function findLatestScanForDomain(
 ): Promise<ScanRow | null> {
   const db = sql();
   const rows = (await db.query(
+    // The join is not optional: SCAN_SELECT ends in `l.email`, so omitting it
+    // is a "missing FROM-clause entry for table l" at runtime rather than a
+    // compile error. Every other query here joins for the same reason.
     `SELECT ${SCAN_SELECT}
-       FROM scans s
+       FROM scans s JOIN scan_leads l ON l.id = s.lead_id
       WHERE s.domain = $1 AND s.status = 'complete'
       ORDER BY s.completed_at DESC NULLS LAST, s.created_at DESC
       LIMIT 1`,
