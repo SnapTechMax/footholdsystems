@@ -63,7 +63,7 @@ export function BuildOffer({
           What we build you
         </p>
         <h2 className="mt-4 text-balance font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-[2.6rem]">
-          A second website. Built for machines, not people.
+          A second website. Built for machines.
         </h2>
 
         <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
