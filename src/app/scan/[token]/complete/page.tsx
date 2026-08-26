@@ -7,7 +7,7 @@ import {
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
 } from "@/lib/scan/pricing";
-import { CONTACT_EMAIL, calendlyKickoffUrl } from "@/lib/site";
+import { CONTACT_EMAIL, calendlyRetainerUrl } from "@/lib/site";
 
 /**
  * The handover. What a build customer reads once the work is delivered.
@@ -93,13 +93,15 @@ export default async function ScanCompletePage({
         </p>
 
         <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          It is done. Thank you for trusting us with it.
+          Everything on your list is done. So is the part that was not on
+          it.
         </h1>
 
         <p className="mt-7 max-w-[52ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-          Everything on your list is implemented, your pages are rewritten, your
-          listings agree with each other, and your second site is live. Both
-          domains are yours. Nothing here depends on us staying involved.
+          Your pages are rewritten, your listings agree with each other, and{" "}
+          {handover.secondDomain} is live. No scanner would have told you to
+          build that one, which is why it was never on the list. Both domains
+          are yours, and nothing here depends on us staying involved.
         </p>
 
         {/* What they own now. */}
@@ -241,15 +243,14 @@ export default async function ScanCompletePage({
                 you {GUARANTEE_PAYOUT}.
               </p>
               <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
-                That is ten times what the build cost you, and it is affordable
-                for us only because we do this work for people who have already
-                done the first half properly. You have.
+                We can put that behind it because this work only goes to people
+                who have already done the first half properly. You have.
               </p>
             </div>
 
             <div className="mt-9">
               <a
-                href={calendlyKickoffUrl("tier3-retainer")}
+                href={calendlyRetainerUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"

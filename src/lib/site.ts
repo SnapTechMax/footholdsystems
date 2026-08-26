@@ -27,6 +27,17 @@ export const CALENDLY_KICKOFF_URL =
   "https://calendly.com/maximilian-footholdsystems/30min";
 
 /**
+ * The retainer conversation, on the handover page. A third event again.
+ *
+ * Not the kickoff: that one is scheduling for work already paid for, and this
+ * one is a decision about a six month commitment with a guarantee attached.
+ * Sending both to the same calendar would mean a customer booking a kickoff and
+ * landing in a page framed around a sale.
+ */
+export const CALENDLY_RETAINER_URL =
+  "https://calendly.com/maximilian-footholdsystems/aeo-full-strategy-call";
+
+/**
  * Where lead capture sends people once delivery has happened.
  *
  * ORPHANED PENDING THE SCAN BUILD. This pointed at `/guide/thanks`, which went
@@ -128,6 +139,14 @@ export function calendlyKickoffUrl(
   medium = "website"
 ): string {
   return withCampaign(CALENDLY_KICKOFF_URL, entryPoint, medium);
+}
+
+/** Booking link for the tier 3 retainer. See CALENDLY_RETAINER_URL. */
+export function calendlyRetainerUrl(
+  entryPoint = "tier3-retainer",
+  medium = "website"
+): string {
+  return withCampaign(CALENDLY_RETAINER_URL, entryPoint, medium);
 }
 
 function withCampaign(base: string, entryPoint: string, medium: string): string {
