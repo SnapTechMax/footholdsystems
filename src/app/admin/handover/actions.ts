@@ -19,8 +19,8 @@ import { siteUrl } from "@/lib/scan/pricing";
  * Authorised here rather than by the proxy. A Server Action is dispatched by an
  * id in the `Next-Action` header and does not have to arrive as a request to
  * the route it belongs to, so a matcher on `/admin` is not the boundary it
- * looks like. This one publishes a customer-facing page and offers a $2,500 a
- * month retainer, so it checks the password itself.
+ * looks like. This one publishes a customer-facing page and offers the
+ * retainer, so it checks the password itself.
  */
 
 export type HandoverResult =

@@ -48,7 +48,7 @@ real reviews and history.
 ### How it makes money
 
 Three tiers. Detail in `offer.md`. Summary: **$49** for the fix list, **$1,497**
-for implementation plus a purpose-built second domain, **$2,000 + $2,500/month
+for implementation plus a purpose-built second domain, **$4,500 + $2,500/month
 on a six-month minimum** for the ongoing retainer.
 
 The retainer is a **separate funnel**, sold only to people who have already

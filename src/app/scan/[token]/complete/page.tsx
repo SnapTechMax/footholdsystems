@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getScanByToken } from "@/lib/scan/db";
+import {
+  GUARANTEE_PAYOUT,
+  RETAINER_MONTHLY_PRICE,
+  RETAINER_SETUP_PRICE,
+} from "@/lib/scan/pricing";
 import { CONTACT_EMAIL, calendlyKickoffUrl } from "@/lib/site";
 
 /**
@@ -15,8 +20,8 @@ import { CONTACT_EMAIL, calendlyKickoffUrl } from "@/lib/site";
  * It is also the only place tier 3 is offered. offer.md calls that a separate
  * funnel sold only to existing build customers, and this is the moment that
  * rule describes: they have paid, the work is done, and they can see what it
- * produced. Putting a $2,500 a month commitment in front of somebody who has
- * seen nothing yet asks them to judge it on faith.
+ * produced. Putting a monthly commitment in front of somebody who has seen
+ * nothing yet asks them to judge it on faith.
  *
  * ON THE GUARANTEE. It is stated as what it is, a payout if a condition is not
  * met, and never as a promise about rankings. voice.md is explicit that nobody
@@ -194,7 +199,8 @@ export default async function ScanCompletePage({
               The retainer
             </p>
             <h3 className="mt-4 text-balance font-display text-2xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[var(--text)] sm:text-3xl">
-              $2,000 to start, then $2,500 a month.
+              {RETAINER_SETUP_PRICE} to start, then {RETAINER_MONTHLY_PRICE} a
+              month.
             </h3>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
               Six month minimum, because nothing here shows up faster than that
@@ -232,7 +238,7 @@ export default async function ScanCompletePage({
               </p>
               <p className="mt-4 text-[17px] font-semibold leading-[1.6] text-[var(--text)]">
                 If you are not ranking on the LLM engines after 180 days, we pay
-                you $15,000.
+                you {GUARANTEE_PAYOUT}.
               </p>
               <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
                 That is ten times what the build cost you, and it is affordable

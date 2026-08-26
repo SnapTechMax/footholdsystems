@@ -35,7 +35,7 @@ checklist can deliver. The $49 stays the primary action on the page.
 - **A second site on its own domain**, built for machines only
 - They keep everything, both domains plus a written record of what changed
 
-**Tier 3 — $2,000 up front, then $2,500/month, six-month minimum.**
+**Tier 3 — $4,500 up front, then $2,500/month, six-month minimum.**
 Separate funnel. Only sold to existing $1,497 customers, and the app enforces
 that structurally: the retainer appears on exactly one page,
 `/scan/<token>/complete`, which 404s until an admin publishes a handover at
@@ -67,7 +67,8 @@ ongoing work.
   rather than 1500 on charm-pricing grounds — changed 2026-08-26.
 - **Tier 3** is where recurring work lives, because recurring work has recurring
   cost. The guarantee is affordable precisely because it only applies to people
-  who already did tier 2.
+  who already did tier 2. Setup moved from $2,000 to $4,500 on 2026-08-26; the
+  monthly and the six-month minimum are unchanged.
 
 **The tiers must never be blurred.** Monthly tracking, new content, link
 acquisition and review systems belong to tier 3 only. Putting any of them in the

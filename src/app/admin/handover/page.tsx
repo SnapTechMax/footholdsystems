@@ -33,8 +33,7 @@ export default function HandoverAdminPage() {
           there is nothing to stumble onto mid job.
         </p>
         <p className="mt-3 max-w-[62ch] text-[14px] leading-[1.7] text-[#7a786f]">
-          It is also the only place the $2,000 plus $2,500 a month retainer
-          appears. Nothing on the site or in the email sequence mentions it, so
+          It is also the only place the retainer appears. Nothing on the site or in the email sequence mentions it, so
           it reaches the people you publish a handover for and nobody else.
         </p>
 
