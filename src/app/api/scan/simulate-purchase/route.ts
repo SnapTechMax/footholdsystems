@@ -71,6 +71,22 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  try {
+    return await handle(request);
+  } catch (error) {
+    // Without this an unhandled throw returns a 500 with an empty body, which
+    // from a terminal is indistinguishable from the command not running at all.
+    // An admin debugging their own deployment should get the reason.
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error("[simulate-purchase] failed:", error);
+    return NextResponse.json(
+      { ok: false, error: reason },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+}
+
+async function handle(request: NextRequest): Promise<NextResponse> {
   const params = request.nextUrl.searchParams;
   const token = params.get("token")?.trim();
   const domainParam = params.get("domain")?.trim();
