@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { metaEventId } from "@/lib/meta-event-id";
 
 /**
  * Fires the Purchase conversion once, on the page the buyer returns to.
@@ -55,13 +56,21 @@ export function PurchasePixel({
       // better failure here than never recording the sale at all.
     }
 
-    window.fbq?.("track", "Purchase", {
-      value,
-      currency: "USD",
-      content_name: product,
-      content_type: "product",
-      content_ids: [product],
-    });
+    // eventID must match what the Conversions API sends for this purchase, or
+    // Meta counts the browser event and the webhook event as two sales. See
+    // meta-event-id.ts — the string is derived, never random, for this reason.
+    window.fbq?.(
+      "track",
+      "Purchase",
+      {
+        value,
+        currency: "USD",
+        content_name: product,
+        content_type: "product",
+        content_ids: [product],
+      },
+      { eventID: metaEventId.purchase(token, product) }
+    );
 
     window.gtag?.("event", "purchase", {
       // The scan token doubles as the order id: one purchase of a product per

@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { sendPurchase } from "@/lib/meta-capi";
 import {
   findLatestScanForEmail,
   getScanByToken,
@@ -292,6 +293,27 @@ export async function POST(request: NextRequest) {
       // if a payload arrives without an id.
       providerRef: reference ?? `whop:${token ?? email}:${product}`,
     });
+
+    // The server half of the Purchase conversion, and the more trustworthy
+    // half. The browser event depends on the buyer returning through the
+    // redirect and staying long enough for a script to run; this fires from the
+    // system that actually took the money, so a customer who closes the tab
+    // still counts and no extension can suppress it.
+    //
+    // Guarded on `alreadyPaid` because Whop retries webhooks. The shared
+    // event_id means Meta would collapse the duplicates anyway, but not sending
+    // them is better than relying on that.
+    if (!alreadyPaid) {
+      await sendPurchase({
+        token: scan.token,
+        product,
+        valueCents:
+          product === "done_for_you"
+            ? DONE_FOR_YOU_PRICE_CENTS
+            : SOLUTIONS_PRICE_CENTS,
+        email: scan.email,
+      });
+    }
 
     // End the nurture sequence for this person. Every remaining email pitches
     // the thing they have just bought, and the fastest way to turn a new

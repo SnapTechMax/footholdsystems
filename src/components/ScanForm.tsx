@@ -7,6 +7,7 @@ import {
   DEFAULT_CATEGORY,
   type BusinessCategory,
 } from "@/lib/scan/categories";
+import { metaEventId } from "@/lib/meta-event-id";
 import { CONSENT_TEXT } from "@/lib/site";
 import { HONEYPOT_FIELD } from "@/lib/spam";
 
@@ -128,7 +129,17 @@ export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
         event_category: "scan",
         event_label: entryPoint,
       });
-      window.fbq?.("track", "Lead", { content_name: "ai-visibility-scan" });
+      // eventID must match the Conversions API's id for this same lead, or Meta
+      // counts the browser event and the server event as two. Only possible
+      // when the route handed back a token; without one the server half has
+      // nothing to match against either, so an un-deduplicated event would be
+      // the lesser of two errors — but the route always returns one.
+      window.fbq?.(
+        "track",
+        "Lead",
+        { content_name: "ai-visibility-scan" },
+        data.token ? { eventID: metaEventId.lead(data.token) } : undefined
+      );
 
       router.push(data.token ? `/scan/thanks?t=${data.token}` : "/scan/thanks");
     } catch {

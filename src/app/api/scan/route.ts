@@ -9,6 +9,7 @@ import {
   scansStartedToday,
   upsertLead,
 } from "@/lib/scan/db";
+import { sendLead } from "@/lib/meta-capi";
 import { normaliseDomain } from "@/lib/scan/ora";
 import { runScanJob } from "@/lib/scan/run";
 import { ScanRequestSchema } from "@/lib/scan/schema";
@@ -209,6 +210,31 @@ export async function POST(request: NextRequest) {
       category: data.category,
       ipAddress: ip,
     });
+
+    // The server half of the Lead conversion. The browser fires the same event
+    // with the same id, and Meta collapses the pair — see meta-event-id.ts.
+    // This half is the one that survives an ad blocker, which is a meaningful
+    // share of paid traffic and exactly the share you cannot afford to be blind
+    // to while optimising delivery against it.
+    //
+    // Not sent for a reused scan: that is the same person asking again, and the
+    // lead was already reported the first time.
+    if (!scan.reused) {
+      after(async () => {
+        await sendLead({
+          token: scan.token,
+          email: data.email,
+          ip,
+          userAgent: request.headers.get("user-agent"),
+          // Meta's own cookies, when the browser had them. They are what lifts
+          // match quality above an email hash alone.
+          fbp: request.cookies.get("_fbp")?.value ?? null,
+          fbc: request.cookies.get("_fbc")?.value ?? null,
+          sourceUrl: request.headers.get("referer") ?? undefined,
+          category: data.category,
+        });
+      });
+    }
 
     // Enrolment and the scan are two independent background jobs, deliberately
     // not chained. The sequence should start whether or not Ora cooperates, and
