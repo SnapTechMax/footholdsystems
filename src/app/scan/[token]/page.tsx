@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BookKickoff } from "@/components/BookKickoff";
 import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
@@ -362,25 +363,27 @@ function DoneForYou({ token, domain }: { token: string; domain: string }) {
         </p>
       </div>
 
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <a
-          href={calendlyUrl("scan-report-dfy")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-colors hover:bg-[var(--accent-hot)]"
-        >
-          Book a call about this
-        </a>
+      {/* One button. The call used to sit here as the primary action, which
+          turned a ready buyer into someone who had to be sold again on a call.
+          Scheduling belongs after the payment — see BookKickoff, which is what
+          replaces this block once the build is bought. */}
+      <div className="mt-8">
         <a
           href={pay}
-          className="inline-flex items-center justify-center gap-2.5 rounded-lg border border-[var(--line)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
         >
           Start now &mdash; {DONE_FOR_YOU_PRICE}
+          <span
+            aria-hidden="true"
+            className="transition-transform duration-150 group-hover:translate-x-1"
+          >
+            &rarr;
+          </span>
         </a>
       </div>
       <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
-        Twenty minutes, no pitch deck. If your list is short enough to handle
-        yourself, we&apos;ll tell you that.
+        One payment, then you pick a time with us and we start. Two to three
+        weeks from that day, and you keep everything.
       </p>
     </div>
   );
@@ -482,15 +485,17 @@ export default async function ScanReportPage({
   // is nothing in the rendered payload to reveal.
   const findings = unlocked ? report.findings : toPublicReport(report).findings;
 
-  // Only for the build, and only when the payment is on record — the marker
-  // alone cannot produce a conversion.
-  const boughtBuild = justBoughtBuild
-    ? await isPaid(scan.id, "done_for_you").catch(() => false)
-    : false;
+  // Read on every visit, not just on the checkout redirect: it decides what the
+  // bottom of the page offers, and a build customer coming back a week later
+  // should still find their kickoff link rather than the pitch they already
+  // bought.
+  const boughtBuild = await isPaid(scan.id, "done_for_you").catch(() => false);
 
   return (
     <Shell>
-      {boughtBuild && (
+      {/* The conversion still needs both: a payment on record AND the marker
+          from the checkout redirect, so revisiting cannot re-fire it. */}
+      {boughtBuild && justBoughtBuild && (
         <PurchasePixel
           token={scan.token}
           product="done_for_you"
@@ -547,7 +552,13 @@ export default async function ScanReportPage({
           </div>
 
           <div className="mt-14">
-            {unlocked ? (
+            {/* Three states, cheapest first: nothing bought, list bought, build
+                bought. Once the build is paid for there is nothing left to
+                sell, so the pitch is replaced by the one thing still
+                outstanding — getting a date in the diary. */}
+            {boughtBuild ? (
+              <BookKickoff domain={report.domain} />
+            ) : unlocked ? (
               <DoneForYou token={scan.token} domain={report.domain} />
             ) : (
               <Paywall

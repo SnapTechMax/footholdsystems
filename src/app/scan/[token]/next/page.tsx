@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookKickoff } from "@/components/BookKickoff";
 import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
@@ -11,7 +12,7 @@ import {
   checkoutUrl,
 } from "@/lib/scan/pricing";
 import { buildReport } from "@/lib/scan/report";
-import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Where a buyer lands the moment the {SOLUTIONS_PRICE} payment clears.
@@ -175,24 +176,7 @@ export default async function ScanNextPage({
       </div>
 
       {alreadyBoughtBuild ? (
-        <div className="mt-14 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-7 sm:p-10">
-          <Eyebrow>Already booked</Eyebrow>
-          <h2 className="mt-4 text-balance font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-            We&apos;re already building yours.
-          </h2>
-          <p className="mt-6 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-            You&apos;ve paid for the {DONE_FOR_YOU_PRICE} build, so there&apos;s
-            nothing to buy on this page. If you haven&apos;t heard from us yet,
-            email{" "}
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="font-semibold text-[var(--accent)] underline underline-offset-4"
-            >
-              {CONTACT_EMAIL}
-            </a>{" "}
-            and we&apos;ll get you scheduled.
-          </p>
-        </div>
+        <BookKickoff domain={domain} />
       ) : (
         <>
           <div className="mt-16">
@@ -278,10 +262,14 @@ export default async function ScanNextPage({
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+            {/* One button, deliberately. A "book a call first" option next to a
+                buy button converts the people who would have bought into people
+                who have to be sold again on a call — the call is scheduling,
+                and it belongs after the money, not in front of it. */}
+            <div className="mt-8">
               <a
                 href={pay}
-                className="group inline-flex items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:text-lg"
+                className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
               >
                 Start now &mdash; {DONE_FOR_YOU_PRICE}
                 <span
@@ -291,20 +279,11 @@ export default async function ScanNextPage({
                   &rarr;
                 </span>
               </a>
-              <a
-                href={calendlyUrl("scan-upsell-dfy")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 rounded-lg border border-[var(--line)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--text)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              >
-                Twenty minutes first
-              </a>
             </div>
 
             <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-              Twenty minutes, no pitch deck, and if your list is short enough to
-              handle yourself we&apos;ll tell you that on the call rather than
-              sell you something you don&apos;t need.
+              One payment, then you pick a time with us and we start. No call to
+              sit through before you can buy, and nothing to negotiate.
             </p>
           </div>
 
