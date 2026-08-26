@@ -8,7 +8,6 @@ import {
   CONTACT_PHONE_TEL,
   GUIDE_PATH,
   THANKS_PATH,
-  calendlyUrl,
 } from "@/lib/site";
 import {
   DATABASE_CONFIGURED,
@@ -74,7 +73,6 @@ const SITE_URL = (
 const GUIDE_URL = `${SITE_URL}${GUIDE_PATH}`;
 
 // Booking link, tagged so calls that came out of the delivery email are visible.
-const BOOKING_URL = calendlyUrl("guide-email", "email");
 
 /**
  * What a rejected submission is told.
@@ -249,7 +247,6 @@ export async function POST(request: NextRequest) {
             <hr style="border:none;border-top:1px solid #d4d1c6;margin:24px 0;">
             <p style="margin:0 0 8px;font-size:15px;line-height:1.6;"><strong>You have 1 and 2. The call is where 3, 4 and 5 come from.</strong></p>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">Levels 3 to 5 print as frameworks rather than something you paste, because the prompt is the easy half. Picking the first one worth building and wiring it into what you already run is the other half, and that's what the twenty minutes is for. No charge either way.</p>
-            <a href="${BOOKING_URL}" style="display:inline-block;background:#1b1b1b;color:#f2efe6;font-weight:700;font-size:15px;text-decoration:none;padding:13px 26px;border-radius:8px;">Book a call &rarr;</a>
             <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Twenty minutes, weekday afternoons &mdash; the only window I keep for these. The calendar opens seven days at a time, so what you see is what's left.</p>
             <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#57564f;">Rather just talk? Call <a href="tel:${CONTACT_PHONE_TEL}" style="color:#1b1b1b;font-weight:600;">${CONTACT_PHONE}</a>.</p>
           </div>
@@ -271,7 +268,6 @@ export async function POST(request: NextRequest) {
       `You have 1 and 2. The call is where 3, 4 and 5 come from.`,
       `Levels 3 to 5 print as frameworks rather than something you paste, because the prompt is the easy half. Picking the first one worth building and wiring it into what you already run is the other half, and that's what the twenty minutes is for. No charge either way.`,
       ``,
-      `Book a call: ${BOOKING_URL}`,
       ``,
       `Twenty minutes, weekday afternoons - the only window I keep for these. The calendar opens seven days at a time, so what you see is what's left.`,
       `Rather just talk? Call ${CONTACT_PHONE}.`,

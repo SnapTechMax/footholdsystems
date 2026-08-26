@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { siteUrl } from "@/lib/scan/pricing";
 import { createCheckout } from "@/lib/scan/whop";
-import { CALENDLY_URL } from "@/lib/site";
 import { cleanRecipient, knownKey, recordClick } from "@/lib/tracking";
 
 export const runtime = "nodejs";
@@ -61,9 +60,11 @@ export async function GET(request: NextRequest) {
 
   if (!checkout.ok) {
     console.error(`[upgrade] could not create checkout: ${checkout.reason}`);
-    // See rule 1. A booked call is a real conversion path and a far better
-    // outcome than an error page for someone who just decided to buy.
-    const fallback = new URL(CALENDLY_URL);
+    // See rule 1: always redirect. This used to land on a booking call,
+    // which no longer exists now that nothing is sold through a calendar
+    // before purchase. The site is a weaker landing than a checkout, but
+    // it is somewhere with the offer on it rather than an error page.
+    const fallback = new URL(siteUrl());
     fallback.searchParams.set("utm_source", "footholdsystems");
     fallback.searchParams.set("utm_medium", "email");
     fallback.searchParams.set("utm_campaign", campaign || "sequence");

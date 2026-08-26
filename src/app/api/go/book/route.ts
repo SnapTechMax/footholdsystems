@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CALENDLY_URL } from "@/lib/site";
+import { siteUrl } from "@/lib/scan/pricing";
 import { cleanRecipient, knownKey, recordClick } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +22,15 @@ export const dynamic = "force-dynamic";
  *  1. **It always redirects.** A database that is down, unconfigured, or slow
  *     must not cost a booking. Recording is attempted, and any failure is
  *     swallowed after logging.
- *  2. **The destination is a constant.** It is built from CALENDLY_URL, never
- *     from the query string, so no combination of parameters turns this into an
- *     open redirect pointing somewhere else.
+ *  2. **The destination is a constant.** Built from siteUrl(), never from the
+ *     query string, so no combination of parameters turns this into an open
+ *     redirect pointing somewhere else.
+ *
+ * This route existed to reach the pre-sale booking call, which is gone: nothing
+ * is sold through a calendar before a purchase any more. It stays because links
+ * to it are already sitting in inboxes, and a 404 for one of those is worse
+ * than a landing page. The click is still recorded, so the dashboard keeps its
+ * history rather than developing a hole.
  *  3. **Unknown keys are dropped, not stored.** `e` is checked against the
  *     sequence, so a crawler hitting this with junk cannot invent emails in the
  *     dashboard.
@@ -44,7 +50,7 @@ export async function GET(request: NextRequest) {
   const recipient = cleanRecipient(params.get("r"));
 
   // Built here rather than taken from the request. See rule 2 above.
-  const destination = new URL(CALENDLY_URL);
+  const destination = new URL(siteUrl());
   destination.searchParams.set("utm_source", "footholdsystems");
   destination.searchParams.set("utm_medium", "email");
   // The campaign name is forwarded as sent, not as the normalised key, so GA4

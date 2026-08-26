@@ -7,7 +7,7 @@ import { getScanByToken, isPaid } from "@/lib/scan/db";
 import { SOLUTIONS_PRICE, checkoutUrl } from "@/lib/scan/pricing";
 import { buildReport, toPublicReport } from "@/lib/scan/report";
 import type { ReportFinding, ScanReport } from "@/lib/scan/types";
-import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * The scan report, with the fixes behind a paywall.
@@ -492,15 +492,13 @@ export default async function ScanReportPage({
             You passed every check we run. That is genuinely rare, and it means
             the technical half is done. What&apos;s left is whether an AI
             actually picks you over the competitor down the road, which no scanner
-            can see. If you want a human to look at that, book a call.
+            can see. If you want a human to look at that, email me.
           </p>
           <a
-            href={calendlyUrl("scan-report-clean")}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="mt-7 inline-flex items-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-colors hover:bg-[var(--accent-hot)]"
           >
-            Book a call
+            {CONTACT_EMAIL}
           </a>
         </div>
       )}

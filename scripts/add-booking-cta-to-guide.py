@@ -1,3 +1,10 @@
+"""
+RETIRED. Stamped a booking CTA onto the lead-magnet PDF for the /guide funnel,
+which is gone: /guide 404s, the form component was deleted, and the pre-sale
+call this pointed at no longer exists. Kept for reference only. It reads
+CALENDLY_URL out of lib/site.ts, which is why it will now fail if run.
+"""
+
 #!/usr/bin/env python3
 """Reconcile the exported guide PDF with the website.
 

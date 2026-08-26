@@ -9,10 +9,12 @@
  */
 export const SCAN_ANCHOR = "#scan";
 
-// The dedicated event type carrying the rolling 7-day / 1–4pm Pacific window.
-// This is the PRE-SALE call: twenty minutes, for someone deciding.
-export const CALENDLY_URL =
-  "https://calendly.com/max-snaptechrepair/20-minute-ai-strategy-call";
+/*
+ * The pre-sale call is gone. There is deliberately no calendar in front of a
+ * purchase now: the $49 and the $1,497 are both bought directly, and the only
+ * two calendars left are for people who have already paid, the kickoff and the
+ * retainer conversation. Removed 2026-08-26.
+ */
 
 /**
  * The POST-SALE kickoff. Thirty minutes, and a different event type entirely.
@@ -125,10 +127,6 @@ export const GUIDE_PATH =
  * @param medium     Channel it went out on. Defaults to the website; the
  *                   delivery email and the report pass their own.
  */
-export function calendlyUrl(entryPoint: string, medium = "website"): string {
-  return withCampaign(CALENDLY_URL, entryPoint, medium);
-}
-
 /**
  * Booking link for a customer who has already paid for the build.
  *
