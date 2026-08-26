@@ -3,9 +3,14 @@ import type { ExperimentTotals, VariantKey } from "./types";
 /**
  * Meta (Facebook) Pixel conversion counts, per variant.
  *
- * The pixel fires `Lead` with a `variant` custom-data field (see
- * components/LeadMagnetForm.tsx), and this reads those events back through the
- * Graph API's ads-pixel stats endpoint aggregated by that field.
+ * Reads `Lead` events back through the Graph API's ads-pixel stats endpoint,
+ * aggregated by a `variant` custom-data field.
+ *
+ * NOTHING CURRENTLY SENDS THAT FIELD. The component that did was the guide
+ * lead-magnet form, retired along with /guide, and the scan form — the only
+ * live lead capture — is not part of an experiment. So this returns figures for
+ * historical experiments and nothing for new ones until a public page assigns
+ * variants again.
  *
  * Two things to keep in mind when reading these numbers:
  *
