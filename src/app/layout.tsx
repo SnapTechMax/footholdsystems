@@ -38,12 +38,27 @@ const GA_MEASUREMENT_ID =
 const CLARITY_PROJECT_ID =
   process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID ?? "xurw6i8he8";
 
-// Meta Pixel. Env var overrides the default; set it to an empty string to drop
-// the tag. Defined once because the ID is needed by both the init script and the
-// no-JavaScript fallback image, and updating one but not the other silently
-// splits tracking between two pixels.
-const META_PIXEL_ID =
-  process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "1149312161102608";
+/**
+ * Meta Pixel, from NEXT_PUBLIC_META_PIXEL_ID. No tag renders without it.
+ *
+ * There used to be a hardcoded ID here as a fallback, which is the wrong shape
+ * of safety net: a missing pixel is visible the moment you look at Events
+ * Manager and see nothing, while a *wrong* pixel looks exactly like a working
+ * one and quietly files your conversions into somebody else's account. Silence
+ * is the safer failure.
+ *
+ * Set in Production only, deliberately. Preview deployments and local runs
+ * would otherwise fire PageView into the live pixel every time anyone opened
+ * one, and paid optimisation is only as good as the data under it.
+ *
+ * Baked in at build time, as every NEXT_PUBLIC_ value is, so changing it in
+ * Vercel does nothing until the next deployment.
+ *
+ * Read once because the ID is needed by both the init script and the
+ * no-JavaScript fallback image, and updating one but not the other silently
+ * splits tracking between two pixels.
+ */
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 export const metadata: Metadata = {
   // www, because the apex 308s to it. Canonical tags and og:url pointing at a
