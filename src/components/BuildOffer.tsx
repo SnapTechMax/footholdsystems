@@ -23,12 +23,65 @@ export function BuildOffer({
   token,
   domain,
   findingCount,
+  variant = "full",
 }: {
   token: string;
   domain: string;
   findingCount: number;
+  /**
+   * "full" is for a reader who has bought the list and is deciding what next.
+   * "brief" sits under the $49 paywall for someone who has bought nothing, and
+   * is deliberately shorter: the cheap offer stays the primary action on that
+   * page, and a second full pitch beside it would bury it.
+   */
+  variant?: "full" | "brief";
 }) {
   const pay = checkoutUrl(token, "done_for_you");
+
+  if (variant === "brief") {
+    return (
+      <div className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--ink)] p-7 sm:p-8">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--dim)] sm:text-xs">
+          Or skip the list
+        </p>
+        <h2 className="mt-4 text-balance font-display text-2xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[var(--text)] sm:text-3xl">
+          Have us do it, and build you a second website.
+        </h2>
+
+        <div className="mt-5 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
+          <p>
+            The list tells you what to change on {domain}. It cannot give you the
+            part that matters most, because that part is not a change. It is a
+            second site, on its own domain, built for machines rather than
+            people, saying what they need in order to name you.
+          </p>
+          <p>
+            We implement every fix on your list, rewrite your pages, make your
+            listings agree, and build that second site. Two to three weeks. You
+            keep both domains.
+          </p>
+        </div>
+
+        <div className="mt-7">
+          <a
+            href={pay}
+            className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg border border-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--accent)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--ink)] sm:w-auto"
+          >
+            Work with us &mdash; {DONE_FOR_YOU_PRICE}
+            <span
+              aria-hidden="true"
+              className="transition-transform duration-150 group-hover:translate-x-1"
+            >
+              &rarr;
+            </span>
+          </a>
+          <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
+            One payment, not a retainer. You do not need to buy the list first.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -62,8 +62,19 @@
 export const SCAN_URL = "https://www.footholdsystems.com/#scan";
 export const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
 
-/** What the human tier costs. Named once, mentioned in only three emails. */
-export const UPGRADE_PRICE = "$1,500";
+/**
+ * What the human tier costs. Named once, mentioned in only three emails.
+ *
+ * Duplicated from DONE_FOR_YOU_PRICE_CENTS in lib/scan/pricing.ts and cannot
+ * import it: this file is plain .mjs, read by the Node scripts that build the
+ * Resend automation, and pricing.ts is TypeScript behind a path alias. The two
+ * had already drifted once, to $1,500 against a site charging $1,497.
+ *
+ * CHANGING IT HERE IS NOT ENOUGH. The emails live in Resend as a created
+ * automation, so a price edit only reaches subscribers after
+ * scripts/create-email-sequence.mjs runs again.
+ */
+export const UPGRADE_PRICE = "$1,497";
 
 export function tagged(url, campaign, content = "cta") {
   const target = new URL(url);

@@ -20,6 +20,13 @@ The prioritised fixes from their own scan. Sold on the report page and in the
 report email, at the moment the fixes are blurred in front of them. Impulse
 purchase at peak context.
 
+The $1,497 is now offered on that same page, below the paywall, in a shorter
+form. This reverses an earlier decision that kept it off the unpaid page on the
+grounds that stacking both offers devalues the cheap one. Changed 2026-08-26:
+the build was reachable only by buying the $49 first, which capped it at one
+conversion rate multiplied by another, and the second website is the part no
+checklist can deliver. The $49 stays the primary action on the page.
+
 **Tier 2 — $1,497, one-off. Two to three weeks.**
 - Every technical fix from the scan, implemented on the existing site
 - Pages rewritten, positioning decided first, in their voice
@@ -29,7 +36,9 @@ purchase at peak context.
 - They keep everything, both domains plus a written record of what changed
 
 **Tier 3 — $2,000 up front, then $2,500/month, six-month minimum.**
-Separate funnel. Only sold to existing $1,497 customers.
+Separate funnel. Only sold to existing $1,497 customers, and deliberately absent
+from the app: nothing in the site or the email sequence mentions it, which is
+what enforces that rule today.
 - 2x social posts from influencers AI is listening to
 - High-trust `.gov` backlinks
 - Monthly query tracking
@@ -42,6 +51,10 @@ Separate funnel. Only sold to existing $1,497 customers.
 
 - **$49** is priced as an impulse, below the threshold where anyone needs
   approval. Framed as less than an hour of most people's billable time.
+- **Everyone who runs a scan** enters the nurture sequence, whether they buy the
+  $49 or not, and that sequence sells the $1,497. Only a $1,497 purchase ends
+  it: buying the $49 report is not a reason to stop making the case for the
+  build.
 - **$1,497** is one-off on purpose. "Not a retainer" is a selling point against
   agencies. Framed against the value of a single commercial job. Priced at 1497
   rather than 1500 on charm-pricing grounds — changed 2026-08-26.

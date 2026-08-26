@@ -461,11 +461,25 @@ export default async function ScanReportPage({
                 findingCount={findings.length}
               />
             ) : (
-              <Paywall
-                token={scan.token}
-                findingCount={findings.length}
-                failed={checkoutFailed}
-              />
+              <>
+                <Paywall
+                  token={scan.token}
+                  findingCount={findings.length}
+                  failed={checkoutFailed}
+                />
+                {/* The build, offered to someone who has bought nothing yet.
+                    offer.md argued against this on the grounds that stacking
+                    both offers devalues the cheap one, which is why this is the
+                    brief variant and sits below: the $49 stays the primary
+                    action, and this is the door for a reader who would rather
+                    hand the whole thing over than work a checklist. */}
+                <BuildOffer
+                  token={scan.token}
+                  domain={report.domain}
+                  findingCount={findings.length}
+                  variant="brief"
+                />
+              </>
             )}
           </div>
         </>
