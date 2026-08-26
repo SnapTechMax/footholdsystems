@@ -66,7 +66,17 @@ export interface CapiUserData {
 }
 
 export interface CapiEvent {
-  eventName: "Lead" | "Purchase";
+  /**
+   * "Lead" and "Purchase" are the conversions. Anything else is a custom event
+   * — which is what the health check sends, so proving the credentials work
+   * cannot quietly add a sale to the numbers you optimise against.
+   */
+  eventName: "Lead" | "Purchase" | (string & {});
+  /**
+   * Routes the event to Events Manager's Test Events view instead of the live
+   * dataset. From the code shown on that tab; without one the event is real.
+   */
+  testEventCode?: string;
   /** Must match what the browser sends. Use metaEventId. */
   eventId: string;
   /** The page the conversion belongs to, as Meta reports it. */
@@ -78,18 +88,37 @@ export interface CapiEvent {
 }
 
 /**
- * Sends one event. Resolves either way; the boolean is for logging and tests.
+ * What Meta said. Returned rather than a bare boolean so the health endpoint
+ * can show the actual reason a send failed — "invalid token" and "unreachable"
+ * need different responses from whoever is looking, and a `false` tells them
+ * neither.
+ */
+export interface CapiResult {
+  ok: boolean;
+  /** Absent when the call never went out. */
+  status?: number;
+  /** Meta's own confirmation count. 1 is a healthy single-event send. */
+  eventsReceived?: number;
+  fbtraceId?: string;
+  /** Populated on failure, and safe to show an admin. */
+  error?: string;
+  /** True when nothing was attempted because the credentials are not set. */
+  skipped?: boolean;
+}
+
+/**
+ * Sends one event. Resolves either way — never throws.
  *
  * Awaiting this in a request path costs a round trip to Meta, so callers should
  * put it inside `after()` where one exists.
  */
-export async function sendCapiEvent(event: CapiEvent): Promise<boolean> {
+export async function sendCapiEvent(event: CapiEvent): Promise<CapiResult> {
   const token = accessToken();
   const pixel = pixelId();
   if (!token || !pixel) {
     // Not an error. The site runs without CAPI configured, and saying so once
     // per event would drown the logs.
-    return false;
+    return { ok: false, skipped: true, error: "CAPI is not configured" };
   }
 
   const user: Record<string, unknown> = {};
@@ -125,7 +154,13 @@ export async function sendCapiEvent(event: CapiEvent): Promise<boolean> {
         headers: { "Content-Type": "application/json" },
         // Query string rather than a header: this is what Meta documents, and
         // the token is server-side only so it never reaches a browser.
-        body: JSON.stringify({ ...body, access_token: token }),
+        body: JSON.stringify({
+          ...body,
+          access_token: token,
+          ...(event.testEventCode
+            ? { test_event_code: event.testEventCode }
+            : {}),
+        }),
         cache: "no-store",
       }
     );
@@ -135,7 +170,11 @@ export async function sendCapiEvent(event: CapiEvent): Promise<boolean> {
       console.error(
         `[capi] ${event.eventName} rejected ${response.status}: ${detail.slice(0, 300)}`
       );
-      return false;
+      return {
+        ok: false,
+        status: response.status,
+        error: detail.slice(0, 500) || `HTTP ${response.status}`,
+      };
     }
 
     // Logged on success too, deliberately. Silence on the happy path meant a
@@ -152,13 +191,16 @@ export async function sendCapiEvent(event: CapiEvent): Promise<boolean> {
         receipt?.events_received ?? "?"
       } id=${event.eventId}${receipt?.fbtrace_id ? ` trace=${receipt.fbtrace_id}` : ""}`
     );
-    return true;
+    return {
+      ok: true,
+      status: response.status,
+      eventsReceived: receipt?.events_received,
+      fbtraceId: receipt?.fbtrace_id,
+    };
   } catch (error) {
-    console.error(
-      `[capi] ${event.eventName} failed:`,
-      error instanceof Error ? error.message : String(error)
-    );
-    return false;
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`[capi] ${event.eventName} failed:`, reason);
+    return { ok: false, error: reason };
   } finally {
     clearTimeout(timer);
   }
@@ -174,7 +216,7 @@ export async function sendLead(args: {
   fbc?: string | null;
   sourceUrl?: string;
   category?: string;
-}): Promise<boolean> {
+}): Promise<CapiResult> {
   return sendCapiEvent({
     eventName: "Lead",
     eventId: metaEventId.lead(args.token),
@@ -199,7 +241,7 @@ export async function sendPurchase(args: {
   product: "solutions" | "done_for_you";
   valueCents: number;
   email?: string | null;
-}): Promise<boolean> {
+}): Promise<CapiResult> {
   return sendCapiEvent({
     eventName: "Purchase",
     eventId: metaEventId.purchase(args.token, args.product),
