@@ -93,9 +93,10 @@ export function BuildOffer({
 
         <div className="mt-9 border-t border-[var(--line)] pt-7">
           <p className="text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-            The fixes on your list you could run yourself, and some people will.
-            A second domain is not a fix you apply. It is a thing that has to
-            exist, and building it is the half no report can hand you.
+            The fixes on your list you could run yourself. If you have the time
+            and someone to do it, you should. A second domain is not a fix you
+            apply. It is a thing that has to exist, and building it is the half
+            no report can hand you.
           </p>
         </div>
       </div>
