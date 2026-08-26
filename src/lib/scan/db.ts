@@ -23,6 +23,23 @@ export type ScanStatus = "queued" | "running" | "complete" | "failed";
 export type OrderProduct = "solutions" | "done_for_you";
 export type OrderStatus = "pending" | "paid" | "refunded";
 
+/**
+ * What was handed over when a build finished.
+ *
+ * Filled in by an admin after the work is delivered, and the only thing that
+ * makes the handover page reachable. Stored on the scan rather than in its own
+ * table because there is exactly one of these per build, and a JSONB column
+ * absorbs a new field later without a migration.
+ */
+export interface Handover {
+  /** The machine-readable site we built them. The reason they paid. */
+  secondDomain: string;
+  /** What changed, in the admin's words. Rendered as paragraphs. */
+  notes: string;
+  /** ISO date the work was delivered. */
+  deliveredAt: string;
+}
+
 export interface ScanRow {
   id: number;
   token: string;
@@ -41,6 +58,7 @@ export interface ScanRow {
   createdAt: string;
   completedAt: string | null;
   reportEmailedAt: string | null;
+  handover: Handover | null;
 }
 
 /**
@@ -104,6 +122,9 @@ export async function initScanSchema(): Promise<void> {
   // needs the column added explicitly. IF NOT EXISTS makes this a no-op
   // everywhere else, which is what keeps initSchema safe to call per request.
   await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'sbo'`;
+  // Set once a build is delivered. Null until then, which is what the handover
+  // page checks before it will render anything.
+  await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS handover JSONB`;
 
   await db`CREATE INDEX IF NOT EXISTS scans_status_idx ON scans (status, created_at)`;
   await db`CREATE INDEX IF NOT EXISTS scans_lead_idx ON scans (lead_id)`;
@@ -348,6 +369,28 @@ export async function failScan(id: number, error: string): Promise<void> {
     WHERE id = ${id}`;
 }
 
+/**
+ * Records what was delivered, which is what makes the handover page render.
+ *
+ * Overwrites rather than appending: there is one delivery per build, and an
+ * admin correcting a typo should not create a second one.
+ */
+export async function setHandover(
+  scanId: number,
+  handover: Handover
+): Promise<void> {
+  const db = sql();
+  await db`
+    UPDATE scans SET handover = ${JSON.stringify(handover)}::jsonb
+    WHERE id = ${scanId}`;
+}
+
+/** Clears a handover, so the page goes back to being unreachable. */
+export async function clearHandover(scanId: number): Promise<void> {
+  const db = sql();
+  await db`UPDATE scans SET handover = NULL WHERE id = ${scanId}`;
+}
+
 export async function markReportEmailed(id: number): Promise<void> {
   const db = sql();
   await db`UPDATE scans SET report_emailed_at = now() WHERE id = ${id}`;
@@ -356,7 +399,7 @@ export async function markReportEmailed(id: number): Promise<void> {
 const SCAN_SELECT = `
   s.id, s.token, s.lead_id, s.domain, s.url, s.category, s.status, s.score, s.grade,
   s.report, s.raw, s.error, s.attempts, s.created_at, s.completed_at,
-  s.report_emailed_at, l.email`;
+  s.report_emailed_at, s.handover, l.email`;
 
 interface RawScanRow {
   id: number | string;
@@ -376,6 +419,7 @@ interface RawScanRow {
   created_at: string;
   completed_at: string | null;
   report_emailed_at: string | null;
+  handover: unknown;
 }
 
 function toScanRow(r: RawScanRow): ScanRow {
@@ -399,6 +443,7 @@ function toScanRow(r: RawScanRow): ScanRow {
     attempts: r.attempts,
     createdAt: r.created_at,
     completedAt: r.completed_at,
+    handover: (r.handover as Handover | null) ?? null,
     reportEmailedAt: r.report_emailed_at,
   };
 }

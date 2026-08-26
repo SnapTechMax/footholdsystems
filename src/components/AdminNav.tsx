@@ -10,6 +10,7 @@ const TABS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/campaign", label: "Campaign" },
   { href: "/admin/cro", label: "CRO" },
+  { href: "/admin/handover", label: "Handover" },
 ] as const;
 
 export function AdminNav({ current }: { current: string }) {

@@ -36,9 +36,16 @@ checklist can deliver. The $49 stays the primary action on the page.
 - They keep everything, both domains plus a written record of what changed
 
 **Tier 3 — $2,000 up front, then $2,500/month, six-month minimum.**
-Separate funnel. Only sold to existing $1,497 customers, and deliberately absent
-from the app: nothing in the site or the email sequence mentions it, which is
-what enforces that rule today.
+Separate funnel. Only sold to existing $1,497 customers, and the app enforces
+that structurally: the retainer appears on exactly one page,
+`/scan/<token>/complete`, which 404s until an admin publishes a handover at
+`/admin/handover` for a delivered build. Nothing on the site or in the email
+sequence mentions it otherwise. Added 2026-08-26.
+
+The handover page is also where the work is signed off: what they own, both
+domains, and what changed, written by the admin. The retainer is pitched below
+that, on the argument that a build is a starting position and holding it is
+ongoing work.
 - 2x social posts from influencers AI is listening to
 - High-trust `.gov` backlinks
 - Monthly query tracking
