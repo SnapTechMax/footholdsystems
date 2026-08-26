@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
 import {
   DONE_FOR_YOU_PRICE,
+  DONE_FOR_YOU_PRICE_CENTS,
+  PURCHASE_MARKER,
   SOLUTIONS_PRICE,
   checkoutUrl,
 } from "@/lib/scan/pricing";
@@ -390,13 +393,16 @@ export default async function ScanReportPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; [PURCHASE_MARKER]?: string }>;
 }) {
   const { token } = await params;
   // Set by /api/go/checkout when Whop could not be reached, so the buyer lands
   // back on the button they pressed rather than on an error page.
-  const { checkout } = await searchParams;
-  const checkoutFailed = checkout === "failed";
+  const query = await searchParams;
+  const checkoutFailed = query.checkout === "failed";
+  // Set by the checkout redirect. Only the build lands back here — a $49 buyer
+  // is sent to the upsell page, which fires its own conversion.
+  const justBoughtBuild = query[PURCHASE_MARKER] === "1";
   const scan = await getScanByToken(token).catch(() => null);
 
   // Same 404 for a bad token and a missing one. Distinguishing them would let
@@ -476,8 +482,23 @@ export default async function ScanReportPage({
   // is nothing in the rendered payload to reveal.
   const findings = unlocked ? report.findings : toPublicReport(report).findings;
 
+  // Only for the build, and only when the payment is on record — the marker
+  // alone cannot produce a conversion.
+  const boughtBuild = justBoughtBuild
+    ? await isPaid(scan.id, "done_for_you").catch(() => false)
+    : false;
+
   return (
     <Shell>
+      {boughtBuild && (
+        <PurchasePixel
+          token={scan.token}
+          product="done_for_you"
+          value={DONE_FOR_YOU_PRICE_CENTS / 100}
+          justPurchased
+        />
+      )}
+
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Eyebrow>AI visibility report</Eyebrow>
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">

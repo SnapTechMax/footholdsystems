@@ -57,6 +57,31 @@ export function unsubscribeUrl(email: string): string {
 }
 
 /**
+ * Marks the URL a buyer is handed back on, so the page they land on can tell a
+ * payment that just happened from somebody re-opening their report a week
+ * later. Without it the Purchase conversion would fire on every visit to a paid
+ * report, and Meta would learn a cohort converts several times over.
+ *
+ * A named constant because the writer here and the reader on the page fail
+ * silently when they disagree, and a pixel that quietly stops recording sales
+ * looks exactly like one that was never installed.
+ */
+export const PURCHASE_MARKER = "purchased";
+
+/** Where a buyer is sent once the payment clears. */
+export function checkoutReturnUrl(
+  token: string,
+  product: "solutions" | "done_for_you"
+): string {
+  // A $49 buyer goes to the upsell page, which opens with the link to the fixes
+  // they just bought and then makes the case for the build. Anyone who has
+  // bought the build has nothing left to be sold, so they go to the report.
+  const base =
+    product === "solutions" ? upsellUrl(token) : reportUrl(token);
+  return `${base}?${PURCHASE_MARKER}=1`;
+}
+
+/**
  * Where a buy button points.
  *
  * Our own route, never Whop directly. A Whop checkout has to be created

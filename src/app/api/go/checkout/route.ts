@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getScanByToken } from "@/lib/scan/db";
-import { reportUrl, siteUrl, upsellUrl } from "@/lib/scan/pricing";
+import { checkoutReturnUrl, reportUrl, siteUrl } from "@/lib/scan/pricing";
 import { createCheckout } from "@/lib/scan/whop";
 import { cleanRecipient, knownKey, recordClick } from "@/lib/tracking";
 
@@ -64,12 +64,9 @@ export async function GET(request: NextRequest) {
       domain: scan.domain,
       ...(campaign ? { email_key: campaign } : {}),
     },
-    // A $49 buyer goes to the upsell page, which opens with the link to the
-    // fixes they just bought and then makes the case for the build. Anyone who
-    // has already bought the build has nothing left to be sold, so they go
-    // straight back to the report.
-    redirectUrl:
-      product === "solutions" ? upsellUrl(scan.token) : reportUrl(scan.token),
+    // Carries the marker that lets the landing page fire the Purchase
+    // conversion exactly once. See checkoutReturnUrl.
+    redirectUrl: checkoutReturnUrl(scan.token, product),
   });
 
   if (!checkout.ok) {

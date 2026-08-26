@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PurchasePixel } from "@/components/PurchasePixel";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
-import { DONE_FOR_YOU_PRICE, checkoutUrl } from "@/lib/scan/pricing";
+import {
+  DONE_FOR_YOU_PRICE,
+  PURCHASE_MARKER,
+  SOLUTIONS_PRICE_CENTS,
+  checkoutUrl,
+} from "@/lib/scan/pricing";
 import { buildReport } from "@/lib/scan/report";
 import { CONTACT_EMAIL, calendlyUrl } from "@/lib/site";
 
@@ -72,10 +78,13 @@ function Deliverable({
 
 export default async function ScanNextPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { token } = await params;
+  const query = await searchParams;
   const scan = await getScanByToken(token).catch(() => null);
   if (!scan) notFound();
 
@@ -107,6 +116,17 @@ export default async function ScanNextPage({
     <Shell>
       {/* Only while the webhook is in flight. Stops once it lands. */}
       {!unlocked && <ScanPoller intervalMs={3_000} maxAttempts={20} />}
+
+      {/* Rendered only once the payment is recorded, so the conversion cannot
+          be produced by visiting this URL with the marker appended. */}
+      {unlocked && (
+        <PurchasePixel
+          token={scan.token}
+          product="solutions"
+          value={SOLUTIONS_PRICE_CENTS / 100}
+          justPurchased={query[PURCHASE_MARKER] === "1"}
+        />
+      )}
 
       <Eyebrow>{unlocked ? "Payment received" : "Payment processing"}</Eyebrow>
 
