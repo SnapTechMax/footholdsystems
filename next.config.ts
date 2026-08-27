@@ -27,6 +27,27 @@ const LINK_HEADER = [
   '</.well-known/agent-card.json>; rel="service-meta"; type="application/json"',
 ].join(", ");
 
+/**
+ * `Vary: Accept`, set at the routing layer rather than on the response.
+ *
+ * markdown-negotiation-vary wants it on anything negotiated by Accept, and
+ * without it a shared cache is free to hand the HTML variant to an agent that
+ * asked for markdown — whichever landed in the cache first.
+ *
+ * It has to be here because everywhere closer to the response is overwritten.
+ * lib/agent-response.ts sets it and that works under `next dev`; on Vercel the
+ * markdown routes are prerendered and served from the edge cache, which
+ * replaces Vary with Next's own rsc value. Setting it from the proxy on
+ * NextResponse.next() is discarded too. This layer is the one that demonstrably
+ * reaches production — it is how the Link headers below get there.
+ *
+ * The value stays on the responses in agent-response.ts as well. Two places is
+ * usually a smell; here it is the difference between correct behaviour locally
+ * and correct behaviour deployed, and they cannot disagree because both say
+ * exactly one thing.
+ */
+const VARY_ACCEPT = { key: "Vary", value: "Accept" };
+
 /** The homepage adds its markdown twin. /pricing gets its own below. */
 const HOME_LINK_HEADER = `${LINK_HEADER}, </index.md>; rel="alternate"; type="text/markdown"`;
 
@@ -42,9 +63,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/",
-        headers: [
-          { key: "Link", value: HOME_LINK_HEADER },
-        ],
+        headers: [{ key: "Link", value: HOME_LINK_HEADER }, VARY_ACCEPT],
       },
       {
         source: "/pricing",
@@ -53,7 +72,15 @@ const nextConfig: NextConfig = {
             key: "Link",
             value: `${LINK_HEADER}, </pricing.md>; rel="alternate"; type="text/markdown"`,
           },
+          VARY_ACCEPT,
         ],
+      },
+      {
+        // The markdown documents themselves, including the ones the proxy
+        // rewrites to — a rewritten request is served from the target's cache
+        // entry, so this is the rule that reaches a negotiated "/".
+        source: "/:doc(index\\.md|pricing\\.md|llms\\.txt)",
+        headers: [VARY_ACCEPT],
       },
       {
         // Everything else public. No markdown alternate, because most pages do
