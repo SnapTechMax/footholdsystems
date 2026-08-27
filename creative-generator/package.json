@@ -1,0 +1,10 @@
+{
+  "name": "foothold-creative-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Facebook ad creative generator for FootHold AEO. Not part of the website.",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

@@ -1,0 +1,277 @@
+/* Same palette as the sales page. The generator should look like the thing it
+   makes ads for, so a creative that looks wrong here looks wrong in the feed. */
+:root {
+  --ink: #08080a;
+  --bg: #0e0e11;
+  --panel: #15151a;
+  --panel-2: #1c1c22;
+  --line: #2a2a33;
+  --text: #f5f3ee;
+  --muted: #a5a29a;
+  --dim: #8a877f;
+  --accent: #f6be00;
+  --accent-hot: #ffd23d;
+  --danger: #ff4d3d;
+  --ok: #4ade80;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------------ bar -- */
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--line);
+  background: var(--ink);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-wrap: wrap;
+}
+
+.mark {
+  font-family: Archivo, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 19px;
+}
+.mark span { color: var(--accent); margin-left: 6px; }
+
+.tag {
+  margin: 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+.tag.right { margin-left: auto; }
+
+/* ------------------------------------------------------------- controls -- */
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 26px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+button, .ghost {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 10px 16px;
+  text-decoration: none;
+  transition: border-color .12s, background .12s;
+}
+button:hover, .ghost:hover { border-color: var(--dim); }
+
+.primary {
+  background: var(--accent);
+  color: var(--ink);
+  border-color: var(--accent);
+  font-weight: 800;
+  padding: 12px 22px;
+}
+.primary:hover { background: var(--accent-hot); border-color: var(--accent-hot); }
+.primary:disabled { opacity: .5; cursor: wait; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+select, input[type=number] {
+  font: inherit;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 190px;
+}
+input[type=number] { min-width: 120px; }
+
+.check { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding-bottom: 10px; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* --------------------------------------------------------------- panels -- */
+
+main { padding: 26px; display: grid; gap: 26px; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.panelHead { margin-bottom: 20px; }
+.panelHead h2 {
+  margin: 0;
+  font-family: Archivo, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-size: 22px;
+}
+
+.note { margin: 6px 0 0; color: var(--dim); font-size: 13px; }
+.note code { color: var(--muted); }
+
+.field-block { margin-bottom: 18px; }
+
+.labelRow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+.counter {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+.counter.over { color: var(--danger); }
+.copyBtn { margin-left: auto; padding: 4px 10px; font-size: 12px; font-weight: 500; }
+
+.value {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.primaryText {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  white-space: pre-wrap;
+  color: var(--dim);
+  font-size: 14.5px;
+}
+.primaryText .fold { color: var(--text); }
+.primaryText .seemore {
+  display: block;
+  margin: 10px 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+
+.value {
+  font-family: Archivo, sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+.lintOk { color: var(--ok); font-size: 13.5px; }
+.lintBad { color: var(--danger); font-size: 13px; margin: 0 0 6px; }
+
+/* ------------------------------------------------------------------ ads -- */
+
+.ads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+
+.ad {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.adHead h3 {
+  margin: 0;
+  font-family: Archivo, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.ratios { display: flex; gap: 6px; margin: 14px 0 12px; flex-wrap: wrap; }
+.ratios button {
+  padding: 5px 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  background: transparent;
+}
+.ratios button.on { background: var(--accent); color: var(--ink); border-color: var(--accent); font-weight: 700; }
+
+.frame {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+}
+.canvasHolder { display: flex; max-height: 460px; }
+.canvasHolder canvas {
+  max-width: 100%;
+  max-height: 460px;
+  width: auto;
+  height: auto;
+  border-radius: 3px;
+  display: block;
+}
+
+.adFoot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.dims { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); }
+.dl { margin-left: auto; padding: 6px 12px; font-size: 12px; }
+
+.places { margin: 12px 0 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+
+/* --------------------------------------------------------------- export -- */
+
+.export {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.export .note { margin: 0; }
+
+@media (max-width: 1100px) {
+  .ads { grid-template-columns: 1fr; }
+  .two { grid-template-columns: 1fr; }
+}

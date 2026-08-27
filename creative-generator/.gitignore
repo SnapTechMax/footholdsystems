@@ -1,0 +1,5 @@
+# Generated ad sets. Regenerate from the seed printed in copy.txt.
+out/
+
+# macOS
+.DS_Store

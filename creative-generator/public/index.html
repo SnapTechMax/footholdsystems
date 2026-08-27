@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FootHold — Creative Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="mark">FOOTHOLD<span>AEO</span></div>
+  <p class="tag">Creative generator · Facebook image ads</p>
+  <p class="tag right" id="bootStat">loading</p>
+</header>
+
+<section class="controls">
+  <button id="generate" class="primary">Generate a set</button>
+
+  <label class="field">
+    <span>Angle</span>
+    <select id="angle"><option value="">Let the seed choose</option></select>
+  </label>
+
+  <label class="field">
+    <span>Seed</span>
+    <input id="seed" type="number" inputmode="numeric" placeholder="random">
+  </label>
+
+  <label class="check">
+    <input type="checkbox" id="safeZones">
+    <span>Show Reels safe zone</span>
+  </label>
+
+  <a class="ghost" href="/api/reference" target="_blank" rel="noopener">Swipe file</a>
+</section>
+
+<main id="stage" hidden>
+
+  <section class="panel copy">
+    <div class="panelHead">
+      <h2>The creative text</h2>
+      <p class="note" id="angleNote"></p>
+    </div>
+
+    <div class="field-block">
+      <div class="labelRow">
+        <span class="label">Primary text</span>
+        <span class="counter" id="foldCounter"></span>
+        <button class="copyBtn" data-copy="primaryText">Copy</button>
+      </div>
+      <div class="primaryText" id="primaryText"></div>
+    </div>
+
+    <div class="two">
+      <div class="field-block">
+        <div class="labelRow">
+          <span class="label">Headline</span>
+          <span class="counter" id="headlineCounter"></span>
+          <button class="copyBtn" data-copy="headline">Copy</button>
+        </div>
+        <div class="value" id="headline"></div>
+      </div>
+      <div class="field-block">
+        <div class="labelRow">
+          <span class="label">Description</span>
+          <span class="counter" id="descriptionCounter"></span>
+          <button class="copyBtn" data-copy="description">Copy</button>
+        </div>
+        <div class="value" id="description"></div>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="field-block">
+        <div class="labelRow"><span class="label">CTA button</span></div>
+        <div class="value" id="ctaLabel"></div>
+      </div>
+      <div class="field-block">
+        <div class="labelRow"><span class="label">Voice check</span></div>
+        <div id="lint"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ads" id="ads"></section>
+
+  <section class="export">
+    <button id="exportAll" class="primary">Write all 15 PNGs and the copy files</button>
+    <p class="note" id="exportNote">Everything lands in <code>creative-generator/out/</code>, one folder per set.</p>
+  </section>
+
+</main>
+
+<template id="adCard">
+  <article class="ad">
+    <div class="adHead">
+      <h3></h3>
+      <p class="note"></p>
+    </div>
+    <div class="ratios"></div>
+    <div class="frame"><div class="canvasHolder"></div></div>
+    <div class="adFoot">
+      <span class="dims"></span>
+      <button class="ghost dl">Download PNG</button>
+    </div>
+    <p class="places"></p>
+  </article>
+</template>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# The creative generator is a local tool, not part of the website. Nothing in
+# src/ imports it and it has no route, so keeping it out of the deploy is just
+# making that structural.
+creative-generator

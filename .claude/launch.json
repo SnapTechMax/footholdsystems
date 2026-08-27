@@ -4,8 +4,19 @@
     {
       "name": "foothold-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "creative-generator",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "creative-generator/server.mjs"
+      ],
+      "port": 4321
     }
   ]
 }
