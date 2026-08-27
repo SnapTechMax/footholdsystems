@@ -27,13 +27,29 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * the scan, and it is listed once, honestly, in each file.
  */
 
-/** Everything here is one capability described three ways. Defined once. */
+/**
+ * Everything here is one capability described three ways. Defined once.
+ *
+ * THE "When to use:" CLAUSE IS LOAD-BEARING, and its absence is why the first
+ * pass scored agent-instruction 2/3 rather than 3/3: "Agent instruction file at
+ * /.well-known/agent-skills/ but no explicit when-to-use guidance". The scan
+ * reads this description, not the SKILL.md the entry points at — where a
+ * perfectly good "## When to use it" section already lived and went unread. The
+ * phrasing mirrors ora.ai's own index.json, which is the shape demonstrably
+ * being parsed.
+ */
 const SCAN_DESCRIPTION =
   "Run a free AI visibility scan of a business website. Returns a score out " +
   "of 100 for how readable, clear and recommendable the site is to AI " +
   "assistants such as ChatGPT, Gemini, Perplexity and Copilot, plus every " +
-  "finding ranked worst first and what each one costs the business. The " +
-  "report is emailed, so it needs the recipient's own consent.";
+  "finding ranked worst first and what each one costs the business. " +
+  "When to use: someone asks why ChatGPT does not recommend their business, " +
+  "whether their website is readable to AI crawlers, what AI assistants " +
+  "currently say about their company, or how to appear in AI answers before " +
+  "their competitors. Do not use for brand-new businesses with no trading " +
+  "history, for traditional SEO or paid ads, or when someone wants a " +
+  "guaranteed placement in an AI answer. The report is emailed, so it needs " +
+  "the recipient's own consent.";
 
 const REPRESENTATIVE_QUERIES = [
   "why doesn't ChatGPT recommend my business",

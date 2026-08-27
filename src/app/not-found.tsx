@@ -93,18 +93,25 @@ export default function NotFound() {
           </Link>
         </div>
 
-        {/* Visible rather than hidden. An agent-only payload that a person
-            cannot see is the shape of thing search engines have spent twenty
-            years penalising, and there is nothing in here worth concealing —
-            it is a list of links to public pages. */}
-        <details className="mt-14 rounded-xl border border-[var(--line)] bg-[var(--ink)] p-6">
-          <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
-            Machine-readable version
-          </summary>
+        {/* Open, not a <details>.
+            
+            It shipped collapsed and the scan came back 1/2 — "for full credit,
+            include a short markdown body". A <details> keeps its contents in
+            the DOM, so the theory was that a parser would find them anyway; it
+            evidently reads what is rendered. Which is fair, and it is the same
+            reason this is visible rather than hidden by CSS: an agent-only
+            payload a person cannot see is the shape of thing search engines
+            have spent twenty years penalising. There is nothing here worth
+            concealing — it is a list of links to public pages, and a person who
+            hit a dead link can use it as readily as a crawler can. */}
+        <div className="mt-14 rounded-xl border border-[var(--line)] bg-[var(--ink)] p-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
+            Where to look next
+          </p>
           <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[13px] leading-relaxed text-[var(--muted)]">
             {AGENT_RECOVERY}
           </pre>
-        </details>
+        </div>
       </section>
     </div>
   );
