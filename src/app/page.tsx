@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { ScanCta } from "@/components/ScanCta";
 import { ScanForm } from "@/components/ScanForm";
+import {
+  breadcrumbSchema,
+  faqSchema,
+  jsonLdGraph,
+  organizationSchema,
+  serviceSchema,
+  webSiteSchema,
+} from "@/lib/schema";
 
 /**
  * FootHold AEO — the sales page.
@@ -336,11 +345,63 @@ function Cell({ value }: { value: boolean | string }) {
   return <Check on={value} />;
 }
 
+/* -------------------------------------------------------------- METADATA -- */
+
+/**
+ * Homepage metadata.
+ *
+ * Only the alternates. Title, description and Open Graph all come from the root
+ * layout and are already right for this page — it is the one the layout's
+ * defaults were written for.
+ *
+ * Redeclaring `alternates` replaces the layout's whole block rather than
+ * merging into it, which is why the canonical is repeated here. Dropping it
+ * would leave the homepage as the one page on the site without one.
+ */
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+    // The markdown twin of this page. Agents that would rather parse prose than
+    // strip a marketing layout can follow this instead of the HTML; /index.md
+    // is a real file in public/ and is generated from the same offer facts.
+    types: {
+      "text/markdown": "/index.md",
+    },
+  },
+};
+
 /* -------------------------------------------------------------------- PAGE -- */
 
 export default function SalesPage() {
+  /*
+   * Structured data for the homepage.
+   *
+   * Built here rather than in the layout because the FAQ copy is the FAQS
+   * const forty lines up — the questions a model quotes back are the same
+   * strings a reader sees, and there is no second copy to fall out of date.
+   *
+   * Rendered as a plain <script>, not next/script: this has to be in the
+   * server-rendered HTML. A crawler that does not execute JavaScript is
+   * precisely the reader this exists for, and next/script's afterInteractive
+   * default would put the whole graph behind the thing we cannot assume.
+   */
+  const graph = jsonLdGraph([
+    organizationSchema(),
+    webSiteSchema(),
+    serviceSchema(),
+    faqSchema(FAQS),
+    breadcrumbSchema([{ name: "FootHold AEO", path: "/" }]),
+  ]);
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        // The payload is our own constants, not user input, and JSON.stringify
+        // over it cannot produce a closing script tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+      />
+
       {/* ============================================================ HERO == */}
       <section className="relative overflow-hidden bg-[var(--ink)]">
         {/* Single soft light source behind the headline. No gradient meshes —

@@ -5,10 +5,17 @@ import { BUSINESS_ADDRESS } from "@/lib/site";
 /**
  * Footer.
  *
- * Deliberately thin. The only links are the two that have to be here: the
- * privacy policy, because the site collects email addresses and Meta's ad
- * review looks for it, and nothing else. A footer full of exits on a
+ * Deliberately thin, and it is staying thin: a footer full of exits on a
  * single-page funnel is just a leak with a border on top.
+ *
+ * Three links now rather than one. Privacy is here because the site collects
+ * email addresses and Meta's ad review looks for it. Pricing and contact were
+ * added after the 2026-08-27 agent-readiness scan, which found the site had no
+ * reachable pricing and no contact page — two of the pages an assistant fetches
+ * before it will name a business in an answer. They earn their place by being
+ * the pages a machine goes looking for, not by being somewhere we want a
+ * visitor to go, which is why they sit down here in small type rather than in
+ * the header where they would compete with the CTA.
  *
  * The postal address is the same one the delivery emails print for CAN-SPAM.
  * It stays visible because a lead-capture page running cold paid traffic with
@@ -43,9 +50,25 @@ export function Footer() {
 
         <div className="sm:text-right">
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
-            Legal
+            More
           </p>
           <ul className="mt-3 space-y-2 text-[15px]">
+            <li>
+              <Link
+                href="/pricing"
+                className="text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+              >
+                Pricing
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/contact"
+                className="text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+              >
+                Contact
+              </Link>
+            </li>
             <li>
               <Link
                 href="/privacy"

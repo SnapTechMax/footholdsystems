@@ -95,6 +95,20 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  /*
+   * Canonical URL. Added after the 2026-08-27 agent-readiness scan reported
+   * metadata-completeness at 1/2 — html lang, og:image and og:type were all
+   * present and the canonical was the one missing signal.
+   *
+   * "./" rather than a literal, which is Next's relative form: it resolves
+   * against metadataBase *plus the current pathname*, so /privacy canonicalises
+   * to /privacy. A literal "/" here would quietly tell every crawler that every
+   * page on the site is the homepage, which is a far more expensive mistake
+   * than the missing tag it replaces.
+   */
+  alternates: {
+    canonical: "./",
+  },
   // No facebook-domain-verification tag on purpose. The previous token belonged
   // to the Business Manager that holds the domain claim, and serving it was the
   // only thing keeping that claim valid — Meta re-checks periodically and has

@@ -3,10 +3,15 @@ import type { MetadataRoute } from "next";
 /**
  * sitemap.xml.
  *
- * Two public pages now that the site is a single sales page plus the privacy
- * policy it is legally required to carry. Listed by hand rather than derived —
- * there is no content collection to walk, and a generated sitemap over a
- * two-page site would be indirection standing in for a list.
+ * Four public pages: the sales page, the privacy policy it is legally required
+ * to carry, and the pricing and contact pages added after the 2026-08-27
+ * agent-readiness scan — pricing because an assistant asked what this costs
+ * needs somewhere to read it from, contact because it is one of the three
+ * trust-anchor pages a model fetches to decide a business is real.
+ *
+ * Listed by hand rather than derived — there is no content collection to walk,
+ * and a generated sitemap over four pages would be indirection standing in for
+ * a list.
  *
  * `/admin` is deliberately absent. A sitemap is a request to index, and it
  * should not be.
@@ -29,6 +34,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      // Reference, not a second funnel entrance — see the page's own note. Ranked
+      // above privacy because "how much does it cost" is a question people and
+      // models both actually ask.
+      url: `${BASE}/pricing`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE}/contact`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
     },
     {
       url: `${BASE}/privacy`,
