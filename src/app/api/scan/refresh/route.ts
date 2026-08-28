@@ -11,7 +11,7 @@ import { refreshScanJob } from "@/lib/scan/run";
  * putting their email back through the capture form, which mints a new token,
  * gives them a second URL, and drops a duplicate report in their inbox.
  *
- * Behind the admin password, for the same two reasons as /api/lead/health: it
+ * Behind the admin password, for two reasons: it
  * spends a third-party API call per request against a 30-a-day ceiling, and an
  * unauthenticated endpoint that regenerates arbitrary customers' reports is not
  * something to leave open. `isAdminAuthorised` fails shut.

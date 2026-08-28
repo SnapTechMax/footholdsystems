@@ -40,17 +40,6 @@ export const CALENDLY_RETAINER_URL =
   "https://calendly.com/maximilian-footholdsystems/aeo-full-strategy-call";
 
 /**
- * Where lead capture sends people once delivery has happened.
- *
- * ORPHANED PENDING THE SCAN BUILD. This pointed at `/guide/thanks`, which went
- * away with the rest of the 5 Levels funnel. Nothing on the site posts to the
- * lead API right now, so nothing reaches a 404 — but the scan form is going to
- * need a thank-you page, and this constant is where it gets named. Build the
- * route before shipping the form, not after.
- */
-export const THANKS_PATH = "/scan/thanks";
-
-/**
  * Postal address, shown on the privacy policy and in the site footer.
  *
  * The same address the delivery email prints for CAN-SPAM, kept here so the two
@@ -58,7 +47,7 @@ export const THANKS_PATH = "/scan/thanks";
  * worse than one that appears in only one of them. Meta's ad review also treats a
  * contactable business address on a lead-capture landing page as a trust signal.
  * If the business moves, this constant and `BRAND_ADDRESS` in
- * `src/app/api/lead-magnet/route.ts` move together.
+ * `content/nurture-sequence.mjs` move together.
  */
 export const BUSINESS_ADDRESS =
   "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
@@ -66,10 +55,10 @@ export const BUSINESS_ADDRESS =
 /**
  * Wording beside the marketing consent checkbox.
  *
- * Lives here rather than in lib/consent.ts because that module is server-only
- * and the form is a client component. Both import this one, so the wording shown
- * to someone and the wording stored against their consent cannot drift apart —
- * which is the only thing that makes the stored record worth anything.
+ * Read by the scan form, which shows it, and by /api/scan, which stores it
+ * verbatim against the lead. One constant, so the wording someone agreed to and
+ * the wording on record cannot drift apart — which is the only thing that makes
+ * the stored record worth anything.
  */
 export const CONSENT_TEXT =
   "Yes, send me my scan results and occasional AI visibility tips. Unsubscribe any time.";
@@ -82,34 +71,21 @@ export const CONSENT_TEXT =
 export const CONSENT_TEXT_OPTIONAL =
   "Also email me occasional AI visibility tips for businesses. Unsubscribe any time. Your scan is yours either way.";
 
-/**
- * Wording beside the phone-contact checkbox.
- *
- * A separate permission from the two above, not a rewording of them. Those cover
- * marketing email under CAN-SPAM and GDPR; this covers being called or texted
- * about what they requested, which in the US is TCPA's question rather than
- * CAN-SPAM's. Two boxes because they are two agreements — someone may reasonably
- * want the scan and the emails without wanting the phone to ring.
- */
-export const CONTACT_CONSENT_TEXT = "I agree to be contacted about my results.";
-
 // Direct line. Published to people who have opted in — the delivery email and
 // the report itself — but deliberately NOT on the public website, so it stays
 // off the pages anonymous visitors and scrapers hit. Keep those two surfaces in
 // mind before adding it anywhere new.
 export const CONTACT_PHONE = "(909) 407-6602";
-export const CONTACT_PHONE_TEL = "9094076602";
 export const CONTACT_EMAIL = "maximilian@footholdsystems.com";
 
-/**
- * Static deliverable in public/downloads.
+/*
+ * THE 5 LEVELS PDF IS STILL IN public/downloads, AND STAYS THERE.
  *
- * Still the 5 Levels PDF. The marketing pages around it are gone, but delivery
- * emails already sent to real people link straight to this file, so the file
- * stays until those sequences are retired. Do not delete it to tidy up.
+ * Its `GUIDE_PATH` constant is gone with the lead route that served it, but
+ * delivery emails already sent to real people link straight at the file. It
+ * costs nothing to host and a 404 in somebody's inbox is not recoverable. Do
+ * not delete it to tidy up.
  */
-export const GUIDE_PATH =
-  "/downloads/Foothold-The-5-Levels-of-AI-and-The-Prompts.pdf";
 
 // NOTE ON THE BOOKING WINDOW
 // The "max 7 days out, 1–4pm PT" rule is enforced inside Calendly, on the event

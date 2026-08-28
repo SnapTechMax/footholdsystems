@@ -11,11 +11,11 @@
 # running and abandoned, and completed-but-never-emailed. The last one is the
 # cheapest and the most common, which is why the handler does those first.
 #
-# It lives here rather than in vercel.json for the same reason cro-tick does:
-# Vercel's Hobby plan allows daily cron only and does not degrade quietly (a
-# sub-daily schedule in vercel.json fails the whole deployment), and that daily
-# allowance is already spent on /api/cro/tick. Free here, and this repo is
-# public, so the minutes are not billed either.
+# It lives here rather than in vercel.json because Vercel's Hobby plan allows
+# daily cron only and does not degrade quietly: a sub-daily schedule there fails
+# the whole deployment. Ten minutes is the point of a sweep, so a daily run is
+# not a smaller version of this job. Free here, and this repo is public, so the
+# minutes are not billed either.
 #
 # SETUP: none. The existing CRON_SECRET repository secret covers this, the same
 # one cro-tick and campaign-refresh use.

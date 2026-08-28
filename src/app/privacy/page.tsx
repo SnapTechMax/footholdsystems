@@ -31,9 +31,10 @@ const display = "font-display";
 // Kept in step with the tags in src/app/layout.tsx and the processors the scan
 // flow actually touches. Adding a tag or a vendor means adding a row here.
 //
-// Google Sheets and Pushover are deliberately absent: they are only used by the
-// older /api/lead route, and nothing on the site posts to it any more. A
-// processor listed here that never sees your data is as wrong as one missing.
+// Google Sheets and Pushover are absent because they are gone: they belonged to
+// the older /api/lead route, which was deleted along with the rest of the guide
+// funnel. A processor listed here that never sees your data is as wrong as one
+// missing.
 const PROCESSORS = [
   {
     name: "Resend",

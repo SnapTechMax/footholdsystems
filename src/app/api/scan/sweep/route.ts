@@ -17,9 +17,9 @@ import { runScanJob, sendReportEmail } from "@/lib/scan/run";
  *
  * Driven from .github/workflows/scan-sweep.yml every 10 minutes, not from
  * vercel.json: the Hobby plan allows one cron run a day and fails the whole
- * deployment on anything finer, and that daily allowance is already spent on
- * /api/cro/tick. Authorises the same way either would, so it can be moved back
- * without touching this file.
+ * deployment on anything finer. That daily allowance is now unspent — it used
+ * to go on /api/cro/tick — but one run a day is not a sweep. Authorises the way
+ * a Vercel cron would, so it can be moved back without touching this file.
  */
 
 export const runtime = "nodejs";

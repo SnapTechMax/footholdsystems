@@ -15,7 +15,7 @@ import { neon } from "@neondatabase/serverless";
  * so the pooler is what should absorb them. POSTGRES_URL_NO_SSL is deliberately
  * absent — Neon requires TLS.
  *
- * `src/lib/cro/db.ts` and `src/lib/consent.ts` predate this and carry their own
+ * `src/lib/tracking.ts` predates this and carries its own
  * copies. They work, so they are left alone; new code should use this.
  */
 
