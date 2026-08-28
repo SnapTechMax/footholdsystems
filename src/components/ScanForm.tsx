@@ -170,17 +170,20 @@ export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
       event_category: "scan",
       event_label: source,
     });
-    // eventID must match the Conversions API's id for this same lead, or Meta
-    // counts the browser event and the server event as two. Only possible
-    // when the route handed back a token; without one the server half has
-    // nothing to match against either, so an un-deduplicated event would be
-    // the lesser of two errors — but the route always returns one.
-    window.fbq?.(
-      "track",
-      "Lead",
-      { content_name: "ai-visibility-scan" },
-      data.token ? { eventID: metaEventId.lead(data.token) } : undefined
-    );
+
+    // Meta's Lead fires on the thank-you page now, not here — see LeadPixel.
+    // Except for the WebMCP path, which deliberately does not navigate, so
+    // nothing downstream would ever fire it. Same event, same derived eventID,
+    // so an agent-driven scan is still deduplicated against the Conversions
+    // API's half and still counted exactly once.
+    if (source === "webmcp" && data.token) {
+      window.fbq?.(
+        "track",
+        "Lead",
+        { content_name: "ai-visibility-scan" },
+        { eventID: metaEventId.lead(data.token) }
+      );
+    }
 
     return { ok: true, token: data.token };
   }
@@ -193,8 +196,6 @@ export function ScanForm({ entryPoint = "scan" }: { entryPoint?: string }) {
     setError(null);
     setErrorField(null);
 
-    // Fire before navigating: the thank-you page is a different document and
-    // an event queued here would not survive the transition.
     const result = await submitScan(
       { url, email, category, consent },
       entryPoint

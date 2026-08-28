@@ -1,6 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getScanByToken } from "@/lib/scan/db";
-import { checkoutReturnUrl, reportUrl, siteUrl } from "@/lib/scan/pricing";
+import { sendInitiateCheckout } from "@/lib/meta-capi";
+import {
+  DONE_FOR_YOU_PRICE_CENTS,
+  SOLUTIONS_PRICE_CENTS,
+  checkoutReturnUrl,
+  reportUrl,
+  siteUrl,
+} from "@/lib/scan/pricing";
 import { createCheckout } from "@/lib/scan/whop";
 import { cleanRecipient, knownKey, recordClick } from "@/lib/tracking";
 
@@ -53,6 +60,47 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  /**
+   * The server half of InitiateCheckout, and the reliable one.
+   *
+   * Fires here rather than only on the button because this route runs on the
+   * click that actually reached us — no blocker in between, and no race with
+   * the navigation that carries the buyer away from the page. BuyButton sends
+   * the same event with the same derived id and Meta collapses the two.
+   *
+   * Placed before the Whop round trip, in `after()`, so it neither delays the
+   * redirect nor depends on Whop cooperating. A checkout Whop refuses to create
+   * is still a person who tried to buy, and for the $1,497 tier that is a
+   * signal worth having either way — arguably more than the ones that succeed,
+   * since it is also how a broken checkout becomes visible in the funnel rather
+   * than as silence.
+   */
+  after(async () => {
+    try {
+      await sendInitiateCheckout({
+        token: scan.token,
+        product,
+        valueCents:
+          product === "done_for_you"
+            ? DONE_FOR_YOU_PRICE_CENTS
+            : SOLUTIONS_PRICE_CENTS,
+        // An outreach scan's address is the internal row every one of them
+        // hangs off, not a buyer's. Sending it would hash the same value onto
+        // every cold-audit checkout and tell Meta they are one person.
+        email: scan.outreach ? null : scan.email,
+        ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        userAgent: request.headers.get("user-agent"),
+        // This click does come from a browser, so prefer its live cookies and
+        // fall back to what was stored against the lead at scan time.
+        fbp: request.cookies.get("_fbp")?.value ?? scan.fbp,
+        fbc: request.cookies.get("_fbc")?.value ?? scan.fbc,
+        sourceUrl: reportUrl(scan.token),
+      });
+    } catch (error) {
+      console.error("[checkout] InitiateCheckout not sent:", error);
+    }
+  });
+
   const checkout = await createCheckout({
     product,
     // Read straight back by the webhook. scan_token is what unlocks the report;
@@ -60,7 +108,10 @@ export async function GET(request: NextRequest) {
     metadata: {
       scan_token: scan.token,
       product,
-      email: scan.email,
+      // Same reason as above, and one more: the webhook falls back to this
+      // address when a payment arrives with no token, and resolving it would
+      // find whichever outreach scan ran last rather than this buyer's.
+      ...(scan.outreach ? {} : { email: scan.email }),
       domain: scan.domain,
       ...(campaign ? { email_key: campaign } : {}),
     },

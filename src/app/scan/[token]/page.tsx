@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { after } from "next/server";
+import { notFound, redirect } from "next/navigation";
 import { BookKickoff } from "@/components/BookKickoff";
 import { BuildOffer } from "@/components/BuildOffer";
+import { BuyButton } from "@/components/BuyButton";
+import { ReportOpenedPixel } from "@/components/ReportOpenedPixel";
+import { Eyebrow, Finding, ScoreHeader } from "@/components/ScanReportView";
 import { ScanPoller } from "@/components/ScanPoller";
-import { getScanByToken, isPaid } from "@/lib/scan/db";
-import { SOLUTIONS_PRICE, checkoutUrl } from "@/lib/scan/pricing";
+import { getScanByToken, isPaid, markReportOpened } from "@/lib/scan/db";
+import { sendReportOpened } from "@/lib/meta-capi";
+import { SOLUTIONS_PRICE, checkoutUrl, reportUrl } from "@/lib/scan/pricing";
 import { buildReport, toPublicReport } from "@/lib/scan/report";
-import type { ReportFinding, ScanReport } from "@/lib/scan/types";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -41,187 +45,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent)] sm:text-xs">
-      {children}
-    </p>
-  );
-}
-
-/**
- * Stand-in for locked text.
- *
- * Deterministic line lengths from the finding's own id, so the blocks look like
- * real paragraphs of differing length rather than an obviously repeating
- * pattern — and so they do not reflow between renders.
- */
-function LockedBlock({ seed }: { seed: string }) {
-  const widths = [96, 88, 92, 74];
-  const offset = seed.length % widths.length;
-  return (
-    <div aria-hidden="true" className="mt-3 select-none space-y-2">
-      {widths.map((_, i) => (
-        <div
-          key={i}
-          className="h-3 rounded-full bg-[var(--line)] blur-[2px]"
-          style={{ width: `${widths[(i + offset) % widths.length]}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
 /* ── pieces ───────────────────────────────────────────────────────────────── */
-
-function ScoreHeader({ report }: { report: ScanReport }) {
-  const tone =
-    report.grade === "A" || report.grade === "B"
-      ? "text-[var(--accent)]"
-      : report.grade === "F"
-        ? "text-[var(--danger)]"
-        : "text-[var(--text)]";
-
-  return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-7 sm:p-10">
-      <Eyebrow>AI visibility score</Eyebrow>
-      <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className={`font-display text-6xl font-black leading-none sm:text-7xl ${tone}`}>
-          {report.score}
-        </span>
-        <span className="font-display text-2xl font-bold text-[var(--dim)]">
-          / {report.maxScore}
-        </span>
-        <span className="ml-auto font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--dim)]">
-          Grade {report.grade}
-        </span>
-      </div>
-      {/* Says what the score was measured against. A number with no stated
-          basis invites the obvious comparison against a raw Ora score, which is
-          computed over a different set of checks entirely. */}
-      <div className="mt-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
-          Scored as: {report.categoryLabel}
-        </span>
-      </div>
-      {/* Only rendered when the cap actually moved the letter. A high score
-          sitting next to a middling grade reads as a broken scale unless the
-          reason is right there. */}
-      {report.gradeCappedBecause && (
-        <div className="mt-4 flex gap-3 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3">
-          <span aria-hidden="true" className="text-[var(--danger)]">
-            !
-          </span>
-          <p className="max-w-[54ch] text-[14px] leading-[1.55] text-[var(--muted)]">
-            <span className="font-semibold text-[var(--text)]">
-              Your grade is held at {report.grade} despite a score of{" "}
-              {report.score}.{" "}
-            </span>
-            {report.gradeCappedBecause}
-          </p>
-        </div>
-      )}
-      <div>
-      </div>
-      <p className="mt-6 max-w-[42ch] font-display text-xl font-extrabold uppercase leading-[1.15] tracking-[-0.01em] text-[var(--text)] sm:text-2xl">
-        {report.verdict}
-      </p>
-      <p className="mt-5 max-w-[54ch] text-[16px] leading-[1.65] text-[var(--muted)] sm:text-[17px]">
-        {report.summary}
-      </p>
-      <div className="mt-7 flex flex-wrap gap-x-8 gap-y-3 border-t border-[var(--line)] pt-6">
-        {[
-          { label: "Passed", value: report.totals.passed },
-          { label: "Failed", value: report.totals.failed },
-          { label: "Warnings", value: report.totals.warnings },
-        ].map((s) => (
-          <div key={s.label}>
-            <p className="font-display text-2xl font-extrabold text-[var(--text)]">
-              {s.value}
-            </p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--dim)]">
-              {s.label}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Finding({
-  finding,
-  index,
-  unlocked,
-}: {
-  // Typed as the full finding only when unlocked; the caller passes the
-  // stripped shape otherwise, so there is nothing here to leak.
-  finding: Omit<ReportFinding, "fix" | "specUrl"> & Partial<Pick<ReportFinding, "fix" | "specUrl">>;
-  index: number;
-  unlocked: boolean;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="font-mono text-sm font-bold tracking-[0.18em] text-[var(--accent)]">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        {finding.tier === "required" && (
-          <span className="rounded-full border border-[var(--danger)]/60 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--danger)]">
-            Critical
-          </span>
-        )}
-      </div>
-
-      <h3 className="mt-3 font-display text-xl font-extrabold uppercase leading-[1.1] tracking-[-0.01em] text-[var(--text)] sm:text-2xl">
-        {finding.title}
-      </h3>
-
-      <p className="mt-4 text-[15px] leading-[1.6] text-[var(--muted)]">
-        <span className="font-semibold text-[var(--text)]">What we found: </span>
-        {finding.problem}
-      </p>
-
-      <p className="mt-3 max-w-[56ch] text-[16px] leading-[1.65] text-[var(--muted)]">
-        {finding.consequence}
-      </p>
-
-      {/* Set apart rather than appended. A reader who checks this in their own
-          browser and sees a different answer concludes the report is wrong, so
-          the explanation has to be impossible to skim past. */}
-      {finding.caveat && (
-        <p className="mt-4 border-l-2 border-[var(--line)] py-1 pl-4 text-[13px] leading-[1.6] text-[var(--dim)]">
-          {finding.caveat}
-        </p>
-      )}
-
-      <div className="mt-5 border-t border-[var(--line)] pt-5">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
-          How to fix it
-        </p>
-        {unlocked && finding.fix ? (
-          <>
-            <p className="mt-3 max-w-[58ch] text-[16px] leading-[1.7] text-[var(--text)]">
-              {finding.fix}
-            </p>
-            {finding.specUrl && (
-              <a
-                href={finding.specUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-block text-[14px] text-[var(--accent)] underline underline-offset-4"
-              >
-                Reference &rarr;
-              </a>
-            )}
-          </>
-        ) : (
-          <LockedBlock seed={finding.checkId} />
-        )}
-      </div>
-    </div>
-  );
-}
 
 function Paywall({
   token,
@@ -277,7 +101,9 @@ function Paywall({
       )}
 
       <div className="mt-8">
-        <a
+        <BuyButton
+          token={token}
+          product="solutions"
           href={pay}
           className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
         >
@@ -288,7 +114,7 @@ function Paywall({
           >
             &rarr;
           </span>
-        </a>
+        </BuyButton>
         <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
           One payment. Instant access on this page. {SOLUTIONS_PRICE} is less than
           an hour of most people&apos;s billable time, and the answer only has
@@ -318,6 +144,23 @@ export default async function ScanReportPage({
   // Same 404 for a bad token and a missing one. Distinguishing them would let
   // somebody probe for valid tokens.
   if (!scan) notFound();
+
+  /**
+   * An outreach scan is read somewhere else, so send them there.
+   *
+   * Nothing links here with one of those tokens, but two things can produce
+   * one: an admin copying a link out of habit, and /api/go/checkout, which
+   * bounces a failed checkout back to `reportUrl` for every product. Rendering
+   * it here would show a cold prospect the $49 paywall over fixes the email
+   * they clicked promised them for nothing, which is the worst possible first
+   * impression of a business selling clarity. The query is carried across so
+   * the checkout=failed notice survives the hop.
+   */
+  if (scan.outreach) {
+    redirect(
+      `/audit/${scan.token}${checkoutFailed ? "?checkout=failed" : ""}`
+    );
+  }
 
   if (scan.status === "queued" || scan.status === "running") {
     return (
@@ -398,8 +241,67 @@ export default async function ScanReportPage({
   // bought.
   const boughtBuild = await isPaid(scan.id, "done_for_you").catch(() => false);
 
+  /**
+   * Claim the first read of this report, and report it as a conversion.
+   *
+   * The strongest quality signal this funnel produces. Lead means somebody
+   * typed an email into a form on a cold ad; this means they opened the email,
+   * followed the link and looked at the answer. Those two populations are not
+   * the same, and the second is the one worth buying more of — which is the
+   * whole reason it is a standard `ViewContent` rather than a custom event, so
+   * it can be selected as an ad set's optimisation event without wrapping it in
+   * a custom conversion first.
+   *
+   * Only once, decided by the database rather than the browser: `markReportOpened`
+   * is a conditional UPDATE and returns true for exactly one caller, so two tabs
+   * opened at once produce one event and a re-read next week produces none.
+   *
+   * Only when there is something to read. A visitor who lands here while the
+   * scan is still running gets the poller, not a report, and counting that as a
+   * read would teach delivery that the signal is cheaper to produce than it is.
+   * `report` is non-null past the notFound above, so this is really asking
+   * whether the scan finished.
+   *
+   * Failure is swallowed on purpose. This is a marketing event on the critical
+   * path of the page a paying customer came to read, and there is no version of
+   * a Meta outage that should cost somebody their report.
+   */
+  const openedNow =
+    scan.status === "complete"
+      ? await markReportOpened(scan.id).catch(() => false)
+      : false;
+
+  if (openedNow) {
+    after(async () => {
+      try {
+        await sendReportOpened({
+          token: scan.token,
+          email: scan.email,
+          // Stored on the lead at scan time. The request that got here usually
+          // came from an email link on another device and carries no Meta
+          // cookies of its own — see the columns' note in db.ts.
+          fbp: scan.fbp,
+          fbc: scan.fbc,
+          sourceUrl: reportUrl(scan.token),
+          category: scan.category,
+          score: report.score,
+        });
+      } catch (error) {
+        console.error("[report] ViewContent not sent:", error);
+      }
+    });
+  }
+
   return (
     <Shell>
+      {/* The browser half, sharing the event id above so Meta collapses the
+          pair. Rendered only on the request that won the claim. */}
+      <ReportOpenedPixel
+        token={scan.token}
+        category={scan.category}
+        score={report.score}
+        fire={openedNow}
+      />
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Eyebrow>AI visibility report</Eyebrow>
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">

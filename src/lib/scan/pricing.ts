@@ -61,6 +61,19 @@ export function reportUrl(token: string): string {
 }
 
 /**
+ * Where a cold prospect reads a scan we ran on them without being asked.
+ *
+ * A different path from `reportUrl` because it is a different page with a
+ * different deal on it: nothing is paywalled, nothing was emailed to them by
+ * the system, and the only thing for sale is the build. `/scan/<token>` is the
+ * page a lead reads, and it redirects here when the token turns out to be an
+ * outreach one, so a link pasted from the wrong place still lands right.
+ */
+export function auditUrl(token: string): string {
+  return `${siteUrl()}/audit/${token}`;
+}
+
+/**
  * Where a buyer lands once the SOLUTIONS payment clears.
  *
  * A separate page rather than the report, because the moment after paying is

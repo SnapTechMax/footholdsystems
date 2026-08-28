@@ -235,6 +235,103 @@ export async function sendLead(args: {
   });
 }
 
+/**
+ * The server half of ReportOpened — the quality signal in this funnel.
+ *
+ * Lead says somebody typed an email. This says they came back and read the
+ * thing, which is the first evidence in the whole sequence that they care about
+ * the answer. It is also the last event with enough volume to optimise delivery
+ * against: purchases at $49 and $1,497 will not clear Meta's learning threshold
+ * for a long time, and report opens will.
+ *
+ * `ViewContent` rather than a custom event, because a standard event can be
+ * picked as an ad set's optimisation event directly, and a custom one has to be
+ * wrapped in a custom conversion first. Nothing about the data differs; it is
+ * purely about what the delivery system will let you point at.
+ *
+ * The user data comes off the stored lead rather than off the request, and that
+ * is the reason `fbp`/`fbc` are columns now. This event usually fires from the
+ * email link — a later session, frequently a different device — where the
+ * request itself carries no Meta cookies at all.
+ */
+export async function sendReportOpened(args: {
+  token: string;
+  email: string;
+  ip?: string | null;
+  userAgent?: string | null;
+  fbp?: string | null;
+  fbc?: string | null;
+  sourceUrl?: string;
+  category?: string;
+  /** The score they were shown. Useful for reading quality back by segment. */
+  score?: number | null;
+}): Promise<CapiResult> {
+  return sendCapiEvent({
+    eventName: "ViewContent",
+    eventId: metaEventId.reportOpened(args.token),
+    eventSourceUrl: args.sourceUrl,
+    userData: {
+      email: args.email,
+      ip: args.ip,
+      userAgent: args.userAgent,
+      fbp: args.fbp,
+      fbc: args.fbc,
+    },
+    customData: {
+      content_name: "ai-visibility-report",
+      content_type: "product",
+      content_ids: ["ai-visibility-report"],
+      ...(args.category ? { content_category: args.category } : {}),
+      ...(typeof args.score === "number" ? { report_score: args.score } : {}),
+    },
+  });
+}
+
+/**
+ * The server half of InitiateCheckout, fired by the redirect route.
+ *
+ * Better placed than the browser half it deduplicates against: this runs inside
+ * the route that mints the Whop checkout, so it fires on the click that
+ * actually reached us rather than on one a blocker allowed through.
+ *
+ * `value` is the price of the product being started. That is what makes the two
+ * tiers legible as separate intents — a $1,497 checkout start and a $49 one are
+ * the same event name with a thirty-fold difference in what they are worth, and
+ * without the value Meta sees only the name.
+ */
+export async function sendInitiateCheckout(args: {
+  token: string;
+  product: "solutions" | "done_for_you";
+  valueCents: number;
+  email?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+  fbp?: string | null;
+  fbc?: string | null;
+  sourceUrl?: string;
+}): Promise<CapiResult> {
+  return sendCapiEvent({
+    eventName: "InitiateCheckout",
+    eventId: metaEventId.initiateCheckout(args.token, args.product),
+    eventSourceUrl: args.sourceUrl,
+    userData: {
+      email: args.email,
+      ip: args.ip,
+      userAgent: args.userAgent,
+      fbp: args.fbp,
+      fbc: args.fbc,
+    },
+    customData: {
+      value: args.valueCents / 100,
+      currency: "USD",
+      content_name: args.product,
+      content_type: "product",
+      content_ids: [args.product],
+      num_items: 1,
+    },
+  });
+}
+
 /** Convenience for the payment webhook. */
 export async function sendPurchase(args: {
   token: string;

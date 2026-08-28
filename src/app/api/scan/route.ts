@@ -201,6 +201,13 @@ export async function POST(request: NextRequest) {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent"),
       attribution: cleanAttribution(data.attribution),
+      // Stored, not just used below. This is the only moment we are guaranteed
+      // to see these cookies — the visitor is in the browser that clicked the
+      // ad. ReportOpened fires later from an emailed link, often on another
+      // device, and without these kept it would have nothing but a hashed
+      // email to match on.
+      fbp: request.cookies.get("_fbp")?.value ?? null,
+      fbc: request.cookies.get("_fbc")?.value ?? null,
     });
 
     const scan = await createScan({

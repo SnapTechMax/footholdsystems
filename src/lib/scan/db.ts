@@ -58,7 +58,23 @@ export interface ScanRow {
   createdAt: string;
   completedAt: string | null;
   reportEmailedAt: string | null;
+  /** Null until the report is first read. See `markReportOpened`. */
+  reportOpenedAt: string | null;
   handover: Handover | null;
+  /**
+   * True when an admin queued this from /admin/outreach rather than a visitor
+   * asking for it.
+   *
+   * It decides three things, and all three are the difference between a lead
+   * and a stranger: nothing is emailed (there is no customer here, only a
+   * domain), nothing is paywalled (the whole report is the pitch), and the
+   * report is read at /audit/<token> rather than /scan/<token>.
+   */
+  outreach: boolean;
+  /** Meta's `_fbp` from the visit that created the lead, for later events. */
+  fbp: string | null;
+  /** Meta's `_fbc` from the visit that created the lead, for later events. */
+  fbc: string | null;
 }
 
 /**
@@ -88,6 +104,21 @@ export async function initScanSchema(): Promise<void> {
       unsubscribed_at TIMESTAMPTZ,
       created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
     )`;
+
+  /**
+   * Meta's own browser cookies, kept against the lead.
+   *
+   * They are read from the request at scan time and used immediately for the
+   * Lead conversion, which was the only thing that needed them while every
+   * conversion fired in the same visit. ReportOpened does not: the report link
+   * is emailed, so it is opened later, often on a phone rather than the browser
+   * that saw the ad, and that browser has no _fbc to offer. Storing them here
+   * means the later event can still be matched back to the click that paid for
+   * it, which for a $1,497 product is the difference between an attributed sale
+   * and an anonymous one.
+   */
+  await db`ALTER TABLE scan_leads ADD COLUMN IF NOT EXISTS fbp TEXT`;
+  await db`ALTER TABLE scan_leads ADD COLUMN IF NOT EXISTS fbc TEXT`;
 
   // Case-insensitive uniqueness. Addresses are stored lowercased, but the index
   // is the thing that actually stops MAX@x.com and max@x.com becoming two
@@ -125,8 +156,35 @@ export async function initScanSchema(): Promise<void> {
   // Set once a build is delivered. Null until then, which is what the handover
   // page checks before it will render anything.
   await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS handover JSONB`;
+  /**
+   * When the report was first read, and the guard on the ReportOpened event.
+   *
+   * In the database rather than in localStorage, unlike every other conversion
+   * guard here, because this one cannot be a per-browser fact. The report link
+   * is emailed and lives forever; the same person opens it on a laptop and then
+   * a phone, and a per-browser guard would report that as two. One column, one
+   * conditional UPDATE, one event per scan for all time.
+   */
+  await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS report_opened_at TIMESTAMPTZ`;
+  /**
+   * Marks a scan we ran on somebody who never asked.
+   *
+   * Cold outbound: an admin types a prospect's domain into /admin/outreach, we
+   * scan it, and the resulting link goes out in an email. That row is not a
+   * lead — nobody consented to anything — so it must never be emailed a report
+   * and must never be counted as one. A column rather than a separate table
+   * because it is the same scan, run for a different reason, and every reader
+   * downstream (the report builder, the paywall, the sweeper) wants the same
+   * shape.
+   */
+  await db`ALTER TABLE scans ADD COLUMN IF NOT EXISTS outreach BOOLEAN NOT NULL DEFAULT false`;
 
   await db`CREATE INDEX IF NOT EXISTS scans_status_idx ON scans (status, created_at)`;
+  // Partial, because outreach rows are a small minority of the table and the
+  // admin panel is the only thing that ever asks for them.
+  await db`
+    CREATE INDEX IF NOT EXISTS scans_outreach_idx
+      ON scans (created_at DESC) WHERE outreach`;
   await db`CREATE INDEX IF NOT EXISTS scans_lead_idx ON scans (lead_id)`;
   // Powers the per-IP throttle, which is what protects Ora's 30-scans-a-day
   // ceiling from a single bored visitor.
@@ -166,6 +224,10 @@ export interface LeadInput {
   ipAddress: string | null;
   userAgent: string | null;
   attribution: Record<string, unknown> | null;
+  /** Meta's `_fbp` cookie, when the browser had one. */
+  fbp?: string | null;
+  /** Meta's `_fbc` cookie — the click that brought them. */
+  fbc?: string | null;
 }
 
 /**
@@ -184,10 +246,11 @@ export async function upsertLead(input: LeadInput): Promise<number> {
   const email = input.email.trim().toLowerCase();
 
   const rows = (await db`
-    INSERT INTO scan_leads (email, consent_text, ip_address, user_agent, attribution)
+    INSERT INTO scan_leads (email, consent_text, ip_address, user_agent, attribution, fbp, fbc)
     VALUES (
       ${email}, ${input.consentText}, ${input.ipAddress}, ${input.userAgent},
-      ${input.attribution ? JSON.stringify(input.attribution) : null}::jsonb
+      ${input.attribution ? JSON.stringify(input.attribution) : null}::jsonb,
+      ${input.fbp ?? null}, ${input.fbc ?? null}
     )
     ON CONFLICT (lower(email)) DO UPDATE SET
       consent_text    = EXCLUDED.consent_text,
@@ -195,6 +258,11 @@ export async function upsertLead(input: LeadInput): Promise<number> {
       ip_address      = COALESCE(EXCLUDED.ip_address, scan_leads.ip_address),
       user_agent      = COALESCE(EXCLUDED.user_agent, scan_leads.user_agent),
       attribution     = COALESCE(EXCLUDED.attribution, scan_leads.attribution),
+      -- Newest non-null wins. A returning visitor arriving from a fresh ad
+      -- click carries a newer _fbc, and that click is the one that should be
+      -- credited with whatever they do next.
+      fbp             = COALESCE(EXCLUDED.fbp, scan_leads.fbp),
+      fbc             = COALESCE(EXCLUDED.fbc, scan_leads.fbc),
       unsubscribed_at = NULL
     RETURNING id`) as { id: number }[];
 
@@ -396,10 +464,31 @@ export async function markReportEmailed(id: number): Promise<void> {
   await db`UPDATE scans SET report_emailed_at = now() WHERE id = ${id}`;
 }
 
+/**
+ * Claims the first read of a report, returning true only for the caller that won.
+ *
+ * The conditional UPDATE is the whole point. The report page is
+ * force-dynamic, so this runs on every request, and two tabs opened together
+ * are two concurrent requests racing for the same row. `WHERE report_opened_at
+ * IS NULL` makes the database the arbiter: exactly one UPDATE matches, one
+ * caller gets a row back, and everybody else gets an empty array and fires
+ * nothing. Doing this as a read-then-write in application code would let both
+ * tabs read null and both send a conversion.
+ */
+export async function markReportOpened(id: number): Promise<boolean> {
+  const db = sql();
+  const rows = (await db`
+    UPDATE scans SET report_opened_at = now()
+    WHERE id = ${id} AND report_opened_at IS NULL
+    RETURNING id`) as { id: number }[];
+  return rows.length > 0;
+}
+
 const SCAN_SELECT = `
   s.id, s.token, s.lead_id, s.domain, s.url, s.category, s.status, s.score, s.grade,
   s.report, s.raw, s.error, s.attempts, s.created_at, s.completed_at,
-  s.report_emailed_at, s.handover, l.email`;
+  s.report_emailed_at, s.report_opened_at, s.handover, s.outreach,
+  l.email, l.fbp, l.fbc`;
 
 interface RawScanRow {
   id: number | string;
@@ -419,7 +508,11 @@ interface RawScanRow {
   created_at: string;
   completed_at: string | null;
   report_emailed_at: string | null;
+  report_opened_at: string | null;
   handover: unknown;
+  outreach: boolean | null;
+  fbp: string | null;
+  fbc: string | null;
 }
 
 function toScanRow(r: RawScanRow): ScanRow {
@@ -444,7 +537,13 @@ function toScanRow(r: RawScanRow): ScanRow {
     createdAt: r.created_at,
     completedAt: r.completed_at,
     handover: (r.handover as Handover | null) ?? null,
+    // Explicit rather than truthy: a row written before the column existed
+    // reads as null, and null is not outreach.
+    outreach: r.outreach === true,
     reportEmailedAt: r.report_emailed_at,
+    reportOpenedAt: r.report_opened_at,
+    fbp: r.fbp,
+    fbc: r.fbc,
   };
 }
 
@@ -501,6 +600,11 @@ export async function findUnemailedScans(limit = 10): Promise<ScanRow[]> {
       WHERE s.status = 'complete'
         AND s.report_emailed_at IS NULL
         AND l.unsubscribed_at IS NULL
+        -- Outreach scans have no recipient. They hang off an internal lead row
+        -- whose only purpose is satisfying the foreign key, and without this
+        -- the sweeper would post a prospect's report to ourselves every ten
+        -- minutes until it gave up.
+        AND NOT s.outreach
       ORDER BY s.completed_at
       LIMIT $1`,
     [limit]
@@ -561,6 +665,195 @@ export async function findLatestScanForDomain(
     [domain]
   )) as RawScanRow[];
   return rows[0] ? toScanRow(rows[0]) : null;
+}
+
+/* ── outreach ─────────────────────────────────────────────────────────────── */
+
+/**
+ * The lead row every outreach scan hangs off.
+ *
+ * `scans.lead_id` is NOT NULL and references `scan_leads`, which is correct for
+ * every scan a person asks for. An outreach scan has no person: we picked the
+ * domain, and the prospect finds out when the email lands. Making the column
+ * nullable would push an `email: string | null` through the report builder, the
+ * emailer and both Meta paths to serve one case, so instead there is a single
+ * internal row and every outreach scan points at it.
+ *
+ * On our own domain, so that if anything ever does send to it, it reaches us
+ * and not a stranger.
+ */
+export const OUTREACH_LEAD_EMAIL = "outreach@footholdsystems.com";
+
+/**
+ * Finds or creates that row.
+ *
+ * Written with `unsubscribed_at` set on purpose. Nothing should ever mail this
+ * address, and the column every sender in this codebase already checks is the
+ * one that says so. `upsertLead` is deliberately not reused: it clears
+ * `unsubscribed_at`, which is right for a human asking again and wrong here.
+ */
+async function outreachLeadId(): Promise<number> {
+  const db = sql();
+  const rows = (await db`
+    INSERT INTO scan_leads (email, consent_text, unsubscribed_at)
+    VALUES (
+      ${OUTREACH_LEAD_EMAIL},
+      'Internal row for admin-run outreach scans. Not a subscriber, never mailed.',
+      now()
+    )
+    ON CONFLICT (lower(email)) DO UPDATE SET email = EXCLUDED.email
+    RETURNING id`) as { id: number }[];
+  return Number(rows[0].id);
+}
+
+/**
+ * Queues a scan an admin asked for, on a domain that did not ask for it.
+ *
+ * Reuses a completed outreach scan for the same domain and category from the
+ * last 24 hours, the same way `createScan` does and for the same reason: typing
+ * the same prospect in twice should not spend a second provider slot on an
+ * answer we already hold. Only ever reuses an outreach row — a visitor's scan
+ * of the same domain belongs to them, and its token is their credential.
+ */
+export async function createOutreachScan(args: {
+  domain: string;
+  url: string;
+  category: BusinessCategory;
+}): Promise<{ id: number; token: string; reused: boolean }> {
+  const db = sql();
+
+  const existing = (await db`
+    SELECT id, token FROM scans
+    WHERE outreach
+      AND domain = ${args.domain}
+      AND category = ${args.category}
+      AND status = 'complete'
+      AND completed_at > now() - INTERVAL '24 hours'
+    ORDER BY completed_at DESC
+    LIMIT 1`) as { id: number; token: string }[];
+
+  if (existing.length > 0) {
+    return { id: Number(existing[0].id), token: existing[0].token, reused: true };
+  }
+
+  const leadId = await outreachLeadId();
+  const token = newToken();
+  const rows = (await db`
+    INSERT INTO scans (token, lead_id, domain, url, category, outreach)
+    VALUES (${token}, ${leadId}, ${args.domain}, ${args.url}, ${args.category}, true)
+    RETURNING id, token`) as { id: number; token: string }[];
+
+  return { id: Number(rows[0].id), token: rows[0].token, reused: false };
+}
+
+/**
+ * One line of the outreach panel.
+ *
+ * A projection rather than a `ScanRow`, because the panel lists twenty-five of
+ * them and a `ScanRow` carries two JSONB documents each: the built report and
+ * the raw provider payload. Nothing on that screen reads either.
+ */
+export interface OutreachScanSummary {
+  id: number;
+  token: string;
+  domain: string;
+  category: BusinessCategory;
+  status: ScanStatus;
+  score: number | null;
+  grade: string | null;
+  error: string | null;
+  findingCount: number;
+  /** Whether this prospect has bought the build. The number that matters. */
+  paid: boolean;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+interface RawOutreachRow {
+  id: number | string;
+  token: string;
+  domain: string;
+  category: string;
+  status: ScanStatus;
+  score: number | null;
+  grade: string | null;
+  error: string | null;
+  finding_count: number | string | null;
+  paid: boolean;
+  created_at: string;
+  completed_at: string | null;
+}
+
+const OUTREACH_SELECT = `
+  s.id, s.token, s.domain, s.category, s.status, s.score, s.grade, s.error,
+  s.created_at, s.completed_at,
+  COALESCE(jsonb_array_length(s.report -> 'findings'), 0) AS finding_count,
+  EXISTS (
+    SELECT 1 FROM scan_orders o
+     WHERE o.scan_id = s.id AND o.product = 'done_for_you' AND o.status = 'paid'
+  ) AS paid`;
+
+function toOutreachSummary(r: RawOutreachRow): OutreachScanSummary {
+  return {
+    id: Number(r.id),
+    token: r.token,
+    domain: r.domain,
+    category: isBusinessCategory(r.category) ? r.category : DEFAULT_CATEGORY,
+    status: r.status,
+    score: r.score,
+    grade: r.grade,
+    error: r.error,
+    findingCount: Number(r.finding_count ?? 0),
+    paid: r.paid === true,
+    createdAt: r.created_at,
+    completedAt: r.completed_at,
+  };
+}
+
+/** The outreach scans, newest first. The whole content of the admin panel. */
+export async function listOutreachScans(
+  limit = 25
+): Promise<OutreachScanSummary[]> {
+  const db = sql();
+  const rows = (await db.query(
+    `SELECT ${OUTREACH_SELECT}
+       FROM scans s
+      WHERE s.outreach
+      ORDER BY s.created_at DESC
+      LIMIT $1`,
+    [limit]
+  )) as RawOutreachRow[];
+  return rows.map(toOutreachSummary);
+}
+
+/**
+ * Outreach scans still waiting to run.
+ *
+ * The panel runs these itself rather than waiting on the sweeper. A ten-minute
+ * cron is the right answer for a customer who has already been told the report
+ * is coming by email, and the wrong one for an admin sitting in front of the
+ * screen that queued it.
+ *
+ * Includes rows left `running` by an invocation that died, on the same
+ * ten-minute rule `findStuckScans` uses, so a killed scan is recoverable from
+ * the panel and not only by cron.
+ */
+export async function findQueuedOutreachScans(
+  limit = 8
+): Promise<{ id: number; domain: string }[]> {
+  const db = sql();
+  const rows = (await db`
+    SELECT id, domain FROM scans
+     WHERE outreach
+       AND attempts < 3
+       AND (
+         status = 'queued'
+         OR (status = 'running' AND started_at < now() - INTERVAL '10 minutes')
+         OR (status = 'failed' AND created_at > now() - INTERVAL '24 hours')
+       )
+     ORDER BY created_at
+     LIMIT ${limit}`) as { id: number | string; domain: string }[];
+  return rows.map((r) => ({ id: Number(r.id), domain: r.domain }));
 }
 
 /* ── orders ───────────────────────────────────────────────────────────────── */

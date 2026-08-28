@@ -287,7 +287,10 @@ export async function POST(request: NextRequest) {
           product === "done_for_you"
             ? DONE_FOR_YOU_PRICE_CENTS
             : SOLUTIONS_PRICE_CENTS,
-        email: scan.email,
+        // On an outreach scan this column holds the internal row every cold
+        // audit hangs off, not the buyer. Their real address is in Whop, and
+        // the token already identifies the sale.
+        email: scan.outreach ? undefined : scan.email,
       });
     }
 
@@ -299,8 +302,22 @@ export async function POST(request: NextRequest) {
     // must not be lost, and a contact update failing is an annoyance rather
     // than a loss. Only for the done-for-you tier, because buying the $49
     // report is not a reason to stop making the case for the upgrade.
-    if (product === "done_for_you" && !alreadyPaid) {
+    //
+    // Skipped for an outreach sale, where there is no sequence to end: the
+    // buyer came from a cold email sent by hand and was never enrolled, and
+    // the address on the row is our own internal one.
+    if (product === "done_for_you" && !alreadyPaid && !scan.outreach) {
       await markConverted(scan.email);
+    }
+
+    if (scan.outreach && !alreadyPaid) {
+      // Worth saying out loud in the log. A cold prospect who paid is the
+      // outbound channel working, and nothing else in the system will mention
+      // it — there is no lead row, no sequence and no email thread to find it
+      // in later.
+      console.info(
+        `[whop] outreach sale: ${scan.domain} bought ${product} on token ${scan.token.slice(0, 8)}…`
+      );
     }
 
     return NextResponse.json({ ok: true, alreadyPaid });

@@ -83,6 +83,11 @@ const DISALLOWED = [
   // seen by a crawler that already fetched the page, which is exactly what
   // should not be happening to a private report.
   "/scan/",
+  // The same again for the cold audits. If anything these matter more: the
+  // subject of the report never asked for it, and an indexed page grading a
+  // stranger's website is a different and worse thing than an indexed page
+  // grading a customer's.
+  "/audit/",
 ];
 
 export default function robots(): MetadataRoute.Robots {

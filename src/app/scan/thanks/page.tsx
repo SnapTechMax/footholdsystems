@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { LeadPixel } from "@/components/LeadPixel";
 
 /**
  * Post-submission page.
@@ -8,6 +9,10 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * Its whole job is to stop someone closing the tab thinking nothing happened,
  * and to set the expectation that the report arrives by email rather than here.
  * The scan is running in the background at this point.
+ *
+ * It is also where the Meta Lead conversion fires — see LeadPixel, which needs
+ * the `t` token both to dedupe against the Conversions API and to refuse to
+ * fire for anyone who arrived here without submitting anything.
  *
  * Not indexed: a thank-you page in search results is a page that shows up for
  * people who never submitted anything.
@@ -27,6 +32,7 @@ export default async function ScanThanksPage({
 
   return (
     <main className="bg-[var(--ink)]">
+      <LeadPixel token={token} />
       <div className="mx-auto max-w-2xl px-5 py-24 sm:px-6 sm:py-32">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent)] sm:text-xs">
           Scan running

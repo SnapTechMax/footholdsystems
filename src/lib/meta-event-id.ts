@@ -21,6 +21,27 @@ export const metaEventId = {
     return `lead:${token}`;
   },
   /**
+   * One report open per scan, ever — which is what `scans.report_opened_at`
+   * enforces, so the browser half and the server half agree on when this is
+   * allowed to happen rather than each keeping their own count.
+   */
+  reportOpened(token: string): string {
+    return `report-opened:${token}`;
+  },
+  /**
+   * One checkout start per product per scan.
+   *
+   * Deliberately not one per click. Somebody who bounces off the payment page
+   * and comes back twice is one person with one intent, and deriving the id
+   * from the token collapses those into a single signal — which matters more
+   * here than elsewhere, because at this volume a handful of repeat clicks from
+   * one indecisive visitor would visibly bend what Meta thinks intent looks
+   * like. The cost is that genuine intent a week later is not counted again.
+   */
+  initiateCheckout(token: string, product: "solutions" | "done_for_you"): string {
+    return `checkout:${token}:${product}`;
+  },
+  /**
    * One purchase per product per scan — which is exactly what the database
    * enforces, via the partial unique index on scan_orders.
    */

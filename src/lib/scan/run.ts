@@ -82,6 +82,22 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
     return { status: "failed", reason: `storing report: ${reason}`, retryable: true };
   }
 
+  /**
+   * An outreach scan has nobody to send to, and that is the point.
+   *
+   * The row exists because an admin typed a prospect's domain into
+   * /admin/outreach. The prospect never gave us an address and never asked for
+   * anything, so the report goes out by hand in a cold email with a link to
+   * /audit/<token>, from an inbox a human is watching. Mailing a scan report to
+   * someone who did not request it, from the system, is the one thing this
+   * funnel must not do — see the consent record every other row carries.
+   *
+   * `report_emailed_at` deliberately stays null. The sweeper skips outreach
+   * rows explicitly (see findUnemailedScans), so nothing retries this, and
+   * stamping a send that never happened would put a lie in the column.
+   */
+  if (scan.outreach) return { status: "done" };
+
   // Email is deliberately after the write and outside its try. A report that is
   // stored but unsent is recoverable by the sweeper; a report that was emailed
   // but never stored leaves a customer holding a link to nothing.
