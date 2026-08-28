@@ -6,13 +6,17 @@ import Link from "next/link";
  * The dashboards were reachable only by typing their URLs, which is fine once
  * you know them and useless otherwise.
  *
- * Two tabs now. Overview, Campaign and CRO went with the guide funnel they
- * were built to measure: an experiment engine with nothing running in it and a
- * per-email breakdown of a sequence nobody was reading are worse than no
- * dashboard, because a stale number still gets acted on.
+ * Overview, Campaign and CRO went with the guide funnel they were built to
+ * measure: an experiment engine with nothing running in it and a per-email
+ * breakdown of a sequence nobody was reading are worse than no dashboard,
+ * because a stale number still gets acted on.
+ *
+ * The three that remain are in the order a customer moves through them:
+ * prospect, intake, handover.
  */
 const TABS = [
   { href: "/admin/outreach", label: "Outreach" },
+  { href: "/admin/intake", label: "Intake" },
   { href: "/admin/handover", label: "Handover" },
 ] as const;
 
