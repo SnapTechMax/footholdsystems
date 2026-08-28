@@ -446,8 +446,8 @@ export default function SalesPage() {
             </ScanCta>
             <p className="max-w-[42ch] text-[14px] leading-relaxed text-[var(--dim)]">
               Takes about 60 seconds to request. No call, no card. We show you
-              exactly what the AIs say about your business today, and who they name
-              instead of you.
+              exactly what the AIs can see in your business, and where you&rsquo;re
+              leaving visibility on the table.
             </p>
           </div>
         </div>
