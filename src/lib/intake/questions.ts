@@ -359,15 +359,6 @@ export const INTAKE_SECTIONS: readonly IntakeSection[] = [
         maxLength: 200,
       },
       {
-        name: "second_domain_ideas",
-        label: "Ideas for the second domain",
-        kind: "textarea",
-        rows: 3,
-        hint: "Optional. Part of this build is a second site on its own domain, built to be read by machines. If you want a say in the name, say so here. Otherwise we propose two or three and you pick.",
-        placeholder: "Something with sangabrielroofing in it if it is available",
-        maxLength: 600,
-      },
-      {
         name: "gbp_status",
         label: "Google Business Profile",
         kind: "select",
