@@ -88,6 +88,11 @@ const DISALLOWED = [
   // stranger's website is a different and worse thing than an indexed page
   // grading a customer's.
   "/audit/",
+  // The build intake. It is sent to one customer by hand and it asks them for
+  // their pricing, their suppliers and who holds their accounts. It carries
+  // noindex too, and for the same reason as above the two are worth having
+  // together: a meta tag only reaches a crawler that already fetched the page.
+  "/start",
 ];
 
 export default function robots(): MetadataRoute.Robots {
