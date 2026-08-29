@@ -33,11 +33,38 @@ export function isAdminAuthorised(authorizationHeader: string | null): boolean {
   return timingSafeEqual(supplied, password);
 }
 
-/** Pull the password half out of a `Basic base64(user:pass)` header. */
+/**
+ * Pull the password half out of a `Basic base64(user:pass)` header.
+ *
+ * THE DECODE IS TWO STEPS ON PURPOSE. `atob` alone returns a binary string, one
+ * character per byte, which is Latin-1 and not the password. Clients encode the
+ * credentials as UTF-8, so any character outside ASCII arrives as several bytes
+ * and `atob` hands back one character for each of them: `café` comes out as the
+ * five-character `cafÃ©` and is compared against a four-character environment
+ * variable. The length check in `timingSafeEqual` then rejects it before
+ * comparing anything.
+ *
+ * That made a non-ASCII admin password impossible to authenticate with — not
+ * unreliable, impossible, and with nothing in the response to say why. It cost
+ * a real debugging session.
+ *
+ * `TextDecoder` rather than `Buffer`, because this runs in the proxy as well as
+ * in Node and `Buffer` does not exist in that runtime. It is deliberately
+ * non-fatal: malformed UTF-8 becomes replacement characters, which cannot match
+ * a real password, and failing the comparison is better than throwing.
+ *
+ * STILL NOT HANDLED: Unicode normalization. `café` typed as NFC and as NFD are
+ * different strings and only one of them will match what is stored. Left alone
+ * rather than normalized, because making two different secrets both open the
+ * door is not a fix to apply quietly. Use ASCII if this ever bites.
+ */
 export function passwordFromBasicHeader(header: string | null): string | null {
   if (!header?.startsWith("Basic ")) return null;
   try {
-    const decoded = atob(header.slice(6));
+    const binary = atob(header.slice(6));
+    // atob only ever yields code points 0-255, so this is a faithful byte view.
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const decoded = new TextDecoder().decode(bytes);
     // Split on the first colon only: a password may contain colons, a username
     // may not.
     const separator = decoded.indexOf(":");
