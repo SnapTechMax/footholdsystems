@@ -178,7 +178,20 @@ function extract(payload: unknown): {
         ? root.id
         : null;
 
-  const rawAmount = data.final_amount ?? data.amount ?? data.subtotal;
+  /**
+   * What the buyer was charged, in the field names v1 actually uses.
+   *
+   * This read `final_amount ?? amount ?? subtotal` for its whole life. Neither
+   * of the first two exists on a v1 payment — `final_amount` is the v2 name —
+   * so every payment fell through to `subtotal`, which was right only by luck,
+   * on a sale with no discount and no tax.
+   *
+   * `total` is the charge. `subtotal` stays as the fallback because it is the
+   * nearest thing if `total` is ever absent. `amount_after_fees` is
+   * deliberately not used: that is net of Whop's cut, which is a different fact
+   * from what the customer paid, and this column holds the second one.
+   */
+  const rawAmount = data.total ?? data.subtotal;
   const amountCents =
     typeof rawAmount === "number" && Number.isFinite(rawAmount)
       ? // Whop reports dollars; everything we store is cents.
@@ -288,18 +301,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, ignored: "unknown scan" });
     }
 
+    const expectedCents =
+      product === "done_for_you" ? DONE_FOR_YOU_PRICE_CENTS : SOLUTIONS_PRICE_CENTS;
+
+    /**
+     * A charge that is not the list price is worth saying out loud.
+     *
+     * The likeliest cause is a pinned Whop plan whose price drifted from
+     * pricing.ts, which charges every customer the wrong amount and is
+     * otherwise only visible by reading the Whop dashboard. A discount or an
+     * affiliate code lands here too, and is not a problem — hence a log rather
+     * than an alert.
+     */
+    if (amountCents !== null && amountCents !== expectedCents) {
+      console.warn(
+        `[whop] charged ${amountCents}c for ${product} but the price list says ${expectedCents}c, ref ${reference ?? "unknown"}`
+      );
+    }
+
     const { alreadyPaid } = await recordPayment({
       scanId: scan.id,
       product,
-      // Trust our own price list over the payload. The amount in a webhook is
-      // what the provider says was charged; the amount we record is what the
-      // product costs, and a mismatch should show up in reconciliation rather
-      // than be silently absorbed.
-      amountCents:
-        amountCents ??
-        (product === "done_for_you"
-          ? DONE_FOR_YOU_PRICE_CENTS
-          : SOLUTIONS_PRICE_CENTS),
+      /**
+       * What actually happened, with the price list as the fallback.
+       *
+       * The note here used to say the opposite: that our own price wins,
+       * because a mismatch "should show up in reconciliation rather than be
+       * silently absorbed". It had it backwards, and the code never did what it
+       * said. Recording the list price is exactly what absorbs a mismatch — the
+       * row then agrees with the source no matter what the customer was
+       * charged. This is the money table, so it holds the money, and the
+       * disagreement is logged above instead.
+       */
+      amountCents: amountCents ?? expectedCents,
       provider: "whop",
       // Falls back to a deterministic reference so the row is still traceable
       // if a payload arrives without an id.
@@ -319,10 +353,7 @@ export async function POST(request: NextRequest) {
       await sendPurchase({
         token: scan.token,
         product,
-        valueCents:
-          product === "done_for_you"
-            ? DONE_FOR_YOU_PRICE_CENTS
-            : SOLUTIONS_PRICE_CENTS,
+        valueCents: expectedCents,
         // On an outreach scan this column holds the internal row every cold
         // audit hangs off, not the buyer. Their real address is in Whop, and
         // the token already identifies the sale.
