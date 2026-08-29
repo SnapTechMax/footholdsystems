@@ -1,6 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
-import { formatPrice } from "./pricing";
+import { auditUrl, formatPrice, reportUrl } from "./pricing";
+import { sendPush } from "@/lib/notify";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -58,6 +59,30 @@ export interface UnmatchedPayment {
 export async function alertUnmatchedPayment(
   payment: UnmatchedPayment
 ): Promise<void> {
+  const amountForPush =
+    payment.amountCents === null
+      ? "A payment"
+      : formatPrice(payment.amountCents);
+
+  /**
+   * Push first, and at high priority.
+   *
+   * This is the one alert in the system where the cost of being read late is a
+   * customer sitting on a receipt from a business that does not know they
+   * exist. It goes ahead of the email and bypasses quiet hours, and it is
+   * awaited rather than fired off, so a Resend outage cannot swallow it.
+   */
+  await sendPush({
+    title: `${amountForPush} paid and not recorded`,
+    message: [
+      payment.reason,
+      `Product: ${payment.product}`,
+      `Whop ref: ${payment.reference ?? "none in the payload"}`,
+      "Find it in Whop, which has the buyer's real email.",
+    ].join("\n"),
+    priority: 1,
+  });
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error(
@@ -153,4 +178,51 @@ export async function alertUnmatchedPayment(
   } catch (error) {
     console.error("[alert] unmatched payment alert threw:", error);
   }
+}
+
+/**
+ * A sale, on the phone, with the attribution already in it.
+ *
+ * The whole reason this is not Whop's own notification: Whop knows an amount
+ * and a card, and this knows whose website it was and which cold email earned
+ * it. Turn Whop's on as well — two independent alerts on the same event is the
+ * right amount for money arriving — but this is the one worth reading.
+ *
+ * Normal priority, deliberately. It is good news and it keeps until morning.
+ * The unmatched-payment alert above is the one that bypasses quiet hours.
+ */
+export async function notifySale(sale: {
+  domain: string;
+  token: string;
+  product: string;
+  amountCents: number;
+  outreach: boolean;
+  emailKey: string | null;
+  source: string | null;
+  simulated?: boolean;
+}): Promise<void> {
+  const what = sale.product === "done_for_you" ? "the build" : "the fix list";
+
+  // Where the buyer came from, in the order the answer is interesting. Cold
+  // outbound wins because it is the channel with a question outstanding.
+  const origin = sale.outreach
+    ? "Cold outreach"
+    : sale.source === "sequence"
+      ? "Nurture sequence"
+      : "From the report";
+
+  const lines = [
+    `${sale.domain} bought ${what}.`,
+    origin,
+    sale.emailKey ? `Batch: ${sale.emailKey}` : null,
+    sale.simulated ? "SIMULATED — no money changed hands." : null,
+  ].filter(Boolean) as string[];
+
+  await sendPush({
+    title: `${formatPrice(sale.amountCents)} — ${sale.domain}`,
+    message: lines.join("\n"),
+    url: sale.outreach ? auditUrl(sale.token) : reportUrl(sale.token),
+    urlTitle: "Open their report",
+    priority: 0,
+  });
 }

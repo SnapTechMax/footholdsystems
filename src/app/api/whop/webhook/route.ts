@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse, after } from "next/server";
 import { sendPurchase } from "@/lib/meta-capi";
-import { alertUnmatchedPayment } from "@/lib/scan/alert";
+import { alertUnmatchedPayment, notifySale } from "@/lib/scan/alert";
 import { markConverted } from "@/lib/scan/converted";
 import {
   findLatestScanForEmail,
@@ -151,6 +151,8 @@ function extract(payload: unknown): {
   /** Returned whole so an unmatched payment can be reported with everything
    *  Whop actually sent, rather than with the four fields we knew to look for. */
   metadata: Record<string, unknown>;
+  /** The cold-email batch tag, which gets its own column on the order. */
+  emailKey: string | null;
 } {
   const root = (payload ?? {}) as Record<string, unknown>;
   // Providers commonly nest the interesting part under `data`.
@@ -170,6 +172,12 @@ function extract(payload: unknown): {
 
   const product: OrderProduct =
     metadata.product === "done_for_you" ? "done_for_you" : "solutions";
+
+  // The cold-email batch, set by /api/go/checkout and /api/go/upgrade. Pulled
+  // out here rather than read from the JSON later because it gets its own
+  // column: grouping revenue by batch is the question outbound exists to ask.
+  const emailKey =
+    typeof metadata.email_key === "string" ? metadata.email_key : null;
 
   const reference =
     typeof data.id === "string"
@@ -198,7 +206,7 @@ function extract(payload: unknown): {
         Math.round(rawAmount * 100)
       : null;
 
-  return { token, email, product, reference, amountCents, metadata };
+  return { token, email, product, reference, amountCents, metadata, emailKey };
 }
 
 /**
@@ -239,7 +247,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: `event ${eventType || "unknown"}` });
   }
 
-  const { token, email, product, reference, amountCents, metadata } =
+  const { token, email, product, reference, amountCents, metadata, emailKey } =
     extract(payload);
 
   if (!token && !email) {
@@ -338,18 +346,40 @@ export async function POST(request: NextRequest) {
       // Falls back to a deterministic reference so the row is still traceable
       // if a payload arrives without an id.
       providerRef: reference ?? `whop:${token ?? email}:${product}`,
+      // Both stored so /admin/sales can answer which email earned this without
+      // anyone opening Whop. See the columns in initScanSchema.
+      emailKey,
+      metadata,
     });
 
-    // The server half of the Purchase conversion, and the more trustworthy
-    // half. The browser event depends on the buyer returning through the
-    // redirect and staying long enough for a script to run; this fires from the
-    // system that actually took the money, so a customer who closes the tab
-    // still counts and no extension can suppress it.
-    //
-    // Guarded on `alreadyPaid` because Whop retries webhooks. The shared
-    // event_id means Meta would collapse the duplicates anyway, but not sending
-    // them is better than relying on that.
+    /**
+     * The two things that happen once per sale, both behind `alreadyPaid`.
+     *
+     * Whop retries webhooks. The conversion carries a shared event_id so Meta
+     * would collapse duplicates anyway, but not sending them is better than
+     * relying on that, and a phone that buzzes again on every retry is one that
+     * stops being read.
+     *
+     * The push goes first because it is for a person, and it never throws — see
+     * lib/notify.ts. Both are awaited rather than left to `after()`, so neither
+     * can be cut off by the function returning.
+     */
     if (!alreadyPaid) {
+      await notifySale({
+        domain: scan.domain,
+        token: scan.token,
+        product,
+        amountCents: amountCents ?? expectedCents,
+        outreach: scan.outreach,
+        emailKey,
+        source: typeof metadata.source === "string" ? metadata.source : null,
+      });
+
+      // The server half of the Purchase conversion, and the more trustworthy
+      // half. The browser event depends on the buyer returning through the
+      // redirect and staying long enough for a script to run; this fires from
+      // the system that actually took the money, so a customer who closes the
+      // tab still counts and no extension can suppress it.
       await sendPurchase({
         token: scan.token,
         product,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthorised } from "@/lib/admin-auth";
+import { notifySale } from "@/lib/scan/alert";
 import { sendPurchase } from "@/lib/meta-capi";
 import { markConverted } from "@/lib/scan/converted";
 import {
@@ -30,7 +31,9 @@ import {
  * time that flow changes.
  *
  * WHAT IT DOES NOT TEST: Whop. Not the checkout, not the payment, not the
- * webhook signature. Those are covered — /api/whop/health proves checkout
+ * webhook signature. Everything after the webhook is fair game, including the
+ * sales listing and the push, both of which take the same arguments here that
+ * the webhook hands them in production. Those are covered — /api/whop/health proves checkout
  * creation, and a real $49 purchase proved delivery and verification end to
  * end. What was never exercised is the `done_for_you` branch after that point,
  * which is exactly what this covers.
@@ -56,6 +59,11 @@ import {
  *                   default — see above.
  *   sequence        1 to also mark the contact converted in Resend, ending
  *                   their nurture run. OFF by default.
+ *   push            1 to also send the Pushover notification, so the phone
+ *                   alert can be proved without spending $1,497. The message
+ *                   says SIMULATED. OFF by default.
+ *   e               a batch tag, stored on the order exactly as a cold-email
+ *                   sale would store it, so /admin/sales can be checked.
  *   undo            1 to delete the simulated payment so the test can be re-run.
  */
 
@@ -94,6 +102,10 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     params.get("product") === "solutions" ? "solutions" : "done_for_you";
   const withCapi = params.get("capi") === "1";
   const withSequence = params.get("sequence") === "1";
+  const withPush = params.get("push") === "1";
+  // Lets a test prove the batch tag survives all the way to the sales page,
+  // which is otherwise only exercised by a real cold-email sale.
+  const emailKey = params.get("e")?.trim() || null;
   const undo = params.get("undo") === "1";
 
   if (!token && !domainParam) {
@@ -158,7 +170,34 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     // The marker that keeps a test out of the revenue figures.
     provider: "simulated",
     providerRef: `simulated:${scan.token}:${product}`,
+    emailKey,
+    metadata: { source: "simulated" },
   });
+
+  /**
+   * The push, opt-in like the rest.
+   *
+   * Off by default on the same principle as the others, but for a milder
+   * reason: a push costs nothing and misleads nobody, it just buzzes a phone
+   * for a sale that did not happen. It is worth having because it is the only
+   * way to prove the notification path works without spending $1,497, and the
+   * message says SIMULATED in its own body so a test can never be mistaken for
+   * the real thing on a lock screen.
+   */
+  let push: unknown = "skipped (pass push=1 to send)";
+  if (withPush) {
+    await notifySale({
+      domain: scan.domain,
+      token: scan.token,
+      product,
+      amountCents,
+      outreach: scan.outreach,
+      emailKey,
+      source: "simulated",
+      simulated: true,
+    });
+    push = "sent";
+  }
 
   let capi: unknown = "skipped (pass capi=1 to send)";
   if (withCapi) {
@@ -184,6 +223,8 @@ async function handle(request: NextRequest): Promise<NextResponse> {
     token: scan.token,
     alreadyPaidBefore,
     wroteNewOrder: !alreadyPaid,
+    emailKey,
+    push,
     capi,
     sequence,
     urls: reportUrls,

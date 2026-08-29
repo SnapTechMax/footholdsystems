@@ -214,6 +214,36 @@ export async function initScanSchema(): Promise<void> {
   await db`
     CREATE INDEX IF NOT EXISTS scan_orders_provider_ref_idx
       ON scan_orders (provider_ref)`;
+
+  /**
+   * Which cold email earned this sale.
+   *
+   * The tag rides out on the checkout as `email_key` and comes back on the
+   * webhook, and until this column existed it stopped there: recoverable by
+   * opening the payment in Whop, and unanswerable from here. The domain was
+   * always reachable through `scan_id`; the batch never was.
+   *
+   * Its own column rather than a read into the JSON below, because grouping
+   * revenue by batch is the entire question outbound is trying to answer, and
+   * that should be an index away rather than a JSON path.
+   */
+  await db`ALTER TABLE scan_orders ADD COLUMN IF NOT EXISTS email_key TEXT`;
+
+  /**
+   * Everything else the provider sent back with the payment.
+   *
+   * Kept whole and unread, on the same reasoning as `template_id` in
+   * tracking.ts: it is cheap to store, impossible to reconstruct later, and the
+   * question it answers is usually one nobody had thought to ask when the row
+   * was written. `source`, `domain` and the buyer's address all live in here.
+   */
+  await db`ALTER TABLE scan_orders ADD COLUMN IF NOT EXISTS metadata JSONB`;
+
+  // The sales list reads newest first, and grouping by batch is the point of
+  // the column above.
+  await db`
+    CREATE INDEX IF NOT EXISTS scan_orders_paid_at_idx
+      ON scan_orders (paid_at DESC) WHERE status = 'paid'`;
 }
 
 /* ── leads ────────────────────────────────────────────────────────────────── */
@@ -905,13 +935,103 @@ export async function recordPayment(args: {
   amountCents: number;
   provider: string;
   providerRef: string;
+  /** The batch tag the checkout carried, when it carried one. */
+  emailKey?: string | null;
+  /** The provider's metadata, stored whole. See the columns in initScanSchema. */
+  metadata?: Record<string, unknown> | null;
 }): Promise<{ alreadyPaid: boolean }> {
   const db = sql();
   const rows = (await db`
-    INSERT INTO scan_orders (scan_id, product, amount_cents, status, provider, provider_ref, paid_at)
-    VALUES (${args.scanId}, ${args.product}, ${args.amountCents}, 'paid', ${args.provider}, ${args.providerRef}, now())
+    INSERT INTO scan_orders (
+      scan_id, product, amount_cents, status, provider, provider_ref, paid_at,
+      email_key, metadata
+    )
+    VALUES (
+      ${args.scanId}, ${args.product}, ${args.amountCents}, 'paid',
+      ${args.provider}, ${args.providerRef}, now(),
+      ${args.emailKey ?? null},
+      ${args.metadata ? JSON.stringify(args.metadata) : null}
+    )
     ON CONFLICT (scan_id, product) WHERE status = 'paid' DO NOTHING
     RETURNING id`) as { id: number }[];
 
   return { alreadyPaid: rows.length === 0 };
+}
+
+/** One paid order, with the scan it belongs to already joined on. */
+export interface SaleRow {
+  id: number;
+  token: string;
+  domain: string;
+  product: OrderProduct;
+  amountCents: number;
+  paidAt: string | null;
+  /** The cold-email batch, when the checkout carried one. */
+  emailKey: string | null;
+  /** "whop" for real money, "simulated" for an admin test. */
+  provider: string | null;
+  providerRef: string | null;
+  /** True when the buyer came from cold outbound rather than the funnel. */
+  outreach: boolean;
+  /** From the provider metadata: "sequence" for a nurture-email purchase. */
+  source: string | null;
+  /** The address on the checkout. Absent on outreach, by design. */
+  buyerEmail: string | null;
+}
+
+/**
+ * Every sale, newest first.
+ *
+ * `scan_orders` was written and never read for its whole life — the only thing
+ * that ever touched a paid row was an EXISTS check behind the green chip on the
+ * outreach panel. That answered "did this one buy" and nothing else: not when,
+ * not for how much, and not which email earned it.
+ *
+ * Simulated rows are included rather than filtered. They are marked as such in
+ * their own column and on this page, and a test purchase that silently vanishes
+ * from the list is how somebody ends up believing a flow works.
+ */
+export async function listSales(limit = 200): Promise<SaleRow[]> {
+  const db = sql();
+  const rows = (await db.query(
+    `SELECT o.id, o.product, o.amount_cents, o.paid_at, o.email_key,
+            o.provider, o.provider_ref, o.metadata,
+            s.token, s.domain, s.outreach
+       FROM scan_orders o
+       JOIN scans s ON s.id = o.scan_id
+      WHERE o.status = 'paid'
+      ORDER BY o.paid_at DESC NULLS LAST, o.id DESC
+      LIMIT $1`,
+    [limit]
+  )) as {
+    id: string | number;
+    product: string;
+    amount_cents: string | number;
+    paid_at: string | null;
+    email_key: string | null;
+    provider: string | null;
+    provider_ref: string | null;
+    metadata: Record<string, unknown> | null;
+    token: string;
+    domain: string;
+    outreach: boolean | null;
+  }[];
+
+  return rows.map((r) => {
+    const metadata = r.metadata ?? {};
+    return {
+      id: Number(r.id),
+      token: r.token,
+      domain: r.domain,
+      product: r.product === "done_for_you" ? "done_for_you" : "solutions",
+      amountCents: Number(r.amount_cents),
+      paidAt: r.paid_at,
+      emailKey: r.email_key,
+      provider: r.provider,
+      providerRef: r.provider_ref,
+      outreach: r.outreach === true,
+      source: typeof metadata.source === "string" ? metadata.source : null,
+      buyerEmail: typeof metadata.email === "string" ? metadata.email : null,
+    };
+  });
 }

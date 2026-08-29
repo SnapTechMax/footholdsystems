@@ -11,11 +11,12 @@ import Link from "next/link";
  * breakdown of a sequence nobody was reading are worse than no dashboard,
  * because a stale number still gets acted on.
  *
- * The three that remain are in the order a customer moves through them:
- * prospect, intake, handover.
+ * The four that remain are in the order a customer moves through them:
+ * prospect, sale, intake, handover.
  */
 const TABS = [
   { href: "/admin/outreach", label: "Outreach" },
+  { href: "/admin/sales", label: "Sales" },
   { href: "/admin/intake", label: "Intake" },
   { href: "/admin/handover", label: "Handover" },
 ] as const;
