@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { sendPurchase } from "@/lib/meta-capi";
+import { alertUnmatchedPayment } from "@/lib/scan/alert";
 import { markConverted } from "@/lib/scan/converted";
 import {
   findLatestScanForEmail,
@@ -147,6 +148,9 @@ function extract(payload: unknown): {
   product: OrderProduct;
   reference: string | null;
   amountCents: number | null;
+  /** Returned whole so an unmatched payment can be reported with everything
+   *  Whop actually sent, rather than with the four fields we knew to look for. */
+  metadata: Record<string, unknown>;
 } {
   const root = (payload ?? {}) as Record<string, unknown>;
   // Providers commonly nest the interesting part under `data`.
@@ -181,7 +185,7 @@ function extract(payload: unknown): {
         Math.round(rawAmount * 100)
       : null;
 
-  return { token, email, product, reference, amountCents };
+  return { token, email, product, reference, amountCents, metadata };
 }
 
 /**
@@ -222,13 +226,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: `event ${eventType || "unknown"}` });
   }
 
-  const { token, email, product, reference, amountCents } = extract(payload);
+  const { token, email, product, reference, amountCents, metadata } =
+    extract(payload);
 
   if (!token && !email) {
     // 200, not 4xx: this is a real Whop event for something that isn't one of
     // ours (or an event type we don't handle), and a non-2xx would have Whop
     // retry it forever.
     console.warn("[whop] event with neither scan_token nor email — ignoring");
+    // But somebody has still paid. `payment.succeeded` got this far, so this is
+    // money with no way home, and 200 is the response that guarantees nothing
+    // else will ever mention it. See lib/scan/alert.ts.
+    after(() =>
+      alertUnmatchedPayment({
+        reason: "The checkout carried no scan token and no email address.",
+        reference,
+        product,
+        amountCents,
+        token: null,
+        email: null,
+        metadata,
+        eventType,
+      })
+    );
     return NextResponse.json({ ok: true, ignored: "nothing to match on" });
   }
 
@@ -248,6 +268,22 @@ export async function POST(request: NextRequest) {
         `[whop] payment recorded nowhere: no scan for ${
           token ? `token ${token.slice(0, 8)}…` : `email ${email}`
         }, product ${product}, ref ${reference ?? "unknown"}`
+      );
+      // The log is not the alert. Nothing reads it, and this is the branch a
+      // bad link in a cold email lands on every single time.
+      after(() =>
+        alertUnmatchedPayment({
+          reason: token
+            ? "The checkout carried a scan token that matches no scan."
+            : "The checkout carried an email address that has never run a scan.",
+          reference,
+          product,
+          amountCents,
+          token,
+          email,
+          metadata,
+          eventType,
+        })
       );
       return NextResponse.json({ ok: true, ignored: "unknown scan" });
     }

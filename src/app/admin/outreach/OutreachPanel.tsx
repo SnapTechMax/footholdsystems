@@ -53,7 +53,7 @@ function statusChip(scan: OutreachScanSummary): {
  * The whole point of this screen is getting a URL into an email, and a copy
  * button with no feedback makes you paste somewhere to check it worked.
  */
-function CopyLink({ url }: { url: string }) {
+function CopyLink({ url, label }: { url: string; label: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -69,16 +69,66 @@ function CopyLink({ url }: { url: string }) {
           setCopied(false);
         }
       }}
-      className={`${mono} rounded border border-[#33332f] px-2.5 py-1 text-[#8a887f] transition-colors hover:border-[#f6be00] hover:text-[#f6be00]`}
+      className={`${mono} shrink-0 rounded border border-[#33332f] px-2.5 py-1 text-[#8a887f] transition-colors hover:border-[#f6be00] hover:text-[#f6be00]`}
     >
-      {copied ? "Copied" : "Copy link"}
+      {copied ? "Copied" : label}
     </button>
   );
 }
 
+/**
+ * One sendable link, named, with the URL on screen and a copy button.
+ *
+ * The name matters more than it looks. Two URLs a token apart are easy to
+ * paste the wrong one of, and the wrong one here is not a broken link, it is
+ * an email that sells nothing or one that opens on a price with no report
+ * behind it.
+ */
+function LinkRow({
+  name,
+  hint,
+  path,
+  origin,
+}: {
+  name: string;
+  hint: string;
+  path: string;
+  origin: string;
+}) {
+  const url = `${origin}${path}`;
+
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <span className={`${mono} w-12 shrink-0 text-[#5f5e58]`}>{name}</span>
+      <a
+        href={path}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all font-mono text-[12px] text-[#f6be00] underline underline-offset-4"
+      >
+        {url}
+      </a>
+      <CopyLink url={url} label={`Copy ${name.toLowerCase()}`} />
+      <span className="w-full text-[12px] leading-snug text-[#7a786f]">
+        {hint}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Two links per prospect, because a cold email can open either way.
+ *
+ * AUDIT leads with the report and sells underneath it. PAY goes straight to
+ * the offer for an email that has already made the case in its own body.
+ *
+ * Both carry the same token, so a sale off either one lands on this row and
+ * turns the chip below green. Neither is the raw checkout route: that one has
+ * side effects on GET, and a mail scanner opening it would invent a checkout
+ * start. See /audit/<token>/start.
+ */
 function ScanRow({ scan, origin }: { scan: OutreachScanSummary; origin: string }) {
   const chip = statusChip(scan);
-  const url = `${origin}/audit/${scan.token}`;
 
   return (
     <div className="border-t border-[#33332f] px-5 py-4 first:border-t-0">
@@ -105,16 +155,19 @@ function ScanRow({ scan, origin }: { scan: OutreachScanSummary; origin: string }
       </div>
 
       {scan.status === "complete" ? (
-        <div className="mt-2.5 flex flex-wrap items-center gap-3">
-          <a
-            href={`/audit/${scan.token}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="break-all font-mono text-[12px] text-[#f6be00] underline underline-offset-4"
-          >
-            {url}
-          </a>
-          <CopyLink url={url} />
+        <div className="mt-3 space-y-3">
+          <LinkRow
+            name="Audit"
+            hint="The whole report, free, with the build offered under it."
+            path={`/audit/${scan.token}`}
+            origin={origin}
+          />
+          <LinkRow
+            name="Pay"
+            hint="Straight to the offer and the button. Add &e=your-batch-name to tag the batch in Whop."
+            path={`/audit/${scan.token}/start`}
+            origin={origin}
+          />
         </div>
       ) : (
         <p className="mt-2 text-[13px] leading-snug text-[#7a786f]">
