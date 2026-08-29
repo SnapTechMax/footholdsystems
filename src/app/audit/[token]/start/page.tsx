@@ -4,6 +4,7 @@ import { BuildGuarantee } from "@/components/BuildOffer";
 import { BuyButton } from "@/components/BuyButton";
 import { Eyebrow } from "@/components/ScanReportView";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
+import { buildReport } from "@/lib/scan/report";
 import {
   DONE_FOR_YOU_PRICE,
   checkoutUrl,
@@ -79,7 +80,30 @@ export default async function StartBuildPage({
     redirect(`/audit/${scan.token}`);
   }
 
-  const findingCount = scan.report.findings.length;
+  /**
+   * Rebuilt from the stored provider payload, not read from the stored report.
+   *
+   * The same call /audit/<token> makes, for the same reason and now for one
+   * more: the report JSON is a rendering, so rebuilding means a change to the
+   * check set reaches every report ever produced. This page quotes a count of
+   * those findings back at the buyer, so reading the stored copy while the
+   * audit page rebuilt it would let the two disagree — the pay page promising
+   * eight fixes beside a report listing nine.
+   *
+   * Falls back to the stored report if anything throws, because a slightly
+   * stale number beats an error page on the link that takes the money.
+   */
+  const report = (() => {
+    if (!scan.raw) return scan.report;
+    try {
+      return buildReport(scan.raw, scan.category);
+    } catch {
+      return scan.report;
+    }
+  })();
+  if (!report) redirect(`/audit/${scan.token}`);
+
+  const findingCount = report.findings.length;
 
   // The batch tag from the cold email, passed straight through so it reaches
   // Whop's metadata alongside the token.
