@@ -1,4 +1,5 @@
 import type { Resend } from "resend";
+import { canonicalEmail, findContact } from "./resend-contact";
 
 /**
  * Adds a scan requester to the mailing list and kicks off the nurture sequence.
@@ -51,6 +52,18 @@ export async function subscribeToSequence(
   let addedToAudience = false;
   let eventSent = false;
 
+  // The address every call below uses.
+  //
+  // Canonical — lowercased — for anyone new, so the contact can be found again
+  // from a `scan_leads` row, which is stored the same way. For anyone Resend
+  // already holds under a different case, their stored spelling instead:
+  // matching is byte for byte, so creating a contact or triggering an event on
+  // the canonical form would put the same person on the list a second time and
+  // send them all 22 emails twice. Resolved before anything is written, since
+  // neither of those is undoable afterwards. See lib/resend-contact.ts.
+  const existing = await findContact(resend, email).catch(() => null);
+  const address = existing?.email ?? canonicalEmail(email);
+
   // 1. Audience membership, so there's a real list for Broadcasts.
   const audienceId = process.env.RESEND_AUDIENCE_ID;
   if (!audienceId) {
@@ -59,7 +72,7 @@ export async function subscribeToSequence(
     try {
       const { error } = await resend.contacts.create({
         audienceId,
-        email,
+        email: address,
         // Always set, never omitted. FIRST_NAME is a reserved variable in
         // Resend, so a template cannot declare a fallback for it, which makes
         // this the only place a missing name can be handled. Leaving it empty
@@ -85,7 +98,7 @@ export async function subscribeToSequence(
   try {
     const { error } = await resend.events.send({
       event: EVENT_NAME,
-      email,
+      email: address,
       payload: {
         first_name: firstName ?? "",
         source,
@@ -120,7 +133,7 @@ export async function subscribeToSequence(
   // what makes this work where `contacts.create` cannot.
   try {
     const { error } = await resend.contacts.update({
-      email,
+      email: address,
       firstName: firstName?.trim() || "there",
     });
     if (error) notes.push(`name: ${error.message}`);

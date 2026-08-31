@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { Resend } from "resend";
+import { updateContact } from "@/lib/resend-contact";
 import { knownKey, recordBooking } from "@/lib/tracking";
 
 export const dynamic = "force-dynamic";
@@ -148,26 +149,27 @@ export async function POST(request: NextRequest) {
     console.error("Calendly webhook: booking not recorded:", error);
   }
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.contacts.update({
-      email,
-      // Both properties, because two sequences are listening for different
-      // things. `booked` is the guide automation's exit rule and is left alone.
-      // `converted` is the AEO sequence's, and a booked call counts there too:
-      // with Whop unconfigured the upgrade link falls back to the booking page,
-      // so this is the same conversion arriving by the other door.
-      properties: { booked, converted: booked },
-    });
-    if (error) {
-      console.error(`Calendly webhook: contact update failed for ${email}:`, error.message);
-      // Still 200. The booking is real and already recorded in Calendly, and a
-      // retry would not fix a contact Resend has never seen, which is what
-      // happens when someone books without ever downloading the guide.
-      return NextResponse.json({ ok: false, error: "Contact update failed." });
-    }
-  } catch (error) {
-    console.error("Calendly webhook: contact update threw:", error);
+  // Through `updateContact` rather than the SDK directly: Calendly reports the
+  // address as the invitee typed it into the booking form, and Resend matches
+  // byte for byte, so anyone whose contact was created in a different case was
+  // silently never marked — and went on getting a sequence that pitches the
+  // call they had already booked. See lib/resend-contact.ts.
+  const outcome = await updateContact(new Resend(process.env.RESEND_API_KEY), email, {
+    // Both properties, because two sequences are listening for different
+    // things. `booked` is the guide automation's exit rule and is left alone.
+    // `converted` is the AEO sequence's, and a booked call counts there too:
+    // with Whop unconfigured the upgrade link falls back to the booking page,
+    // so this is the same conversion arriving by the other door.
+    properties: { booked, converted: booked },
+  });
+
+  if (outcome !== "updated") {
+    // Still 200. The booking is real and already recorded in Calendly, and a
+    // retry would not fix a contact Resend has never seen, which is what
+    // happens when someone books without ever running a scan.
+    console.error(
+      `Calendly webhook: contact not marked for ${email} (${outcome}).`
+    );
     return NextResponse.json({ ok: false, error: "Contact update failed." });
   }
 

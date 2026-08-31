@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { updateContact } from "@/lib/resend-contact";
 
 /**
  * Flags the Resend contact so the nurture automation's condition step ends
@@ -19,23 +20,31 @@ import { Resend } from "resend";
  *
  * Never throws. It runs after the money is recorded, and a contact update
  * failing is an annoyance rather than a loss.
+ *
+ * Goes through `updateContact` rather than the SDK directly because the address
+ * arrives from `scan_leads`, which lowercases, while the contact was created in
+ * whatever case the buyer typed. Resend matches byte for byte, so the direct
+ * call answered 404 for anyone who used capitals and this returned false while
+ * the sequence carried on selling them what they had just bought.
  */
 export async function markConverted(email: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
   const property = process.env.SEQUENCE_CONVERTED_PROPERTY || "converted";
-  try {
-    const { error } = await new Resend(apiKey).contacts.update({
-      email,
-      properties: { [property]: "yes" },
-    });
-    if (error) {
-      console.error(`[converted] could not mark ${email}:`, error.message);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("[converted] contact update threw:", error);
+
+  const outcome = await updateContact(new Resend(apiKey), email, {
+    properties: { [property]: "yes" },
+  });
+
+  if (outcome === "not-found") {
+    // Normal for a cold-outbound buyer: they were sent an audit link by hand
+    // and never ran a scan, so there is no contact and no sequence to end.
+    console.info(`[converted] no Resend contact for ${email} — nothing to mark.`);
     return false;
   }
+  if (outcome === "failed") {
+    console.error(`[converted] could not mark ${email} — see the error above.`);
+    return false;
+  }
+  return true;
 }
