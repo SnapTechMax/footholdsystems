@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { AdminNav } from "@/components/AdminNav";
-import { contractUrl } from "@/lib/intake/contract";
 import { initIntakeSchema, listIntakes } from "@/lib/intake/db";
 import { intakeMarkdown } from "@/lib/intake/digest";
 import { INTAKE_SECTIONS, displayAnswer } from "@/lib/intake/questions";
@@ -38,8 +37,6 @@ export default async function IntakeAdminPage() {
     return [];
   });
 
-  const contract = contractUrl();
-
   return (
     <main className="min-h-screen bg-[#1b1b1b] px-5 py-10 sm:px-8">
       <div className="mx-auto max-w-3xl">
@@ -56,27 +53,6 @@ export default async function IntakeAdminPage() {
           by hand. It is not linked from anywhere on the site and it is not
           indexed, so the link is the only way in.
         </p>
-
-        {contract ? (
-          <p className="mt-3 max-w-[64ch] text-[14px] leading-[1.7] text-[#7a786f]">
-            The agreement they sign before the form:{" "}
-            <a
-              href={contract}
-              className="underline underline-offset-2 hover:text-[#cfccc2]"
-            >
-              {contract}
-            </a>
-          </p>
-        ) : (
-          <p className="mt-4 max-w-[64ch] rounded-lg border border-[#5c2b22] bg-[#2a1a16] px-4 py-3 text-[14px] leading-[1.7] text-[#e8b3a6]">
-            <strong className="font-semibold text-[#ff9c88]">
-              BUILD_CONTRACT_URL is not set.
-            </strong>{" "}
-            Customers sign the agreement before they get the form, so nothing
-            here breaks, but the admin cannot show the link. Set it in Vercel
-            and redeploy to see it here.
-          </p>
-        )}
 
         <div className="mt-10 space-y-4">
           {intakes.length === 0 ? (
