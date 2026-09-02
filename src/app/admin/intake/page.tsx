@@ -59,7 +59,7 @@ export default async function IntakeAdminPage() {
 
         {contract ? (
           <p className="mt-3 max-w-[64ch] text-[14px] leading-[1.7] text-[#7a786f]">
-            The agreement they are sent to sign:{" "}
+            The agreement they sign before the form:{" "}
             <a
               href={contract}
               className="underline underline-offset-2 hover:text-[#cfccc2]"
@@ -72,9 +72,9 @@ export default async function IntakeAdminPage() {
             <strong className="font-semibold text-[#ff9c88]">
               BUILD_CONTRACT_URL is not set.
             </strong>{" "}
-            Everyone who finishes the form is being told the agreement follows
-            by email within one business day, which somebody has to do by hand.
-            Set it in Vercel and redeploy to make it automatic.
+            Customers sign the agreement before they get the form, so nothing
+            here breaks, but the admin cannot show the link. Set it in Vercel
+            and redeploy to see it here.
           </p>
         )}
 

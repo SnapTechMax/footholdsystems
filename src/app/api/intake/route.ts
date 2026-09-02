@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { Resend } from "resend";
-import { contractUrl } from "@/lib/intake/contract";
 import {
   createIntake,
   initIntakeSchema,
@@ -191,7 +190,6 @@ export async function POST(request: NextRequest) {
 
       const confirmation = buildIntakeConfirmation({
         answers: data.answers,
-        contractUrl: contractUrl(),
       });
 
       try {

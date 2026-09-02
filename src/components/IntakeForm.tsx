@@ -367,7 +367,7 @@ export function IntakeForm() {
           disabled={pending}
           className="group mt-7 inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg"
         >
-          {pending ? "Sending your answers…" : "Send this and get the agreement"}
+          {pending ? "Sending your answers…" : "Send this"}
           {!pending && (
             <span
               aria-hidden="true"

@@ -1,6 +1,5 @@
 import "server-only";
 import { BUSINESS_ADDRESS, CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/site";
-import { contractUrl } from "./contract";
 import { intakeMarkdown } from "./digest";
 import {
   INTAKE_SECTIONS,
@@ -63,8 +62,6 @@ export function buildIntakeNotification(args: {
   const email = answers.email?.trim() || "";
   const phone = answers.phone?.trim() || "";
 
-  const contract = contractUrl();
-
   const sections = INTAKE_SECTIONS.map((section) => {
     const answered = section.fields.filter(
       (field) => (answers[field.name] ?? "").trim() !== ""
@@ -126,33 +123,6 @@ export function buildIntakeNotification(args: {
         </td>
       </tr>`;
 
-  /**
-   * The missing-contract warning.
-   *
-   * The customer was just told the agreement follows by email, because there
-   * was no link to give them. That is a promise somebody now has to keep by
-   * hand, and it would be very easy not to notice.
-   */
-  const contractWarning = contract
-    ? ""
-    : `
-      <tr>
-        <td style="padding:0 0 22px;">
-          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:2px solid #c8321e;border-radius:8px;background:#fdf2f0;">
-            <tr>
-              <td style="padding:16px 18px;">
-                <p style="margin:0;font:700 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#8c2214;">
-                  BUILD_CONTRACT_URL is not set, so they were given no link to sign.
-                </p>
-                <p style="margin:8px 0 0;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#8c2214;">
-                  They have been told the agreement follows by email within one business day. Send it, then set the variable in Vercel so the next one is automatic.
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>`;
-
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Build intake</title></head>
 <body style="margin:0;padding:0;background:#f4f2ec;">
@@ -178,7 +148,6 @@ export function buildIntakeNotification(args: {
           <tr>
             <td style="padding:0 28px;">
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                ${contractWarning}
                 <tr>
                   <td style="padding:0 0 4px;">
                     <p style="margin:0;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
@@ -221,39 +190,18 @@ export function buildIntakeNotification(args: {
 /**
  * What the customer gets back.
  *
- * Short. Its job is to confirm the answers arrived, hand over the agreement,
- * and say what happens next, in that order. Everything they just spent twenty
- * minutes typing is not repeated back at them: they wrote it, and a wall of
- * their own words is not a receipt.
+ * Short. Its job is to confirm the answers arrived and say what happens next.
+ * The agreement was signed before the form, so there is nothing to hand over
+ * and nothing left for them to do: saying so plainly is the point. Everything
+ * they just spent twenty minutes typing is not repeated back at them: they
+ * wrote it, and a wall of their own words is not a receipt.
  */
 export function buildIntakeConfirmation(args: {
   answers: IntakeAnswers;
-  contractUrl: string | null;
 }): IntakeEmail {
   const { answers } = args;
   const business = answers.business_name?.trim() || "your business";
   const first = (answers.contact_name?.trim() || "").split(/\s+/)[0] || "";
-  const contract = args.contractUrl;
-
-  const signBlock = contract
-    ? `
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;">
-        <tr>
-          <td style="background:${ACCENT};border-radius:8px;">
-            <a href="${escapeHtml(contract)}" style="display:inline-block;padding:16px 30px;font:800 16px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};text-decoration:none;">
-              Read and sign the agreement &rarr;
-            </a>
-          </td>
-        </tr>
-      </table>
-      <p style="margin:0 0 26px;font:400 13px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
-        Or paste this into your browser: ${escapeHtml(contract)}
-      </p>`
-    : `
-      <p style="margin:0 0 26px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
-        The agreement comes over in a separate email within one business day.
-        Nothing starts until it is signed, so keep an eye out for it.
-      </p>`;
 
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We have everything</title></head>
@@ -269,25 +217,19 @@ export function buildIntakeConfirmation(args: {
               </p>
               <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                 Your answers for ${escapeHtml(business)} are in. That is the
-                part that usually takes the longest, and it is done.
+                part that usually takes the longest, and it is done. The
+                agreement is signed, the form is sent, and there is nothing
+                else we need from you today.
               </p>
               <p style="margin:0 0 8px;font:700 13px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:${MUTED};">
-                One thing left
+                What happens now
               </p>
               <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
-                The agreement. It sets out what gets built, what it costs, what
-                you own at the end, and what happens if you want out. Read it
-                properly before you sign it.
-              </p>
-              ${signBlock}
-              <p style="margin:0 0 8px;font:700 13px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:${MUTED};">
-                Then what
-              </p>
-              <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
-                Once it is signed we read your answers properly and come back
-                with anything that needs a real conversation rather than a form
-                box, plus the account access we need. Build time is two to three
-                weeks from that point.
+                We read your answers properly rather than skimming them, and
+                come back with anything that needs a real conversation rather
+                than a form box, plus the account access we need. Expect that
+                within one business day. Build time is two to three weeks from
+                there.
               </p>
               <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                 Remembered something, or got one wrong? Reply to this email and
@@ -309,17 +251,10 @@ export function buildIntakeConfirmation(args: {
   const text = [
     `Got it${first ? `, ${first}` : ""}.`,
     "",
-    `Your answers for ${business} are in. That is the part that usually takes the longest, and it is done.`,
+    `Your answers for ${business} are in. That is the part that usually takes the longest, and it is done. The agreement is signed, the form is sent, and there is nothing else we need from you today.`,
     "",
-    "ONE THING LEFT",
-    "The agreement. It sets out what gets built, what it costs, what you own at the end, and what happens if you want out. Read it properly before you sign it.",
-    "",
-    contract
-      ? contract
-      : "It comes over in a separate email within one business day. Nothing starts until it is signed.",
-    "",
-    "THEN WHAT",
-    "Once it is signed we read your answers properly and come back with anything that needs a real conversation rather than a form box, plus the account access we need. Build time is two to three weeks from that point.",
+    "WHAT HAPPENS NOW",
+    "We read your answers properly rather than skimming them, and come back with anything that needs a real conversation rather than a form box, plus the account access we need. Expect that within one business day. Build time is two to three weeks from there.",
     "",
     "Remembered something, or got one wrong? Reply to this email and say so. Nothing is locked in.",
     "",
@@ -330,7 +265,7 @@ export function buildIntakeConfirmation(args: {
   ].join("\n");
 
   return {
-    subject: `We have everything for ${business}. One thing left to sign.`,
+    subject: `We have everything for ${business}.`,
     html,
     text,
   };

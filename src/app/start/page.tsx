@@ -16,7 +16,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * Everything below the intro is generated from INTAKE_SECTIONS. The copy here
  * is the only part written by hand, and its whole job is to get somebody to
  * start: say how long it takes, say that leaving halfway is safe, and say what
- * happens when they finish.
+ * happens when they finish. The agreement is signed BEFORE this form, so the
+ * copy here must not promise it afterwards.
  */
 
 export const metadata: Metadata = {
@@ -75,8 +76,10 @@ export default function StartPage() {
                 3.
               </span>
               <p className="text-[15px] leading-[1.6] text-[var(--muted)]">
-                When you send it you get the agreement to read and sign. That is
-                the last thing standing between here and us starting.
+                The agreement is already signed, so sending this is the last
+                thing standing between here and us starting. We read it
+                properly and come back with anything that needs a real
+                conversation rather than a form box.
               </p>
             </div>
           </div>
