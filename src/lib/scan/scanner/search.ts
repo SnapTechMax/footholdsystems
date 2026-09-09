@@ -80,23 +80,33 @@ async function serperApi(
   count: number,
   signal?: AbortSignal
 ): Promise<SearchResult | null> {
-  const result = await fetchUrl("https://google.serper.dev/search", {
-    signal,
-    timeoutMs: SEARCH_TIMEOUT_MS,
-    method: "POST",
-    headers: { "X-API-KEY": key, Accept: "application/json" },
-    body: JSON.stringify({ q: query, num: count }),
-  });
-  if (result.status !== 200) return null;
-  try {
-    const data = JSON.parse(result.body) as { organic?: { link?: string; title?: string }[] };
-    const hits = (data.organic ?? [])
-      .filter((r): r is { link: string; title?: string } => typeof r.link === "string")
-      .map((r) => ({ url: r.link, title: r.title ?? "" }));
-    return { provider: "serper", hits };
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < SERPER_RETRY_WAITS_MS.length + 1; attempt++) {
+    const result = await fetchUrl("https://google.serper.dev/search", {
+      signal,
+      timeoutMs: SEARCH_TIMEOUT_MS,
+      method: "POST",
+      headers: { "X-API-KEY": key, Accept: "application/json" },
+      body: JSON.stringify({ q: query, num: count }),
+    });
+    // Being told to slow down is not a reason to give up on Serper. Falling
+    // through would put this search into the Brave queue below — the very
+    // thing scans are being kept out of — so it waits and asks again.
+    if (result.status === 429 && attempt < SERPER_RETRY_WAITS_MS.length) {
+      await sleep(SERPER_RETRY_WAITS_MS[attempt]);
+      continue;
+    }
+    if (result.status !== 200) return null;
+    try {
+      const data = JSON.parse(result.body) as { organic?: { link?: string; title?: string }[] };
+      const hits = (data.organic ?? [])
+        .filter((r): r is { link: string; title?: string } => typeof r.link === "string")
+        .map((r) => ({ url: r.link, title: r.title ?? "" }));
+      return { provider: "serper", hits };
+    } catch {
+      return null;
+    }
   }
+  return null;
 }
 
 /**
@@ -146,16 +156,27 @@ async function braveHtml(query: string, count: number, signal?: AbortSignal): Pr
 }
 
 /**
- * Searches run one at a time, with a pause between them.
+ * The BRAVE endpoints run one at a time, with a pause between them.
  *
  * Brave's HTML endpoint answered two simultaneous requests from one IP with
- * a 429 for both (measured), and the API tier meters by the second. Two
- * checks search during every scan, so without this the second one always
- * lost. The queue is module-wide: concurrent scans in one process share it.
+ * a 429 for both (measured), and the API tier meters by the second. The queue
+ * is module-wide, so concurrent scans in one process share it.
+ *
+ * Serper deliberately does NOT go through it. It is a paid API built for
+ * concurrent callers and it is tried first, so queueing it made this gap the
+ * throughput ceiling of the entire scanner rather than a guard on a free
+ * endpoint: two searches per scan, one at a time, 1.5s apart, is three
+ * seconds of dead wall-clock in every scan and roughly twenty scans a minute
+ * per process — however many crawls the caller opens. The outreach caller
+ * went from eight concurrent crawls to a hundred and nothing moved, because
+ * every one of them was waiting on this chain. Scoping it to Brave is what
+ * lets concurrency mean anything.
  */
 const GAP_MS = 1_500;
 /** Waits before the second and third try. One 4s pause was not enough. */
 const RETRY_WAITS_MS = [3_000, 6_000];
+/** Serper meters per call rather than per second, so these are short. */
+const SERPER_RETRY_WAITS_MS = [400, 1_200];
 let queue: Promise<unknown> = Promise.resolve();
 
 function sleep(ms: number): Promise<void> {
@@ -175,20 +196,27 @@ export function searchWeb(
   query: string,
   options: SearchOptions = {}
 ): Promise<SearchResult | null> {
-  return enqueue(() => search(query, options));
+  return search(query, options);
 }
 
 async function search(query: string, options: SearchOptions): Promise<SearchResult | null> {
   const count = options.count ?? 10;
+
+  // Unqueued: as many scans as are running may be inside Serper at once.
   const serper = process.env.SERPER_API_KEY;
   if (serper) {
     const result = await serperApi(query, serper, count, options.signal);
     if (result) return result;
   }
-  const brave = process.env.BRAVE_SEARCH_API_KEY;
-  if (brave) {
-    const result = await braveApi(query, brave, count, options.signal);
-    if (result) return result;
-  }
-  return braveHtml(query, count, options.signal);
+
+  // Brave, one at a time. Reached only when Serper is unset or did not
+  // answer, so on a healthy deployment this chain stays empty.
+  return enqueue(async () => {
+    const brave = process.env.BRAVE_SEARCH_API_KEY;
+    if (brave) {
+      const result = await braveApi(query, brave, count, options.signal);
+      if (result) return result;
+    }
+    return braveHtml(query, count, options.signal);
+  });
 }
