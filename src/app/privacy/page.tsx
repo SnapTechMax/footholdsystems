@@ -33,16 +33,16 @@ const display = "font-display";
 //
 // Google Sheets and Pushover are absent because they are gone: they belonged to
 // the older /api/lead route, which was deleted along with the rest of the guide
-// funnel. A processor listed here that never sees your data is as wrong as one
-// missing.
+// funnel. Ora is absent because the scan moved in-house on 2026-09-09. A
+// processor listed here that never sees your data is as wrong as one missing.
 const PROCESSORS = [
   {
     name: "Resend",
     role: "Sends your scan report and the follow-up emails. Holds your email address.",
   },
   {
-    name: "Ora",
-    role: "Runs the technical scan. We send it the website address you give us, nothing about you. It returns the findings your report is built from.",
+    name: "Serper or Brave Search",
+    role: "Runs the web search the scan uses to check whether a business can be found by name. Receives the business name and website address, nothing about you.",
   },
   {
     name: "Whop",
@@ -161,9 +161,11 @@ export default function PrivacyPage() {
                   withdraw at any time and we stop.
                 </>,
                 <>
-                  <strong>To run the scan.</strong> Your website address is sent to
-                  Ora, the service that performs the technical assessment. It is a
-                  public web address and carries nothing personal about you.
+                  <strong>To run the scan.</strong> Our own scanner fetches public
+                  pages from the website address you give us, the way a search
+                  crawler would, and looks the business name up on a web search and
+                  on public registries such as Wikidata. A website address and a
+                  business name are public and carry nothing personal about you.
                 </>,
                 <>
                   <strong>To work out whether the site and the ads are any

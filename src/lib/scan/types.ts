@@ -1,69 +1,60 @@
 /**
- * Types for the Ora agent-readiness API and the report we build from it.
+ * The scan payload and the report built from it.
  *
- * Modelled on the live response from `GET https://ora.ai/api/score/{domain}`
- * rather than the prose docs, because the docs describe a `topFixes` array the
- * cached endpoint does not actually return. We derive our own ranking from the
- * checks instead, which works on either shape.
- *
- * Everything from Ora is treated as untrusted input: it is a third-party API
- * whose response shape can change under us, and half of it gets rendered into
- * an email. Fields are optional wherever the API could plausibly omit them, and
- * `parseOraScan` in ora.ts is the only place allowed to assert otherwise.
+ * The payload shape — four layers of checks, each with a status, a score out
+ * of a maximum, a tier and a details string — is the one Ora's API returned
+ * while it ran the scans. It was kept when the scanner moved in-house
+ * (lib/scan/scanner) so that every row stored before the switch is still a
+ * valid payload and rebuilds into the same report. Fields are optional
+ * wherever an older row could plausibly lack them.
  */
 
-/** Check outcomes. Note it is "warning", not "warn" — confirmed against live data. */
-export type OraCheckStatus = "pass" | "fail" | "warning" | "na" | "error";
+/** Check outcomes. Note it is "warning", not "warn". */
+export type CheckStatus = "pass" | "fail" | "warning" | "na" | "error";
 
-/** How much Ora expects you to care. "required" is the floor. */
-export type OraCheckTier = "required" | "recommended" | "emerging";
+/** How much the reader is expected to care. "required" is the floor. */
+export type CheckTier = "required" | "recommended" | "emerging";
 
-export interface OraCheck {
+export interface ScanCheck {
   id: string;
   name: string;
   description?: string;
-  status: OraCheckStatus;
+  status: CheckStatus;
   score: number;
   maxScore: number;
-  /** What Ora actually found, e.g. "No /.well-known/ai-catalog.json". */
+  /** What the check actually found, e.g. "No /llms.txt found". Quoted in the free half of a finding. */
   details?: string;
-  /** Ora's own fix instruction. This is the paid half of our report. */
-  recommendation?: string;
   /** Bonus checks never cost points, so they must never be sold as a "problem". */
   bonus?: boolean;
   specUrl?: string;
   maturity?: string;
-  tier?: OraCheckTier;
+  tier?: CheckTier;
   /** Points recovered by fixing this. Our ranking signal. */
   estScoreGain?: number;
 }
 
-export interface OraLayer {
+export interface ScanLayer {
   id: string;
   name: string;
   description?: string;
-  checks: OraCheck[];
+  checks: ScanCheck[];
   score: number;
   maxScore: number;
 }
 
-export interface OraScan {
+export interface ScanPayload {
   domain: string;
   url: string;
   finalUrl?: string;
+  /** Raw score over every check that ran. Informational: report.ts rescores over the category's subset. */
   score: number;
   maxScore: number;
   grade: string;
-  ctaMessage?: string;
-  ctaTier?: string;
-  layers: OraLayer[];
+  layers: ScanLayer[];
   scannedAt?: string;
   durationMs?: number;
-  agenticSummary?: string;
-  category?: string;
   /** "complete" | "partial" | "stuck". Partial results are still worth sending. */
   analysisStatus?: string;
-  pendingChecks?: unknown[];
 }
 
 /* ── our report ───────────────────────────────────────────────────────────── */
@@ -78,7 +69,7 @@ export interface OraScan {
  */
 export interface ReportFinding {
   checkId: string;
-  /** Plain-English title, rewritten from Ora's engineer-facing check name. */
+  /** Plain-English title, rewritten from the check's engineer-facing name. */
   title: string;
   /** What we found, in the customer's language. Free. */
   problem: string;
@@ -98,8 +89,8 @@ export interface ReportFinding {
   /** Points back on the board. */
   pointsBack: number;
   layer: string;
-  tier: OraCheckTier;
-  /** Ora's spec link, where one exists. Paid, since it is part of the fix. */
+  tier: CheckTier;
+  /** The check's spec link, where one exists. Paid, since it is part of the fix. */
   specUrl?: string;
 }
 
@@ -108,8 +99,8 @@ import type { BusinessCategory } from "./categories";
 /**
  * Report grade. A, B, C, D, F — the American school scale, no E.
  *
- * Distinct from `OraScan.grade`, which is Ora's own letter over its own score
- * (it does use A+ and E) and is not comparable to this one.
+ * Distinct from `ScanPayload.grade`, which is the scanner's letter over its raw
+ * score across every check (it uses A+) and is not comparable to this one.
  */
 export type Grade = "A" | "B" | "C" | "D" | "F";
 
@@ -126,7 +117,7 @@ export interface ScanReport {
    * the contradiction it was introduced to fix.
    */
   gradeCappedBecause: string | null;
-  /** One-line verdict in our voice, not Ora's. */
+  /** One-line verdict in our voice. */
   verdict: string;
   /** The 2-3 sentence plain-English summary that opens the email. */
   summary: string;
@@ -144,9 +135,7 @@ export interface ScanReport {
   businessCategory: BusinessCategory;
   /** Human label for it, so renderers don't each map the enum themselves. */
   categoryLabel: string;
-  /** Ora's own sector guess, where it has one. Usually absent. */
-  category?: string;
   scannedAt: string;
-  /** True when Ora returned before every check finished. */
+  /** True when the payload was stored before every check finished. */
   partial: boolean;
 }

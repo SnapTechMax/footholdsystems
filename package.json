@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "scan:local": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env.local --import ./scripts/ts-loader.mjs scripts/local-scan.ts",
+    "scan:compare": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env.local --import ./scripts/ts-loader.mjs scripts/scan-compare.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

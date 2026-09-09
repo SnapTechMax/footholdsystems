@@ -9,9 +9,8 @@ import {
   type ScanRow,
 } from "./db";
 import { buildReportEmail } from "./email";
-import { OraError, isRetryable } from "./ora";
 import { buildReport } from "./report";
-import { rescanDomain, scanDomain } from "./source";
+import { isRetryable, scanDomain } from "./scanner";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -44,7 +43,7 @@ export type RunOutcome =
 
 export async function runScanJob(scanId: number): Promise<RunOutcome> {
   // Claim first. If another worker already has it, stop — doing the work twice
-  // means two live crawls and two identical emails.
+  // means two crawls and two identical emails.
   const claimed = await claimScan(scanId);
   if (!claimed) {
     return { status: "skipped", reason: "already claimed or complete" };
@@ -61,8 +60,8 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     await failScan(scanId, reason);
-    // Reaching here means every provider failed, so the error is whichever one
-    // spoke last. A 4xx will fail identically forever; a 429 or a 5xx will not.
+    // A domain that does not resolve will fail identically forever; a site
+    // that was slow or down will not. The sweeper acts on the difference.
     return { status: "failed", reason, retryable: isRetryable(error) };
   }
 
@@ -76,7 +75,7 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
     });
   } catch (error) {
     // The scan itself succeeded, so this is worth retrying — but do not mark it
-    // failed, or the sweeper will spend another Ora call re-running a scan we
+    // failed, or the sweeper will crawl the site again for a payload we
     // already have.
     const reason = error instanceof Error ? error.message : String(error);
     return { status: "failed", reason: `storing report: ${reason}`, retryable: true };
@@ -165,14 +164,12 @@ export async function sendReportEmail(
  * their inbox is a worse outcome than a quietly updated page. `sendEmail` is
  * there for the case where the numbers really have moved.
  *
- * Goes through `rescanDomain` rather than `scanDomain`, because the latter is
- * allowed to hand back a stored result: a refresh that returns the data we
- * already hold is not a refresh. Passing `force` also flips the provider order
- * to put the one that documents cache-bypass first — see source.ts.
+ * Every run is a fresh crawl — the scanner keeps no cache — so a refresh always
+ * reflects the site as it is now.
  */
 export async function refreshScanJob(
   scanId: number,
-  options: { force?: boolean; sendEmail?: boolean } = {}
+  options: { sendEmail?: boolean } = {}
 ): Promise<
   | { status: "done"; before: number | null; after: number; emailed: boolean }
   | { status: "failed"; reason: string }
@@ -183,11 +180,11 @@ export async function refreshScanJob(
   let raw;
   let report;
   try {
-    raw = await rescanDomain(scan.domain, { force: options.force });
+    raw = await scanDomain(scan.domain);
     report = buildReport(raw, scan.category);
   } catch (error) {
     // Deliberately does not call failScan. The existing report is still good
-    // and still being served; a refresh that could not reach Ora is no reason
+    // and still being served; a refresh that could not complete is no reason
     // to mark a completed scan failed and have the sweeper redo it.
     return {
       status: "failed",
@@ -211,12 +208,4 @@ export async function refreshScanJob(
   }
 
   return { status: "done", before, after: report.score, emailed };
-}
-
-/** Whether an error should be shown to a visitor or swallowed into a generic message. */
-export function customerFacingError(error: unknown): string {
-  if (error instanceof OraError && error.status === 429) {
-    return "We're running more scans than usual right now. Yours is queued and we'll email it shortly.";
-  }
-  return "Your scan is queued. We'll email the results shortly.";
 }

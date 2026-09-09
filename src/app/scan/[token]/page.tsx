@@ -206,7 +206,7 @@ export default async function ScanReportPage({
   }
 
   /**
-   * Rebuilt from the stored Ora payload rather than read from the stored report.
+   * Rebuilt from the stored scan payload rather than read from the stored report.
    *
    * The report JSON is a rendering of the raw scan, and rendering it fresh means
    * a correction to the copy reaches every report ever produced, including ones

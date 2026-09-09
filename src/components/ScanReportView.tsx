@@ -73,7 +73,7 @@ export function ScoreHeader({ report }: { report: ScanReport }) {
         </span>
       </div>
       {/* Says what the score was measured against. A number with no stated
-          basis invites the obvious comparison against a raw Ora score, which is
+          basis invites the obvious comparison against the payload's raw score, which is
           computed over a different set of checks entirely. */}
       <div className="mt-3">
         <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">

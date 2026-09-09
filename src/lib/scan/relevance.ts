@@ -1,53 +1,51 @@
 import "server-only";
 import { checksFor, type BusinessCategory } from "./categories";
-import type { OraCheckTier } from "./types";
+import type { CheckTier } from "./types";
 
 /**
- * Which of Ora's checks belong in a report sold to a business owner.
+ * Which checks belong in a report sold to a business owner, and what they say.
  *
- * THIS IS THE MOST IMPORTANT FILE IN THE SCAN PIPELINE. Ora runs ~124 checks,
- * and the large majority of them score a site's readiness to be *operated* by
- * an AI agent: publish an OpenAPI spec, expose a REST API, run an MCP server,
- * implement OAuth 2.0, ship SDKs to npm and PyPI, support the x402 payment
- * protocol. Every one of those is a real finding for a SaaS company and utter
- * nonsense for a roofing contractor.
+ * THIS IS THE MOST IMPORTANT FILE IN THE SCAN PIPELINE. The scanner runs 44
+ * checks (lib/scan/scanner/catalog.ts), and a third of them score a site's
+ * readiness to be *operated* by an AI agent: publish an OpenAPI spec, expose a
+ * REST API, run an MCP server, implement OAuth 2.0, ship SDKs to npm and PyPI.
+ * Every one of those is a real finding for a SaaS company and utter nonsense
+ * for a roofing contractor.
  *
  * Emailing a plumber a paid report that tells him to "build an MCP server
  * exposing your API as tools" is how you earn refunds, chargebacks and a
- * reputation. So the report is built from an explicit allowlist of the checks
- * that describe whether a *business* can be found, understood and recommended.
+ * reputation. So the report is built from an explicit allowlist, per business
+ * category (categories.ts), of the checks that describe whether a *business*
+ * can be found, understood and recommended.
  *
- * ALLOWLIST, NOT DENYLIST, deliberately. Ora adds checks over time. A denylist
- * would silently start recommending whatever they ship next, which is exactly
+ * ALLOWLIST, NOT DENYLIST, deliberately. The catalog will grow. A denylist
+ * would silently start recommending whatever gets added next, which is exactly
  * the failure we are guarding against. An unknown check is excluded until
  * somebody looks at it and decides it belongs.
  *
  * The score we report is computed over this subset too — see report.ts. Showing
- * Ora's raw score would mean telling someone they are at 20/100 and then handing
- * them a fix list that cannot possibly move it, because most of the missing
- * points are behind work they will never do.
+ * the payload's raw score would mean telling someone they are at 20/100 and
+ * then handing them a fix list that cannot possibly move it, because most of
+ * the missing points are behind work they will never do.
  */
 
 export interface CheckCopy {
-  /** Plain-English name. Ora's own names are written for engineers. */
+  /** Plain-English name. The catalog's names are written for engineers. */
   title: string;
   /** What it costs them, in business terms. FREE half of the report. */
   consequence: string;
   /**
-   * Our fix instruction. PAID half.
-   *
-   * Written here rather than passed through from Ora because Ora's
-   * recommendations assume a developer audience ("publish at
-   * /.well-known/...", "declare OAuth scopes"). Where ours is absent the
-   * report falls back to Ora's wording, which is correct but colder.
+   * Our fix instruction. PAID half. Required: the scanner carries no
+   * recommendation text of its own, so this is the only place the paid half
+   * of a finding can come from, and a check with no fix cannot be sold.
    */
-  fix?: string;
+  fix: string;
   /**
    * Copy for a `warning` result, where one differs meaningfully from a `fail`.
    *
-   * Ora distinguishes "we could not find this at all" from "this is partly
-   * there", and collapsing the two produced a report that told a real customer
-   * his business name did not bring up his website when Ora had actually said
+   * The scanner distinguishes "we could not find this at all" from "this is
+   * partly there", and collapsing the two produced a report that told a real
+   * customer his business name did not bring up his website when the check said
    * it appeared at position four. Anything whose failure wording would be false
    * of a partial pass needs an entry here.
    */
@@ -82,7 +80,7 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
       "This is the one that matters most. When something looks you up by name and your own site is not in the results at all, it has no way to confirm you are real, let alone recommend you. Everything else on this list is downstream of this.",
     caveat: COLD_SEARCH_CAVEAT,
     // The failure wording above is false of a site that does appear, just not
-    // at the top, which is what Ora reports far more often than absence.
+    // at the top, which the check reports far more often than absence.
     warning: {
       title: "You are not the top result for your own name",
       consequence:
@@ -153,6 +151,14 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "robots.txt doesn't address AI crawlers",
     consequence:
       "You have no stated position on the crawlers that feed the assistants. Some default to cautious when a site is silent.",
+    // The failure wording is false of the common case the check warns on: a
+    // robots.txt that allows everything and names nothing. The door is
+    // open; what is missing is the sign saying so.
+    warning: {
+      title: "robots.txt lets AI crawlers in but never names them",
+      consequence:
+        "Open by default is not a policy. Nothing in the file says which assistant crawlers are welcome and which training-only crawlers are not, and a crawler deciding whether it has permission reads silence as ambiguity rather than as a yes.",
+    },
     fix: "Name the AI user agents explicitly in robots.txt and allow the ones you want reading you. Being explicit is worth more than a permissive wildcard, because it is unambiguous to a crawler deciding whether it has permission.",
   },
   "redirect-hygiene": {
@@ -200,6 +206,13 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     title: "Your structured data doesn't link to anything else",
     consequence:
       "Nothing connects your website to your Google Business Profile, your directory listings or your social accounts. Each one looks like a different business.",
+    // The check warns rather than fails once one recognised profile is linked;
+    // "doesn't link to anything" would be untrue of that site.
+    warning: {
+      title: "Your structured data links to only one outside profile",
+      consequence:
+        "One link is a start. The profiles that let a model confirm every mention of you is actually you, Wikidata, LinkedIn, your Google Business Profile, are the ones still missing, so the corroboration is thin.",
+    },
     fix: "Add a sameAs array to your Organization or LocalBusiness schema listing every profile you control: Google Business Profile, Facebook, LinkedIn, Yelp, industry directories, Wikidata if you have it. This is what collapses a dozen scattered mentions into one entity a model can be confident about.",
   },
   "org-schema-completeness": {
@@ -302,7 +315,7 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
     consequence: "Crawlers can't tell fresh pages from stale ones, so they re-read everything or nothing.",
     fix: "Add accurate lastmod dates. Accurate is the operative word. A sitemap claiming every page changed today is treated as unreliable.",
     // The failure wording above is false of a sitemap that does carry dates on
-    // some entries. Ora warns rather than fails once they are present but thin:
+    // some entries. The check warns rather than fails once they are present but thin:
     // it wants lastmod on at least half the entries, with the newest inside a
     // year, so a partial pass is either patchy coverage or dates gone stale.
     warning: {
@@ -474,7 +487,7 @@ export const CHECK_COPY: Record<string, CheckCopy> = {
 };
 
 /** Ranking weight by tier. Required failures lead the report. */
-export function tierWeight(tier: OraCheckTier | undefined): number {
+export function tierWeight(tier: CheckTier | undefined): number {
   if (tier === "required") return 1.5;
   if (tier === "emerging") return 0.6;
   return 1;
@@ -485,13 +498,13 @@ export function tierWeight(tier: OraCheckTier | undefined): number {
  *
  * Both conditions have to hold: the category has to claim the check, and we
  * have to have written copy for it. A check in a category list with no copy
- * would otherwise reach a customer as Ora's own engineer-facing wording, which
- * is the exact failure this file exists to prevent.
+ * would otherwise reach a customer with nothing to say about it, which is the
+ * exact failure this file exists to prevent.
  */
 /**
  * Checks that warn without needing distinct wording, and why.
  *
- * Ora uses `warning` for these when the score is a flat zero and the detail
+ * The payment checks use `warning` here when the score is a flat zero and the detail
  * literally reads "No AP2 signals detected", so the failure copy is already
  * accurate. Listed rather than left silent so the next audit can tell a
  * deliberate omission from an oversight, and so `assertWarningCopy` below does
@@ -502,8 +515,8 @@ const WARNING_COPY_NOT_NEEDED = new Set(["ap2-support", "x402-support"]);
 /**
  * Flags a check that started warning without wording for it.
  *
- * A guard rather than a test, because the trigger is Ora changing what it
- * returns rather than anyone changing this file: a check that has only ever
+ * A guard rather than a test, because the trigger is a check starting to
+ * warn rather than anyone changing this file: a check that has only ever
  * failed can start warning at any time, and the first sign would otherwise be
  * a customer reading that he has no structured data when the report also shows
  * the structured data he has.

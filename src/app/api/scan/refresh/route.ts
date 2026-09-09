@@ -11,27 +11,26 @@ import { refreshScanJob } from "@/lib/scan/run";
  * putting their email back through the capture form, which mints a new token,
  * gives them a second URL, and drops a duplicate report in their inbox.
  *
- * Behind the admin password, for two reasons: it
- * spends a third-party API call per request against a 30-a-day ceiling, and an
- * unauthenticated endpoint that regenerates arbitrary customers' reports is not
- * something to leave open. `isAdminAuthorised` fails shut.
+ * Behind the admin password, for two reasons: every request is a full crawl
+ * of somebody's website, and an unauthenticated endpoint that regenerates
+ * arbitrary customers' reports is not something to leave open.
+ * `isAdminAuthorised` fails shut.
  *
  *   curl -u :$ADMIN_PASSWORD -X POST \
  *     "https://www.footholdsystems.com/api/scan/refresh?token=TOKEN"
  *
  * Query parameters:
  *   token  required. The scan to refresh, from its report URL.
- *   force  bypasses Ora's freshness cache. Capped at six per rolling 24 hours
- *          for the entire deployment, so use it when the cached answer is the
- *          one being corrected, not by default.
  *   email  re-sends the report. Off unless asked: a refresh is usually us
  *          correcting our own copy, and a second identical email is worse for
  *          the recipient than a quietly updated page.
+ *
+ * Every refresh is a fresh crawl; there is no cache to bypass.
  */
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Ora's own timeout is 60s and a forced scan is the slow path.
+// The scanner's own deadline is 75s; this has to outlast it.
 export const maxDuration = 90;
 
 export async function POST(request: NextRequest) {
@@ -59,13 +58,12 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await refreshScanJob(scan.id, {
-      force: params.get("force") === "1",
       sendEmail: params.get("email") === "1",
     });
 
     if (result.status === "failed") {
-      // 502, not 500: the failure is upstream, and the stored report is
-      // untouched and still being served.
+      // 502, not 500: the failure is at the site being scanned, and the stored
+      // report is untouched and still being served.
       return NextResponse.json(
         { error: result.reason, note: "The existing report is unchanged." },
         { status: 502 }

@@ -1,8 +1,8 @@
 /**
- * Business categories, and which of Ora's checks apply to each.
+ * Business categories, and which of the scanner's checks apply to each.
  *
  * This exists because a single allowlist was wrong in both directions. A party
- * rental company was being marked down by Ora for not publishing an SDK or an
+ * rental company was being marked down for not publishing an SDK or an
  * agent catalog, which is nonsense; a SaaS company scored on the local-business
  * set would be told it is in perfect shape while shipping no OpenAPI spec, no
  * MCP server and no docs, which is worse than nonsense because it is flattering.
@@ -124,7 +124,7 @@ export function categoryNoun(category: BusinessCategory): string {
  *
  * This is also the whole of the `sbo` and `digital` sets. A business that sells
  * services — whether it turns up at your house or works remotely — has no
- * additions, because the agentic-commerce and developer-tooling checks Ora runs
+ * additions, because the agentic-commerce and developer-tooling checks the scanner runs
  * genuinely do not apply to one. That is not a gap in the list; it is the
  * finding.
  */
@@ -175,7 +175,7 @@ const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
    * Deliberately identical to `sbo`, and worth saying why rather than leaving
    * two empty arrays looking like an oversight.
    *
-   * Ora has no check that separates a business serving a postcode from one
+   * No check separates a business serving a postcode from one
    * serving a Zoom link. What decides whether either gets recommended is the
    * same list: can it be found by name, can a crawler read it, does it say
    * plainly what it sells and for whom, does anything outside its own website
@@ -189,7 +189,7 @@ const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
   digital: [],
 
   /**
-   * Agentic commerce. Every one of these is a `bonus` check in Ora's scoring,
+   * Agentic commerce. Every one of these is a `bonus` check in the catalog,
    * so they surface as opportunities and never drag the score down, which is
    * the right treatment for standards this young. They are here because an
    * assistant that can complete a purchase is the whole ballgame for a shop,
@@ -250,8 +250,8 @@ const CATEGORY_EXTRAS: Record<BusinessCategory, readonly string[]> = {
    *   webmcp             — a browser agent operating your app has no declared
    *                        actions and has to guess at your interface. This
    *                        asks you to describe pages you already ship, not to
-   *                        open an API. Ora scores it `required` at 2 points,
-   *                        so it is a real but small finding.
+   *                        open an API. The catalog scores it `required` at 5
+   *                        points, so it is a real finding, not a footnote.
    *   chatgpt-app-listed — a `bonus` check, so it can never drag the score
    *                        down. Being inside the assistant rather than a name
    *                        it mentions matters more for a product than for
@@ -269,13 +269,13 @@ export function checksFor(category: BusinessCategory): Set<string> {
 /**
  * Whether a check came from the category's own list rather than the base set.
  *
- * This drives one rule in the scoring, and it is worth stating plainly. Ora
- * marks a check `na` when it could not assess it, and for the developer checks
+ * This drives one rule in the scoring, and it is worth stating plainly. The
+ * scanner marks a check `na` when it could not assess it, and for the developer checks
  * that usually means "this site has no API surface at all". Excluding those is
  * right when we inferred the category, and wrong when the reader told us.
  *
  * If somebody selects SaaS and has no OpenAPI spec, no API and no MCP server,
- * Ora returns `na` for all of them and an exclusion rule would hand them a good
+ * the scanner returns `na` for all of them and an exclusion rule would hand them a good
  * score for having nothing to assess. Having nothing is the finding. So `na` on
  * a check the declared category asked for counts as a failure, while `na` on a
  * base check stays excluded, because those genuinely can be inapplicable.

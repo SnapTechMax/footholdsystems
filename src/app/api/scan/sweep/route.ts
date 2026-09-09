@@ -12,7 +12,7 @@ import { runScanJob, sendReportEmail } from "@/lib/scan/run";
  * Two failure shapes, both of which look identical to a waiting customer:
  * a scan that was queued and never picked up (the invocation died first), and
  * a scan that completed and stored but whose email never sent (Resend was
- * down). The first costs an Ora call to redo, the second does not — so they
+ * down). The first costs a full crawl to redo, the second does not — so they
  * are handled separately rather than by re-running everything.
  *
  * Driven from .github/workflows/scan-sweep.yml every 10 minutes, not from
@@ -29,25 +29,27 @@ export const maxDuration = 300;
 /**
  * How many scans one sweep will run.
  *
- * Was 3, sized so a sweep could not exhaust Ora's 30-a-day on retries. Scans no
- * longer come off that budget, and 3 every ten minutes is too slow to be a
+ * Was 3, sized so a sweep could not exhaust a scan provider's daily quota on
+ * retries. That quota is gone, and 3 every ten minutes is too slow to be a
  * safety net: it recovers eighteen scans an hour, which a single advertising
  * spike can outrun. The number is now set by the two things that actually bind.
  *
- * Wall clock: maxDuration is 300s, a cold scan measured 13-25s, and the email
- * pass ahead of this one takes a few seconds. Eight sequential scans is roughly
- * 200s at the slow end, leaving real headroom.
+ * Wall clock: maxDuration is 300s, a scan has a 75s deadline of its own and
+ * takes three to ten seconds on a healthy site, and the email pass ahead of
+ * this one takes a few seconds. Eight sequential scans fit even if several hit
+ * their deadline.
  *
- * Provider burst: 10 a minute for the whole deployment. Run sequentially, eight
- * scans take about two minutes, so a sweep on its own sits at roughly four a
- * minute and leaves room for the request path to keep scanning alongside it.
+ * Search burst: the two web searches per scan go out from one shared IP, and
+ * the keyless fallback rate-limits bursts. Run sequentially, eight scans
+ * spread their searches over a couple of minutes and leave room for the
+ * request path to keep scanning alongside.
  */
 const MAX_RESCANS_PER_SWEEP = 8;
 
 function authorised(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  // Fails shut. An unauthenticated endpoint that spends money on a third-party
-  // API is not something to leave open because a variable is missing.
+  // Fails shut. An unauthenticated endpoint that crawls other people's websites
+  // on demand is not something to leave open because a variable is missing.
   if (!secret) return false;
 
   const header = request.headers.get("authorization");

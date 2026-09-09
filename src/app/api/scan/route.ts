@@ -10,7 +10,7 @@ import {
   upsertLead,
 } from "@/lib/scan/db";
 import { sendLead } from "@/lib/meta-capi";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import { runScanJob } from "@/lib/scan/run";
 import { ScanRequestSchema } from "@/lib/scan/schema";
 import { subscribeToSequence } from "@/lib/subscribe";
@@ -21,7 +21,7 @@ import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
  * Free-scan capture.
  *
  * Responds as soon as the row is written and runs the scan in `after()`, so the
- * visitor never waits on a third-party call. Ora took about six seconds on the
+ * visitor never waits on the crawl. A scan takes three to ten seconds on the
  * sites we tested, which is survivable but not something to put in front of
  * paid traffic — and `after()` also means a slow scan cannot turn into a failed
  * form submission.
@@ -29,8 +29,8 @@ import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Ora's own timeout is 60s; this has to outlast it or `after()` gets killed
-// mid-scan and the sweeper has to redo the work.
+// The scanner's own deadline is 75s (lib/scan/scanner); this has to outlast it
+// or `after()` gets killed mid-scan and the sweeper has to redo the work.
 export const maxDuration = 90;
 
 /**
@@ -42,10 +42,12 @@ const MAX_SCANS_PER_IP_PER_HOUR = 3;
 /**
  * Scans a minute, across everybody, before we stop running them inline.
  *
- * This is the only limit that reflects something real. Scans go through Is
- * Agentic, which allows 10 a minute per IP and Vercel gives us one outbound IP,
- * so ten a minute is the whole deployment's allowance. Eight leaves room for
- * the sweeper, which is scanning on the same allowance.
+ * Each scan is forty-odd requests at somebody's website plus two web searches,
+ * and the searches go out from one shared IP through one queue (see
+ * lib/scan/scanner/search.ts). Eight a minute keeps the request path and the
+ * sweeper, which scans on the same allowance, from stacking dozens of
+ * concurrent crawls on one deployment or rate-limiting the search into
+ * `error` statuses.
  *
  * EXCEEDING THIS DOES NOT REJECT ANYONE. The row is still written and the
  * visitor still gets the same "we're scanning" page; only the inline run is
@@ -59,8 +61,8 @@ const MAX_SCANS_PER_MINUTE = 8;
  * Absolute daily ceiling. A backstop against a runaway loop or a scraper, not
  * a quota.
  *
- * It used to be 25, sized to stay under Ora's 30-per-day — which is the limit
- * the scan pipeline no longer runs against. Left at that value it would have
+ * It used to be 25, sized to a scan provider's daily quota that no longer
+ * exists. Left at that value it would have
  * capped a whole day's advertising at twenty-five leads and shown everyone
  * after that a "try again tomorrow" page. Now it sits far above any plausible
  * day so it only ever fires on something genuinely wrong.
@@ -244,7 +246,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Enrolment and the scan are two independent background jobs, deliberately
-    // not chained. The sequence should start whether or not Ora cooperates, and
+    // not chained. The sequence should start whether or not the scan succeeds, and
     // a scan should still run if Resend is having a bad day.
     //
     // Enrolment runs even on a reused scan. `subscribeToSequence` treats an

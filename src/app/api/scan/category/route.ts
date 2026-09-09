@@ -12,7 +12,7 @@ import {
   initScanSchema,
   setScanCategory,
 } from "@/lib/scan/db";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import { buildReport } from "@/lib/scan/report";
 import { sendReportEmail } from "@/lib/scan/run";
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_CATEGORY, isBusinessCategory } from "@/lib/scan/categories";
 import { createOutreachScan, initScanSchema } from "@/lib/scan/db";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import { auditUrl } from "@/lib/scan/pricing";
 import { outreachAuthorised, unauthorised } from "./auth";
 
@@ -15,9 +15,9 @@ import { outreachAuthorised, unauthorised } from "./auth";
  * QUEUE ONLY, deliberately. The scan itself is left to the sweeper that already
  * runs every ten minutes and already picks these rows up (`findStuckScans` does
  * not filter on `outreach`). Running it inline would hold the caller open for
- * the 13-25s a cold crawl takes, and would put the whole batch through Is
- * Agentic's 10-a-minute burst limit — which is shared with the public form,
- * the thing that must not be starved for cold outbound.
+ * the crawl, and would stack a whole batch of crawls and web searches on the
+ * deployment at once, alongside the public form — the thing that must not be
+ * starved for cold outbound.
  *
  * Nothing here emails the prospect. `runScanJob` returns early on an outreach
  * row, by design, and the report is read at /audit/<token> from a link a human

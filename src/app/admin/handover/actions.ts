@@ -10,7 +10,7 @@ import {
   isPaid,
   setHandover,
 } from "@/lib/scan/db";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import { siteUrl } from "@/lib/scan/pricing";
 
 /**

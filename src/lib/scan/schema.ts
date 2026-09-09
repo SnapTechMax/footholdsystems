@@ -19,7 +19,7 @@ export const ScanRequestSchema = z.object({
    *
    * Deliberately not `z.url()`: people type "example.com" without a scheme,
    * and rejecting that would fail the single most common way a website address
-   * gets entered. `normaliseDomain` in ora.ts does the real parsing, and it is
+   * gets entered. `normaliseDomain` in domain.ts does the real parsing, and it is
    * server-side because it is also what stops us being pointed at internal
    * hosts.
    */

@@ -10,7 +10,7 @@ import {
   listOutreachScans,
   type OutreachScanSummary,
 } from "@/lib/scan/db";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import { auditUrl } from "@/lib/scan/pricing";
 import { runScanJob } from "@/lib/scan/run";
 
@@ -21,7 +21,7 @@ import { runScanJob } from "@/lib/scan/run";
  * lib/admin-auth.ts: a Server Action is dispatched by an id in the
  * `Next-Action` header and does not have to arrive as a request to the route it
  * belongs to, so a matcher on `/admin` is not the boundary it looks like. This
- * one spends money at a third-party scanner on any domain it is handed, which
+ * one crawls any domain it is handed, which
  * is exactly the kind of thing that must not be callable by a stranger.
  */
 

@@ -13,14 +13,14 @@ import {
 } from "./categories";
 import type {
   Grade,
-  OraCheck,
-  OraScan,
+  ScanCheck,
+  ScanPayload,
   ReportFinding,
   ScanReport,
 } from "./types";
 
 /**
- * Turns a raw Ora payload into the report a business owner reads.
+ * Turns a raw scan payload into the report a business owner reads.
  *
  * Three jobs: throw away the checks that don't apply to a non-software business
  * (see relevance.ts, which is where the reasoning lives), re-score against what
@@ -38,7 +38,7 @@ const MAX_FINDINGS = 8;
 /**
  * Checks that only make sense when a parent check passed.
  *
- * Ora reports these independently, so a site with no llms.txt fails "llms.txt
+ * The scanner reports these independently, so a site with no llms.txt fails "llms.txt
  * exists", "llms.txt formatting" and "llms.txt links resolve" all at once, and
  * the report ends up telling someone their formatting is wrong on a file they
  * do not have. Same shape for structured data: with no JSON-LD at all, the
@@ -59,13 +59,14 @@ const DEPENDENT_CHECKS: Record<string, string> = {
 };
 
 /**
- * Our score, not Ora's.
+ * Our score, not the payload's.
  *
- * Ora scores agent-readiness across everything it checks, so a local service
- * business is permanently capped well below 50 by work it will never do —
- * OpenAPI specs, MCP servers, SDK packages. Reporting that number would mean
- * telling someone they are at 20/100 and then selling them a fix list that
- * cannot move it, which is a refund waiting to happen.
+ * The payload's raw score covers every check the scanner ran, developer
+ * surface included, so a local service business is permanently capped well
+ * below 100 by work it will never do — OpenAPI specs, MCP servers, SDK
+ * packages. Reporting that number would mean telling someone they are at
+ * 20/100 and then selling them a fix list that cannot move it, which is a
+ * refund waiting to happen.
  *
  * So we score the subset we actually assessed and can actually fix. `na` checks
  * are excluded from both halves of the fraction rather than counted as
@@ -74,7 +75,7 @@ const DEPENDENT_CHECKS: Record<string, string> = {
  * including them in the denominator would make a perfect site score under 100.
  */
 function scoreSubset(
-  checks: OraCheck[],
+  checks: ScanCheck[],
   category: BusinessCategory
 ): { earned: number; available: number } {
   let earned = 0;
@@ -95,8 +96,8 @@ function scoreSubset(
 }
 
 /**
- * Our own banding. Ora's grades are computed off its own score, so they don't
- * transfer.
+ * Our own banding. The payload's grade is computed off its raw score, so it
+ * doesn't transfer.
  *
  * A, B, C, D, F — the American school scale, with no E, because that is the
  * scale the people reading this went through and a grade only works if it needs
@@ -269,9 +270,9 @@ function summaryFor(args: {
 }
 
 /**
- * Cleans Ora's `details` into something quotable.
+ * Cleans a check's `details` into something quotable.
  *
- * Ora writes details for engineers reading a dashboard, so they arrive with
+ * Details are written for engineers reading a dashboard, so they arrive with
  * trailing parentheticals, bare paths and the occasional unclosed bracket. This
  * is cosmetic only — it never changes the finding, just how it reads in an
  * email a customer paid for.
@@ -279,12 +280,12 @@ function summaryFor(args: {
 function tidyDetails(details: string | undefined): string | null {
   if (!details) return null;
   let text = details.trim();
-  // Ora truncates some details mid-parenthetical; drop a dangling opener.
+  // Some details are truncated mid-parenthetical; drop a dangling opener.
   const open = text.lastIndexOf("(");
   if (open !== -1 && !text.includes(")", open)) text = text.slice(0, open).trim();
   text = text.replace(/\s+/g, " ");
 
-  // Some of Ora's details run the observation and the recommendation together
+  // Some details run the observation and the recommendation together
   // in one string — "No Wikidata entity found for X - creating a Wikipedia page
   // is the highest-impact step...". The second half is the thing we sell, so
   // leaving it in the free report would give away the paid half for nothing.
@@ -300,7 +301,7 @@ function tidyDetails(details: string | undefined): string | null {
   return /[.!?]$/.test(text) ? text : `${text}.`;
 }
 
-function buildFinding(check: OraCheck, layerName: string): ReportFinding | null {
+function buildFinding(check: ScanCheck, layerName: string): ReportFinding | null {
   const copy = CHECK_COPY[check.id];
   if (!copy) return null;
 
@@ -318,18 +319,15 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
   return {
     checkId: check.id,
     title,
-    // What we found on their site, stated before the interpretation. Ora's own
-    // observation is more convincing than our paraphrase of it, because it is
-    // specific to them.
+    // What we found on their site, stated before the interpretation. The
+    // scanner's own observation is more convincing than our paraphrase of it,
+    // because it is specific to them.
     problem: found ?? copy.title,
     consequence,
     caveat: copy.caveat,
-    // Our wording where we have it; Ora's as the floor. Never empty — an empty
-    // fix is the one thing the paid half cannot be.
-    fix:
-      fix ??
-      check.recommendation ??
-      "Get in touch and we'll walk you through this one directly.",
+    // Never empty: `fix` is required on every CheckCopy entry, so the paid half
+    // always has something to say.
+    fix,
     pointsBack: check.estScoreGain ?? 0,
     layer: layerName,
     tier: check.tier ?? "recommended",
@@ -346,10 +344,10 @@ function buildFinding(check: OraCheck, layerName: string): ReportFinding | null 
  * having a sitemap while shipping no API spec. See categories.ts.
  */
 export function buildReport(
-  scan: OraScan,
+  scan: ScanPayload,
   category: BusinessCategory
 ): ScanReport {
-  const relevant: { check: OraCheck; layer: string }[] = [];
+  const relevant: { check: ScanCheck; layer: string }[] = [];
   for (const layer of scan.layers) {
     for (const check of layer.checks) {
       if (isRelevant(check.id, category)) {
@@ -463,12 +461,11 @@ export function buildReport(
       pointsAvailable:
         Math.round(findings.reduce((sum, f) => sum + f.pointsBack, 0) * 10) / 10,
     },
-    // What we assessed against, not Ora's guess at the sector. The reader chose
-    // this, and the report has to be able to say so: a score means nothing
-    // without the set it was scored over.
+    // What we assessed against. The reader chose this, and the report has to
+    // be able to say so: a score means nothing without the set it was scored
+    // over.
     businessCategory: category,
     categoryLabel: categoryLabel(category),
-    category: scan.category,
     scannedAt: scan.scannedAt ?? new Date().toISOString(),
     partial: scan.analysisStatus === "partial" || scan.analysisStatus === "stuck",
   };

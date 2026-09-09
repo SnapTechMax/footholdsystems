@@ -12,7 +12,7 @@ import {
   removeSimulatedPayment,
   type OrderProduct,
 } from "@/lib/scan/db";
-import { normaliseDomain } from "@/lib/scan/ora";
+import { normaliseDomain } from "@/lib/scan/domain";
 import {
   DONE_FOR_YOU_PRICE_CENTS,
   SOLUTIONS_PRICE_CENTS,

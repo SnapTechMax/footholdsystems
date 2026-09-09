@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { sql } from "@/lib/pg";
 import { DEFAULT_CATEGORY, isBusinessCategory, type BusinessCategory } from "./categories";
-import type { OraScan, ScanReport } from "./types";
+import type { ScanPayload, ScanReport } from "./types";
 
 /**
  * Storage for the free-scan funnel.
@@ -52,7 +52,7 @@ export interface ScanRow {
   score: number | null;
   grade: string | null;
   report: ScanReport | null;
-  raw: OraScan | null;
+  raw: ScanPayload | null;
   error: string | null;
   attempts: number;
   createdAt: string;
@@ -186,8 +186,8 @@ export async function initScanSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS scans_outreach_idx
       ON scans (created_at DESC) WHERE outreach`;
   await db`CREATE INDEX IF NOT EXISTS scans_lead_idx ON scans (lead_id)`;
-  // Powers the per-IP throttle, which is what protects Ora's 30-scans-a-day
-  // ceiling from a single bored visitor.
+  // Powers the per-IP throttle, which is what stops a single bored visitor
+  // turning the form into a crawler of whatever site they type.
   await db`CREATE INDEX IF NOT EXISTS scans_ip_created_idx ON scans (ip_address, created_at)`;
 
   await db`
@@ -315,8 +315,8 @@ export async function unsubscribe(email: string): Promise<boolean> {
  *
  * If this lead already has a completed scan for this domain from the last 24
  * hours, that one comes back instead of a new one being queued. Re-submitting
- * the same site is the most likely duplicate, and each one costs a slot out of
- * Ora's daily ceiling.
+ * the same site is the most likely duplicate, and each one is a full crawl of
+ * somebody's website for an answer we already have.
  */
 export async function createScan(args: {
   leadId: number;
@@ -355,9 +355,9 @@ export async function createScan(args: {
 /**
  * How many scans this IP has started in the last hour.
  *
- * Ora's ceiling is 30 scans per rolling 24 hours for our whole deployment, so
- * one visitor hammering the form does not just cost us money, it takes the
- * feature away from everyone else for the rest of the day.
+ * Each scan is forty-odd requests at a third party's website and two web
+ * searches from our shared IP, so one visitor hammering the form is a crawler
+ * we are running on their behalf, and the search quota it burns is everyone's.
  */
 export async function recentScanCountForIp(ip: string): Promise<number> {
   const db = sql();
@@ -421,7 +421,7 @@ export async function completeScan(args: {
   score: number;
   grade: string;
   report: ScanReport;
-  raw: OraScan;
+  raw: ScanPayload;
 }): Promise<void> {
   const db = sql();
   await db`
@@ -532,7 +532,7 @@ interface RawScanRow {
   score: number | null;
   grade: string | null;
   report: ScanReport | null;
-  raw: OraScan | null;
+  raw: ScanPayload | null;
   error: string | null;
   attempts: number;
   created_at: string;
