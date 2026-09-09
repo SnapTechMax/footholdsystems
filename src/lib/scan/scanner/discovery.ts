@@ -64,6 +64,55 @@ const agenticSearchUsecase: CheckFn = async () =>
 
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 
+/**
+ * Wikidata is asked carefully, because it is the one dependency here that
+ * pushed back.
+ *
+ * Three guards, and none of them is a serial queue with a gap — that was the
+ * mistake in search.ts that became the ceiling of the whole scanner:
+ *
+ *   1. A local business is skipped outright. It is never in Wikidata, and
+ *      finding that out cost up to seven requests: two spellings of the
+ *      website claim, a name search, and an entity read for every candidate
+ *      that search returned.
+ *   2. At most three requests in flight for the whole process, so a burst of
+ *      concurrent scans does not arrive at wikidata.org all at once.
+ *   3. A 429 stops every scan asking, not just the one that got it. The rate
+ *      limit is about this deployment, so backing off has to be too. The old
+ *      code recorded the failure and moved on to the next variant, which
+ *      meant being rate-limited made it ask MORE.
+ */
+const WIKIDATA_CONCURRENCY = 3;
+/** How long to leave Wikidata alone after it says 429. */
+const WIKIDATA_COOLDOWN_MS = 60_000;
+/** Candidates from a name search worth an entity read. Four found nothing four times. */
+const WIKIDATA_CANDIDATES = 1;
+
+let inFlight = 0;
+const waiting: (() => void)[] = [];
+let blockedUntil = 0;
+
+/** One Wikidata request, or null when it must not or did not answer. */
+async function wikidataFetch(site: Site, url: string) {
+  if (Date.now() < blockedUntil) return null;
+  while (inFlight >= WIKIDATA_CONCURRENCY) {
+    await new Promise<void>((resolve) => waiting.push(resolve));
+  }
+  inFlight++;
+  let result;
+  try {
+    result = await site.fetch(url);
+  } finally {
+    inFlight--;
+    waiting.shift()?.();
+  }
+  if (result.status === 429) {
+    blockedUntil = Date.now() + WIKIDATA_COOLDOWN_MS;
+    return null;
+  }
+  return result.status === 200 ? result : null;
+}
+
 interface WikidataEntity {
   id: string;
   label: string;
@@ -74,10 +123,11 @@ interface WikidataEntity {
 }
 
 async function wikidataEntity(site: Site, id: string): Promise<WikidataEntity | null> {
-  const result = await site.fetch(
+  const result = await wikidataFetch(
+    site,
     `${WIKIDATA_API}?action=wbgetentities&ids=${encodeURIComponent(id)}&props=claims|sitelinks|labels&languages=en&format=json`
   );
-  if (result.status !== 200) return null;
+  if (!result) return null;
   try {
     const data = JSON.parse(result.body) as {
       entities?: Record<string, {
@@ -111,13 +161,23 @@ async function wikidataEntity(site: Site, id: string): Promise<WikidataEntity | 
  * needs to match on.
  */
 async function findWikidata(site: Site): Promise<{ entity: WikidataEntity | null; failed: boolean }> {
+  // A local business has no Wikidata item. Not "probably not" — the whole
+  // category. Asking anyway is the seven requests described above, per scan,
+  // to arrive at the answer this line gives for free. `failed` stays false
+  // because nothing failed: there is genuinely nothing there.
+  if (site.category === "sbo") return { entity: null, failed: false };
+
   let failed = false;
   for (const variant of [`https://www.${site.domain}/`, `https://${site.domain}/`]) {
-    const result = await site.fetch(
+    const result = await wikidataFetch(
+      site,
       `${WIKIDATA_API}?action=query&list=search&srsearch=${encodeURIComponent(`haswbstatement:P856=${variant}`)}&srlimit=1&format=json`
     );
-    if (result.status !== 200) {
+    if (!result) {
       failed = true;
+      // Rate-limited or refused: stop asking rather than trying the next
+      // spelling, which is what turned a 429 into more traffic.
+      if (Date.now() < blockedUntil) return { entity: null, failed };
       continue;
     }
     try {
@@ -132,13 +192,14 @@ async function findWikidata(site: Site): Promise<{ entity: WikidataEntity | null
     }
   }
 
-  const byName = await site.fetch(
+  const byName = await wikidataFetch(
+    site,
     `${WIKIDATA_API}?action=wbsearchentities&search=${encodeURIComponent(site.brand)}&language=en&limit=5&format=json`
   );
-  if (byName.status !== 200) return { entity: null, failed: true };
+  if (!byName) return { entity: null, failed: true };
   try {
     const data = JSON.parse(byName.body) as { search?: { id?: string }[] };
-    for (const candidate of (data.search ?? []).slice(0, 4)) {
+    for (const candidate of (data.search ?? []).slice(0, WIKIDATA_CANDIDATES)) {
       if (!candidate.id) continue;
       const entity = await wikidataEntity(site, candidate.id);
       if (entity?.websiteMatches) return { entity, failed };

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORY, type BusinessCategory } from "../categories";
 import {
   fetchUrl,
   onDomain,
@@ -196,7 +197,13 @@ export class Site {
     readonly origin: string,
     readonly home: FetchResult,
     readonly page: ParsedHtml,
-    readonly signal: AbortSignal
+    readonly signal: AbortSignal,
+    /**
+     * What this business is being graded as. A check may use it to skip work
+     * that cannot apply — a local business is never in Wikidata, and asking
+     * anyway is seven requests to find that out.
+     */
+    readonly category: BusinessCategory = DEFAULT_CATEGORY
   ) {}
 
   /**
@@ -208,7 +215,11 @@ export class Site {
    * on either scheme is not a bad site, it is no site, and the scan fails
    * the way an Ora scan of it would.
    */
-  static async load(domain: string, signal: AbortSignal): Promise<Site> {
+  static async load(
+    domain: string,
+    signal: AbortSignal,
+    category: BusinessCategory = DEFAULT_CATEGORY
+  ): Promise<Site> {
     let home: FetchResult | null = null;
     for (const scheme of ["https", "http"]) {
       const attempt = await fetchUrl(`${scheme}://${domain}/`, { signal });
@@ -229,7 +240,7 @@ export class Site {
 
     const origin = new URL(home.finalUrl).origin;
     const page = parseHtml(home.body, home.finalUrl);
-    const site = new Site(domain, origin, home, page, signal);
+    const site = new Site(domain, origin, home, page, signal, category);
     site.fetches.set(`GET ${SCANNER_KEY} ${home.finalUrl}`, Promise.resolve(home));
     return site;
   }

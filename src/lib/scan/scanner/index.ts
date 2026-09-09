@@ -1,5 +1,6 @@
 import type { ScanCheck, ScanLayer, ScanPayload } from "../types";
 import { ACCESS_CHECKS } from "./access";
+import { DEFAULT_CATEGORY, type BusinessCategory } from "../categories";
 import { CHECKS, LAYERS, type CheckDefinition } from "./catalog";
 import type { CheckFn, CheckOutcome } from "./check";
 import { DISCOVERY_CHECKS } from "./discovery";
@@ -51,8 +52,10 @@ const CHECK_FUNCTIONS: Record<string, CheckFn> = {
 
 export interface ScanOptions {
   /**
-   * Whole-scan deadline. Defaults to 75s: inside the 90s the capture route
-   * allows its background work, with room to store and email the result.
+   * Whole-scan deadline. 45s, which is what fits: the outreach route that
+   * drives a crawl is a 60s function, and 75s meant the function was killed
+   * mid-scan instead of the scan ending cleanly and storing its result. The
+   * remaining 15s covers building the report, writing it, and answering.
    */
   timeoutMs?: number;
   /**
@@ -65,6 +68,12 @@ export interface ScanOptions {
   /** Checks in flight at once. Each may make a few requests of its own. */
   concurrency?: number;
   signal?: AbortSignal;
+  /**
+   * What the business is being graded as. Reaches the checks through `Site`,
+   * so one can skip work that cannot apply to it. Scoring still happens in
+   * buildReport; this is only about which questions are worth asking.
+   */
+  category?: BusinessCategory;
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -103,11 +112,11 @@ export async function scanDomain(
   options: ScanOptions = {}
 ): Promise<ScanPayload> {
   const started = Date.now();
-  const deadline = AbortSignal.timeout(options.timeoutMs ?? 75_000);
+  const deadline = AbortSignal.timeout(options.timeoutMs ?? 45_000);
   const signal = options.signal ? AbortSignal.any([options.signal, deadline]) : deadline;
   const checkTimeoutMs = options.checkTimeoutMs ?? 45_000;
 
-  const site = await Site.load(domain, signal);
+  const site = await Site.load(domain, signal, options.category ?? DEFAULT_CATEGORY);
 
   const outcomes = await mapLimit(CHECKS, options.concurrency ?? 6, async (def) => {
     const run = CHECK_FUNCTIONS[def.id];

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "scan:local": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env.local --import ./scripts/ts-loader.mjs scripts/local-scan.ts",
     "scan:compare": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env.local --import ./scripts/ts-loader.mjs scripts/scan-compare.ts",
-    "scan:pacing": "node --disable-warning=ExperimentalWarning --import ./scripts/ts-loader.mjs scripts/search-pacing.ts"
+    "scan:pacing": "node --disable-warning=ExperimentalWarning --import ./scripts/ts-loader.mjs scripts/search-pacing.ts",
+    "scan:wikidata": "node --disable-warning=ExperimentalWarning --import ./scripts/ts-loader.mjs scripts/wikidata-guard.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

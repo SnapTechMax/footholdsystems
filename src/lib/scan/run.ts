@@ -55,7 +55,7 @@ export async function runScanJob(scanId: number): Promise<RunOutcome> {
   let report;
   let raw;
   try {
-    raw = await scanDomain(scan.domain);
+    raw = await scanDomain(scan.domain, { category: scan.category });
     report = buildReport(raw, scan.category);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
@@ -180,7 +180,7 @@ export async function refreshScanJob(
   let raw;
   let report;
   try {
-    raw = await scanDomain(scan.domain);
+    raw = await scanDomain(scan.domain, { category: scan.category });
     report = buildReport(raw, scan.category);
   } catch (error) {
     // Deliberately does not call failScan. The existing report is still good
