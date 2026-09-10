@@ -10,10 +10,12 @@ import {
   upsertLead,
 } from "@/lib/scan/db";
 import { sendLead } from "@/lib/meta-capi";
+import { sendPush } from "@/lib/notify";
 import { normaliseDomain } from "@/lib/scan/domain";
 import { runScanJob } from "@/lib/scan/run";
 import { ScanRequestSchema } from "@/lib/scan/schema";
 import { subscribeToSequence } from "@/lib/subscribe";
+import { siteUrl } from "@/lib/scan/pricing";
 import { CONSENT_TEXT, CONTACT_EMAIL } from "@/lib/site";
 import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
 
@@ -58,16 +60,45 @@ const MAX_SCANS_PER_IP_PER_HOUR = 3;
 const MAX_SCANS_PER_MINUTE = 8;
 
 /**
- * Absolute daily ceiling. A backstop against a runaway loop or a scraper, not
- * a quota.
+ * Public scans a day before we stop running them inline.
  *
- * It used to be 25, sized to a scan provider's daily quota that no longer
- * exists. Left at that value it would have
- * capped a whole day's advertising at twenty-five leads and shown everyone
- * after that a "try again tomorrow" page. Now it sits far above any plausible
- * day so it only ever fires on something genuinely wrong.
+ * A cost ceiling on crawling, and — like MAX_SCANS_PER_MINUTE and for the same
+ * reason — NOT A REJECTION. Over this the lead is still captured, the row is
+ * still written, the visitor still gets the same "we're scanning" page, and
+ * only the inline run is skipped; the sweeper picks the row up on its own
+ * pacing.
+ *
+ * This used to answer over-budget with a 503 reading "we've hit today's scan
+ * limit, try again tomorrow", and on 2026-09-10 that is exactly what every
+ * visitor on the homepage got. Note what that costs, because it is the whole
+ * argument for the change: the check sits ahead of `upsertLead`, so a refused
+ * submission wrote no lead row, stored no consent record, enrolled nobody in
+ * the sequence and fired no Lead conversion. We paid for the click and then
+ * discarded the person — not degraded, discarded. A cost ceiling is not worth
+ * one lead, and this one was silently costing all of them.
+ *
+ * Counts public scans only. Cold outbound has its own pacing and must never be
+ * able to close the public form: see the note at the top of
+ * /api/outreach/scan, which says the public form is "the thing that must not be
+ * starved for cold outbound", and see scansStartedToday in lib/scan/db.ts.
  */
 const DAILY_SCAN_BUDGET = 500;
+
+/**
+ * The point at which this stops being a busy day and starts being an incident.
+ *
+ * The only thing here that still refuses a visitor, and it is deliberately far
+ * enough above DAILY_SCAN_BUDGET that ordinary success can never reach it: four
+ * times a day we have never had. Reaching it means a loop, a scraper past the
+ * per-IP throttle, or something else genuinely wrong, and at that volume the
+ * crawling is a real cost incident rather than a good problem.
+ *
+ * Rejecting is a poor answer even here — it is just the least bad one, since
+ * queueing without limit would leave the sweeper grinding through junk rows for
+ * days. That is why crossing it pushes a phone notification: the fix is a human
+ * looking, not a ceiling.
+ */
+const DAILY_SCAN_HARD_STOP = 2000;
 
 /**
  * Resend client for the enrolment call.
@@ -180,9 +211,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Checked before the row is written, so a full day doesn't leave rows that
-    // will never be processed.
-    if ((await scansStartedToday()) >= DAILY_SCAN_BUDGET) {
+    // Both read before the row is written, so this request is not counting
+    // itself. Neither one turns anybody away below DAILY_SCAN_HARD_STOP; they
+    // decide whether the scan runs on this invocation or waits for the sweeper.
+    const [dayCount, burstCount] = await Promise.all([
+      scansStartedToday(),
+      scansStartedInLastMinute(),
+    ]);
+
+    if (dayCount >= DAILY_SCAN_HARD_STOP) {
+      console.error(
+        `[scan] ${dayCount} public scans in 24h, past the ${DAILY_SCAN_HARD_STOP} hard stop — refusing new scans until someone looks.`
+      );
+      // Best effort and deliberately not awaited into the response path: an
+      // alert that could not send must not also cost us the answer.
+      after(async () => {
+        await sendPush({
+          title: "FootHold: scan hard stop",
+          message:
+            `${dayCount} public scans in the last 24h, past the ${DAILY_SCAN_HARD_STOP} limit. ` +
+            "The form is now refusing visitors. Something is looping or scraping.",
+          url: `${siteUrl()}/admin`,
+          urlTitle: "Open admin",
+          priority: 1,
+        });
+      });
       return NextResponse.json(
         {
           error:
@@ -192,8 +245,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read before the row is written, so this request is not counting itself.
-    const burstCount = await scansStartedInLastMinute();
+    const overDailyBudget = dayCount >= DAILY_SCAN_BUDGET;
+    if (overDailyBudget) {
+      console.warn(
+        `[scan] ${dayCount} public scans in 24h, over the ${DAILY_SCAN_BUDGET} inline budget — leaving this one for the sweeper.`
+      );
+    }
 
     const leadId = await upsertLead({
       email: data.email,
@@ -273,18 +330,18 @@ export async function POST(request: NextRequest) {
     // Already scanned this domain today — hand back the existing report rather
     // than spending another slot on an answer we have.
     //
-    // The burst check is the other reason to skip: over the per-minute
-    // allowance, the row is left queued for the sweeper instead of running now
-    // and getting a 429 from the provider. The customer-facing response is
-    // identical either way, because from their side it is — the report was
-    // always going to arrive by email rather than on this page.
+    // The two ceilings are the other reasons to skip: over the per-minute
+    // allowance, or over the day's inline budget, the row is left queued for
+    // the sweeper instead of running now. The customer-facing response is
+    // identical in all three cases, because from their side it is — the report
+    // was always going to arrive by email rather than on this page.
     const overBurst = burstCount >= MAX_SCANS_PER_MINUTE;
     if (overBurst) {
       console.warn(
         `[scan] ${burstCount} scans in the last minute, over the ${MAX_SCANS_PER_MINUTE} inline limit — leaving ${scan.id} for the sweeper.`
       );
     }
-    if (!scan.reused && !overBurst) {
+    if (!scan.reused && !overBurst && !overDailyBudget) {
       after(async () => {
         try {
           await runScanJob(scan.id);

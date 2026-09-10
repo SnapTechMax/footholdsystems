@@ -369,12 +369,35 @@ export async function recentScanCountForIp(ip: string): Promise<number> {
   return rows[0]?.n ?? 0;
 }
 
-/** Total scans started in the last rolling 24 hours. A cost backstop, not a quota. */
+/**
+ * Public scans started in the last rolling 24 hours. A cost backstop, not a
+ * quota — see DAILY_SCAN_BUDGET in /api/scan.
+ *
+ * `NOT outreach` is the whole point of the query and was missing until
+ * 2026-09-10. Cold outbound writes rows into this same table, in batches, on an
+ * admin's schedule, and while it did so it was spending the public form's daily
+ * allowance. Once that allowance ran out the form stopped accepting anybody:
+ * a morning of prospecting could close the funnel the advertising is paying to
+ * fill, and nothing anywhere said that was what had happened.
+ *
+ * The two populations want different treatment for a plain reason. An outreach
+ * row is work we chose, queued deliberately and paced by the sweeper. A public
+ * row is a stranger who clicked an ad. Only one of them should be able to
+ * exhaust the other, and it is not this direction. /api/outreach/scan says the
+ * same thing from its own end: the public form is "the thing that must not be
+ * starved for cold outbound".
+ *
+ * Outreach still counts toward `scansStartedInLastMinute` below, and should:
+ * that ceiling measures crawls in flight from one deployment, and an
+ * admin-queued crawl occupies the network exactly like a visitor's.
+ */
 export async function scansStartedToday(): Promise<number> {
   const db = sql();
   const rows = (await db`
     SELECT count(*)::int AS n FROM scans
-    WHERE created_at > now() - INTERVAL '24 hours' AND status <> 'failed'`) as {
+    WHERE created_at > now() - INTERVAL '24 hours'
+      AND status <> 'failed'
+      AND NOT outreach`) as {
     n: number;
   }[];
   return rows[0]?.n ?? 0;
