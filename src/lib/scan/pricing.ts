@@ -8,7 +8,13 @@
  */
 
 export const SOLUTIONS_PRICE_CENTS = 4900;
-export const DONE_FOR_YOU_PRICE_CENTS = 149_700;
+export const DONE_FOR_YOU_PRICE_CENTS = 150_000;
+
+/**
+ * What a Fix buyer forfeits by cancelling. Paid in full up front, so this is
+ * the part of the payment that is not refunded; the rest is.
+ */
+export const FIX_CANCEL_FEE_CENTS = 75_000;
 
 export function formatPrice(cents: number): string {
   // No cents shown when the price is whole dollars — "$49", not "$49.00".
@@ -20,6 +26,7 @@ export function formatPrice(cents: number): string {
 
 export const SOLUTIONS_PRICE = formatPrice(SOLUTIONS_PRICE_CENTS);
 export const DONE_FOR_YOU_PRICE = formatPrice(DONE_FOR_YOU_PRICE_CENTS);
+export const FIX_CANCEL_FEE = formatPrice(FIX_CANCEL_FEE_CENTS);
 
 /**
  * Tier 3, the retainer. Displayed only, never charged through here.

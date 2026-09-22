@@ -199,10 +199,11 @@ export function offersSchema() {
     {
       "@type": "Offer",
       "@id": `${SITE_ORIGIN}/pricing#done-for-you`,
-      name: "Done-for-you build",
+      name: "The Fix",
       description:
-        "We do the work: site restructured for machine reading, listings " +
-        "aligned, and a second machine-readable domain built and shipped.",
+        "We fix everything in your scan report so AI can read your site. One " +
+        "time, delivered in 21 days or your money back. Bonus: a separate " +
+        "domain custom-built to give AI what it needs to find you.",
       price: (DONE_FOR_YOU_PRICE_CENTS / 100).toFixed(2),
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
@@ -212,7 +213,7 @@ export function offersSchema() {
     {
       "@type": "Offer",
       "@id": `${SITE_ORIGIN}/pricing#retainer`,
-      name: "Ongoing AEO retainer",
+      name: "Get Picked",
       description:
         "Six month engagement. Setup fee plus a monthly retainer, with the " +
         "same prompts re-run against the same competitors every month.",

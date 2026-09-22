@@ -58,7 +58,7 @@ function parseQuotedBullets(md, heading) {
 const TRUE_NUMBERS = [
   "20 out of 100", "20/100", "twenty out of a hundred", "grade f",
   "91/100", "42/100", "91 out of 100", "42 out of 100",
-  "$49", "$1,497", "1,497",
+  "$49", "$1,500", "1,500", "$750", "21 days",
   "60 seconds", "four signals", "4 signals",
   "two to three weeks", "ten results", "one answer", "page two",
 ];

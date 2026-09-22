@@ -74,7 +74,7 @@ export const BRAND_ADDRESS = "403 E Arrow Hwy Suite 306, San Dimas, CA 91773";
  * automation, so a price edit only reaches subscribers after
  * scripts/create-email-sequence.mjs runs again.
  */
-export const UPGRADE_PRICE = "$1,497";
+export const UPGRADE_PRICE = "$1,500";
 
 export function tagged(url, campaign, content = "cta") {
   const target = new URL(url);
