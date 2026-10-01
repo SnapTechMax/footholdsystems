@@ -720,6 +720,63 @@ export async function findLatestScanForDomain(
   return rows[0] ? toScanRow(rows[0]) : null;
 }
 
+/** One hit on /admin/lookup. A projection: nothing there reads the JSONB. */
+export interface ScanLookupRow {
+  token: string;
+  domain: string;
+  email: string;
+  status: ScanStatus;
+  score: number | null;
+  grade: string | null;
+  outreach: boolean;
+  createdAt: string;
+}
+
+/**
+ * Every scan whose domain contains `term`, exact matches first, newest first.
+ *
+ * Substring rather than exact, because the thing being typed is whatever was in
+ * the email being replied to: "joesplumbing" with no TLD, or a subdomain. Every
+ * status, not just complete, so a scan that failed shows up as failed rather
+ * than as "never scanned", which would send you off to run it again.
+ */
+export async function searchScansByDomain(
+  term: string,
+  limit = 25
+): Promise<ScanLookupRow[]> {
+  const db = sql();
+  // LIKE's own wildcards are escaped so a typed "_" means an underscore.
+  const pattern = `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = (await db.query(
+    `SELECT s.token, s.domain, s.status, s.score, s.grade, s.outreach,
+            s.created_at, l.email
+       FROM scans s JOIN scan_leads l ON l.id = s.lead_id
+      WHERE s.domain LIKE $1
+      ORDER BY (s.domain = $2) DESC, s.created_at DESC
+      LIMIT $3`,
+    [pattern, term, limit]
+  )) as {
+    token: string;
+    domain: string;
+    email: string;
+    status: ScanStatus;
+    score: number | null;
+    grade: string | null;
+    outreach: boolean | null;
+    created_at: string;
+  }[];
+  return rows.map((r) => ({
+    token: r.token,
+    domain: r.domain,
+    email: r.email,
+    status: r.status,
+    score: r.score,
+    grade: r.grade,
+    outreach: r.outreach === true,
+    createdAt: r.created_at,
+  }));
+}
+
 /* ── outreach ─────────────────────────────────────────────────────────────── */
 
 /**

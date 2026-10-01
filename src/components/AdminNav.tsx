@@ -12,13 +12,15 @@ import Link from "next/link";
  * because a stale number still gets acted on.
  *
  * The four that remain are in the order a customer moves through them:
- * prospect, sale, intake, handover.
+ * prospect, sale, intake, handover. Lookup sits at the end because it is not
+ * a stage, just the way to a report link when someone writes in about one.
  */
 const TABS = [
   { href: "/admin/outreach", label: "Outreach" },
   { href: "/admin/sales", label: "Sales" },
   { href: "/admin/intake", label: "Intake" },
   { href: "/admin/handover", label: "Handover" },
+  { href: "/admin/lookup", label: "Lookup" },
 ] as const;
 
 export function AdminNav({ current }: { current: string }) {
