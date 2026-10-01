@@ -118,8 +118,8 @@ const PHASES = [
   },
   {
     n: "04",
-    label: "Build",
-    body: "Then we build you a second site, on its own domain, separate from your main one. Your website already has a job: sell to people, carry your brand, look the way you want it to look. Every one of those pulls against being maximally readable to a machine, which is why fixing an existing site is always a compromise between two audiences. The second domain has one audience. It sits where models go looking, structured the way they want, saying what they need in order to recommend you, with none of the compromises. It does not have to look like anything. It has to be findable and unambiguous.",
+    label: "Bonus",
+    body: "On top of the fixes, we also create a separate domain that's custom-built to give AI everything it needs to find you. Your main site already has a job: sell to people and carry your brand. This one has a single audience, so it can be plain and unambiguous in a way your main site cannot. When we're done, the domain is yours.",
   },
 ];
 

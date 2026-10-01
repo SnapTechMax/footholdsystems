@@ -198,7 +198,7 @@ export default async function ScanCompletePage({
 
           <div className="mt-10 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-7 sm:p-10">
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--dim)]">
-              The retainer
+              Get Picked
             </p>
             <h3 className="mt-4 text-balance font-display text-2xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[var(--text)] sm:text-3xl">
               {RETAINER_SETUP_PRICE} to start, then {RETAINER_MONTHLY_PRICE} a
@@ -255,7 +255,7 @@ export default async function ScanCompletePage({
                 rel="noopener noreferrer"
                 className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
               >
-                Talk about the retainer
+                Talk about Get Picked
                 <span
                   aria-hidden="true"
                   className="transition-transform duration-150 group-hover:translate-x-1"
@@ -273,7 +273,7 @@ export default async function ScanCompletePage({
         </div>
 
         <p className="mt-12 text-[15px] leading-relaxed text-[var(--dim)]">
-          Not interested in the retainer? Then this is where we part, and
+          Not interested in Get Picked? Then this is where we part, and
           everything we built stays yours and keeps working. Questions any time:{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ScanCta } from "@/components/ScanCta";
 import {
   DONE_FOR_YOU_PRICE,
+  FIX_CANCEL_FEE,
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
   SOLUTIONS_PRICE,
@@ -40,8 +41,8 @@ export const metadata: Metadata = {
   title: "Pricing",
   description:
     `What FootHold AEO costs: ${SOLUTIONS_PRICE} for the full fix list from your ` +
-    `scan, ${DONE_FOR_YOU_PRICE} for the done-for-you build, and ${RETAINER_SETUP_PRICE} ` +
-    `plus ${RETAINER_MONTHLY_PRICE} a month for the ongoing retainer. The scan itself is free.`,
+    `scan, ${DONE_FOR_YOU_PRICE} for The Fix, and ${RETAINER_SETUP_PRICE} ` +
+    `plus ${RETAINER_MONTHLY_PRICE} a month for Get Picked. The scan itself is free.`,
   alternates: {
     canonical: "/pricing",
     types: { "text/markdown": "/pricing.md" },
@@ -88,26 +89,28 @@ const TIERS = [
   },
   {
     id: "done-for-you",
-    name: "Done-for-you build",
+    name: "The Fix",
     price: DONE_FOR_YOU_PRICE,
-    cadence: "One off",
-    lead: "We do it, including the second domain.",
+    cadence: "One time",
+    lead: "Make AI able to read your site.",
     gets: [
-      "Your existing site restructured so machines can read what your business is: entity and service schema, answer-shaped content, plain crawlable facts.",
-      "Your listings made to agree with each other — same name, same address format, same claims, everywhere you already appear.",
-      "A second site on its own domain, built for machines rather than people, with none of the compromises your main site has to make.",
-      "A kickoff call to settle positioning, which listings matter in your trade, and what the second domain is called.",
+      "We fix everything in your scan report so AI can read your site.",
+      `${DONE_FOR_YOU_PRICE}, one time. No monthly fees. No contract.`,
+      "Guarantee: service delivered in 21 days or you get your money back.",
+      `The ${DONE_FOR_YOU_PRICE} counts toward our next step (Get Picked) if you continue.`,
+      `Paid in full before work starts. If you cancel, ${FIX_CANCEL_FEE} is non-refundable.`,
+      "Bonus: We also create a separate domain that's custom-built to give AI everything it needs to find you. When we're done, the domain is yours.",
     ],
-    not: "It is a build, not a subscription. Nothing is re-measured for you after it ships.",
+    not: "It makes your site readable to AI. It does not promise that AI will pick you. That is the next step.",
   },
   {
     id: "retainer",
-    name: "Ongoing AEO retainer",
+    name: "Get Picked",
     price: `${RETAINER_SETUP_PRICE} + ${RETAINER_MONTHLY_PRICE}/mo`,
     cadence: "Six month minimum",
-    lead: "The build, then somebody keeping the seat.",
+    lead: "The Fix, then somebody keeping the seat.",
     gets: [
-      "Everything in the done-for-you build.",
+      "Everything in The Fix.",
       "The same buying prompts re-run against the same competitors every month, so movement is measured rather than asserted.",
       "Continued work on whichever of the four signals is currently costing you the answer.",
       `A written 180 day condition with ${GUARANTEE_PAYOUT} attached to it.`,
@@ -160,7 +163,7 @@ export default function PricingPage() {
           <p className="mt-6 max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted)]">
             Four tiers, and the first one is free. Every price on this page is
             the price you pay — there is no setup fee hiding under the one-off
-            tiers and no minimum term on anything except the retainer, which
+            tiers and no minimum term on anything except Get Picked, which
             says so.
           </p>
           <p className="mt-4 max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted)]">
@@ -221,7 +224,7 @@ export default function PricingPage() {
           </h2>
           <p className="mt-4 max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted)]">
             Every tier begins with the free scan, including the paid ones — the
-            fix list and the build are both built off your report, so there is
+            fix list and The Fix are both built off your report, so there is
             no order in which buying first would save you a step. Run the scan,
             read what it says, and decide then.
           </p>

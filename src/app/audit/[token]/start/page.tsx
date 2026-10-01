@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { BuildGuarantee } from "@/components/BuildOffer";
+import { FixTerms } from "@/components/BuildOffer";
 import { BuyButton } from "@/components/BuyButton";
 import { Eyebrow } from "@/components/ScanReportView";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
@@ -119,54 +119,26 @@ export default async function StartBuildPage({
   return (
     <main className="bg-[var(--bg)]">
       <div className="mx-auto max-w-2xl px-5 py-16 sm:px-6 sm:py-24">
-        <Eyebrow>The build</Eyebrow>
+        <Eyebrow>The Fix</Eyebrow>
 
         <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          Start the build on {scan.domain}.
+          Make AI able to read {scan.domain}.
         </h1>
 
         <p className="mt-6 text-[17px] leading-[1.7] text-[var(--muted)]">
-          One payment, then we start. Two to three weeks from today you have a
-          second website built for machines, on its own domain, and every fix in
-          your audit applied to {scan.domain} itself.
+          We fix everything in your audit so AI can read your site.{" "}
+          {findingCount === 1
+            ? "There is one problem in it."
+            : `All ${findingCount} problems in it.`}{" "}
+          One payment, then we start.
         </p>
 
-        <div className="mt-10 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-8">
+        <div className="mt-10 rounded-xl border-2 border-[var(--accent)]/40 bg-[var(--panel)] p-6 sm:p-8">
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent)] sm:text-xs">
-            What you get
+            The terms
           </p>
-          <ul className="mt-5 space-y-3.5">
-            {[
-              "A second website on its own domain, built to be read by models rather than people. You own it.",
-              `Every fix in your audit implemented on ${scan.domain}. ${
-                findingCount === 1 ? "There is one." : `All ${findingCount} of them.`
-              }`,
-              "Your pages rewritten, positioning first, in your voice.",
-              "Your listings made to agree with each other.",
-              "A written record of everything that changed and why.",
-            ].map((item) => (
-              <li key={item} className="flex gap-3.5">
-                <span
-                  aria-hidden="true"
-                  className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
-                />
-                <span className="text-[16px] leading-[1.7] text-[var(--muted)]">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <p className="mt-7 border-t border-[var(--line)] pt-6 text-[17px] font-semibold leading-[1.6] text-[var(--text)]">
-            {DONE_FOR_YOU_PRICE}, once. Not a retainer, not a monthly, not a
-            contract you have to get out of later.
-          </p>
+          <FixTerms compact />
         </div>
-
-        {/* Risk reversal immediately above the button, same as on the audit
-            page. A stranger deciding to send four figures to a business they
-            met by email needs this at the decision, not further down. */}
-        <BuildGuarantee />
 
         <div className="mt-9">
           <BuyButton
@@ -175,7 +147,7 @@ export default async function StartBuildPage({
             href={pay}
             className="group inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-all duration-150 hover:bg-[var(--accent-hot)] hover:shadow-[0_0_34px_0_rgba(246,190,0,0.35)] sm:w-auto sm:text-lg"
           >
-            Pay and start &mdash; {DONE_FOR_YOU_PRICE}
+            Get the fix &mdash; {DONE_FOR_YOU_PRICE}
             <span
               aria-hidden="true"
               className="transition-transform duration-150 group-hover:translate-x-1"
@@ -188,6 +160,13 @@ export default async function StartBuildPage({
             asking what we need to know about your business.
           </p>
         </div>
+
+        <p className="mt-8 rounded-lg border border-[var(--line)] p-5 text-[15px] leading-[1.7] text-[var(--muted)]">
+          <span className="font-semibold text-[var(--text)]">Bonus: </span>
+          We also create a separate domain that&apos;s custom-built to give AI
+          everything it needs to find you. When we&apos;re done, the domain is
+          yours.
+        </p>
 
         <div className="mt-14 border-t border-[var(--line)] pt-8">
           <p className="text-[16px] leading-[1.7] text-[var(--muted)]">

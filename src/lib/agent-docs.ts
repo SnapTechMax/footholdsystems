@@ -26,6 +26,7 @@
 
 import {
   DONE_FOR_YOU_PRICE,
+  FIX_CANCEL_FEE,
   GUARANTEE_PAYOUT,
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
@@ -87,12 +88,15 @@ const PRICING_BLOCK = `- **AI visibility scan — free, one off.** Your score ou
 - **Scan solutions — ${SOLUTIONS_PRICE}, one off.** The exact change that clears
   each finding on the report, ordered by the points it puts back. You or your
   developer do the work.
-- **Done-for-you build — ${DONE_FOR_YOU_PRICE}, one off.** The site restructured
-  for machine reading, listings aligned so they agree with each other, and a
-  second machine-readable site built on its own domain. Includes a kickoff call.
-- **Ongoing AEO retainer — ${RETAINER_SETUP_PRICE} setup plus
-  ${RETAINER_MONTHLY_PRICE} a month, six month minimum.** Everything in the
-  build, plus the same buying prompts re-run against the same competitors every
+- **The Fix — ${DONE_FOR_YOU_PRICE}, one time.** We fix everything in the scan
+  report so AI can read the site. No monthly fees, no contract. Delivered in 21
+  days or the money back. Paid in full before work starts; ${FIX_CANCEL_FEE} is
+  non-refundable on cancellation. The ${DONE_FOR_YOU_PRICE} counts toward the
+  next step, Get Picked. Bonus: a separate domain custom-built to give AI
+  everything it needs to find the business, owned by the client when done.
+- **Get Picked — ${RETAINER_SETUP_PRICE} setup plus
+  ${RETAINER_MONTHLY_PRICE} a month, six month minimum.** Everything in The
+  Fix, plus the same buying prompts re-run against the same competitors every
   month, and a written 180 day condition with ${GUARANTEE_PAYOUT} attached.
   Books a call rather than taking a card.`;
 
@@ -216,9 +220,10 @@ reputation problem.
    format, phone and claims everywhere the business already appears. Not link
    building; consistency, because a model checking whether you are real treats
    disagreement as doubt.
-4. **Build.** A second site on its own domain, built for machines. The main site
-   has a job already — sell to people, carry the brand — and every part of that
-   pulls against being maximally readable to a machine.
+4. **Bonus domain.** A separate domain custom-built to give AI everything it
+   needs to find the business. The main site has a job already — sell to
+   people, carry the brand — so this one carries the machine-readable version.
+   The client owns it.
 
 ## What is not promised
 
@@ -259,10 +264,10 @@ ${PRICING_BLOCK}
 ## Notes
 
 - Prices are in US dollars and are the full price. There is no setup fee hidden
-  under the one-off tiers, and no minimum term on anything except the retainer.
+  under the one-off tiers, and no minimum term on anything except Get Picked.
 - The scan is genuinely free: no card, and no call required to receive the
   report.
-- The retainer is not a checkout. A six month commitment with a guarantee
+- Get Picked is not a checkout. A six month commitment with a guarantee
   attached books a conversation first.
 
 Start at [${SITE_ORIGIN}/](${SITE_ORIGIN}/) · full detail at

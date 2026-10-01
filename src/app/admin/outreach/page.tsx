@@ -56,8 +56,9 @@ export default async function OutreachAdminPage() {
         <p className="mt-4 max-w-[64ch] text-[15px] leading-[1.7] text-[#a8a599]">
           Paste their websites, get a link each. The page it produces gives them
           the whole report free, fixes included, and offers the{" "}
-          {DONE_FOR_YOU_PRICE} build underneath with a refund guarantee they can
-          check on any scanner. That link is the thing you send.
+          {DONE_FOR_YOU_PRICE} Fix underneath, with the 21-day delivery
+          guarantee and the separate domain as a bonus. That link is the thing
+          you send.
         </p>
         <p className="mt-3 max-w-[64ch] text-[14px] leading-[1.7] text-[#7a786f]">
           Nothing here emails anyone and nobody joins the sequence. These are

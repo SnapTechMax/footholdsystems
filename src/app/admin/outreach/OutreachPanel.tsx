@@ -158,7 +158,7 @@ function ScanRow({ scan, origin }: { scan: OutreachScanSummary; origin: string }
         <div className="mt-3 space-y-3">
           <LinkRow
             name="Audit"
-            hint="The whole report, free, with the build offered under it."
+            hint="The whole report, free, with The Fix offered under it."
             path={`/audit/${scan.token}`}
             origin={origin}
           />
