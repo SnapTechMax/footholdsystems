@@ -151,7 +151,8 @@ export default async function AuditPage({
           arrived, only what it measured. A grade with no stated basis reads as
           a scare tactic. */}
       <div className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
-        <p className="text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
+        <Eyebrow>What this is</Eyebrow>
+        <p className="mt-3 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
           We checked whether AI like ChatGPT can read {report.domain}. This is
           the full report, fixes included, free. The fixes are technical, and
           done in the wrong order they can break what already works. Getting
