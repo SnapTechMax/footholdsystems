@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { SITE_ORIGIN } from "@/lib/schema";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { SOLUTIONS_PRICE } from "@/lib/scan/pricing";
 
 /**
  * The /.well-known documents: the ARD catalog, the A2A agent card, and the
@@ -124,8 +125,8 @@ private URL.
 
 ## What happens after
 
-The free scan names the problems. The fix for each finding, the done-for-you
-build, and the ongoing retainer are paid tiers — all four are listed at
+The free scan names the problems. The written fix for each finding (${SOLUTIONS_PRICE}) and
+the three steps (The Fix, Get Picked, and an AI Assistant) are listed at
 ${SITE_ORIGIN}/pricing and mirrored in markdown at ${SITE_ORIGIN}/pricing.md.
 
 ## Who runs this

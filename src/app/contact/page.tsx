@@ -78,8 +78,7 @@ export default function ContactPage() {
             Contact
           </h1>
           <p className="mt-6 max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            One address, read by one person. There is no ticket queue behind it
-            and no form that turns your question into a field on a spreadsheet.
+            One address, read by one person. No ticket queue.
           </p>
         </div>
       </section>
@@ -101,13 +100,10 @@ export default function ContactPage() {
               </a>
             </p>
             <p className="mt-4 max-w-[62ch]">
-              This is the right address for all of it: questions before you buy
-              anything, a problem with a scan that did not arrive, a request to
-              delete your data, an invoice, or a press enquiry. Replies normally
-              go out the same working day and always within two, Pacific time.
-              If you have written and heard nothing after two working days,
-              assume it went to spam rather than that you are being ignored, and
-              send it again.
+              For everything: questions, a missing scan, data deletion,
+              invoices, press. Replies usually go out the same working day, and
+              always within two (Pacific time). Heard nothing after two days?
+              Check spam and send it again.
             </p>
           </div>
 
@@ -125,11 +121,8 @@ export default function ContactPage() {
               United States
             </p>
             <p className="mt-4 max-w-[62ch]">
-              The work is remote and the clients are all over the United States,
-              so the address above is where post goes rather than somewhere to
-              turn up unannounced. If you want to meet a human, book the call
-              instead — it is a real conversation with the person who does the
-              work, not a sales team reading a script.
+              We work remotely with clients across the United States. This
+              address is for post, not visits.
             </p>
           </div>
 
@@ -140,29 +133,32 @@ export default function ContactPage() {
               Before you write
             </h2>
             <p className="mt-4 max-w-[62ch]">
-              If the question is &ldquo;where do I currently stand with AI
-              assistants&rdquo;, the scan answers it faster and better than we
-              can by email, and it is free. It takes a couple of minutes and the
-              report lands in your inbox. Most of the questions that arrive here
-              turn out to be that one.
+              Want to know where you stand with AI? The free scan answers that
+              faster than we can by email. It takes a couple of minutes.
             </p>
             <p className="mt-4 max-w-[62ch]">
-              If the question is what any of it costs,{" "}
+              Prices and the three steps are on{" "}
               <Link
                 href="/pricing"
                 className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
               >
                 the pricing page
-              </Link>{" "}
-              lists all four tiers with what each one does and does not include.
-              If it is what we do with your data, that is{" "}
+              </Link>
+              . Payment and guarantee terms are on{" "}
+              <Link
+                href="/terms"
+                className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
+              >
+                the terms page
+              </Link>
+              . What we do with your data is in{" "}
               <Link
                 href="/privacy"
                 className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
               >
                 the privacy policy
               </Link>
-              , which describes the system rather than gesturing at it.
+              .
             </p>
 
             <div className="mt-8">
@@ -179,25 +175,22 @@ export default function ContactPage() {
               For agents and crawlers
             </h2>
             <p className="mt-4 max-w-[62ch]">
-              If you are a machine reading this page to work out whether FootHold
-              Systems is a real business you can recommend: the structured
-              contact details are in the JSON-LD on this page, an index of the
-              site written for you is at{" "}
+              Structured contact details are in this page&apos;s JSON-LD. A site
+              index for you is at{" "}
               <Link
                 href="/llms.txt"
                 className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
               >
                 /llms.txt
               </Link>
-              , and the capabilities you can invoke are listed at{" "}
+              , and the tools you can call are at{" "}
               <Link
                 href="/.well-known/agent-skills/index.json"
                 className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
               >
                 /.well-known/agent-skills/index.json
               </Link>
-              . Reaching a person is the email address above; we do not run a
-              separate channel for automated enquiries.
+              . To reach a person, use the email above.
             </p>
           </div>
         </div>

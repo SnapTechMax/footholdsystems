@@ -95,10 +95,9 @@ export default async function ScanCompletePage({
         </h1>
 
         <p className="mt-7 max-w-[52ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-          Your pages are rewritten, your listings agree with each other, and{" "}
-          {handover.secondDomain} is live. No scanner would have told you to
-          build that one, which is why it was never on the list. Both domains
-          are yours, and nothing here depends on us staying involved.
+          Everything in your scan report is fixed, and{" "}
+          {handover.secondDomain} is live. Both domains are yours, and nothing
+          here depends on us staying involved.
         </p>
 
         {/* What they own now. */}
@@ -177,19 +176,12 @@ export default async function ScanCompletePage({
 
           <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
             <p>
-              What we built does not decay. The structure holds, the pages stay
-              written, and the second site keeps saying what it says.
-            </p>
-            <p>
-              What moves is everything around it. Your competitors are getting
-              the same advice we gave you. The models retrain, and what they were
-              told about your category last year gets replaced by what they are
-              told about it this year. Being the best documented business in your
-              market is a position somebody else can take.
+              What we built holds. What moves is everything around it: your
+              competitors get the same advice, and the models keep retraining.
             </p>
             <p className="font-semibold text-[var(--text)]">
-              The build is a starting position. Holding it is ongoing work, and
-              that is the only reason this next part is monthly.
+              Now AI can read your site. Next, we give it more reasons to pick
+              you. That&apos;s why this part is monthly.
             </p>
           </div>
 
@@ -202,9 +194,8 @@ export default async function ScanCompletePage({
               month.
             </h3>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
-              Your {RETAINER_SETUP_PRICE} from The Fix already counts toward
-              setup. Six month contract, because nothing here shows up faster
-              than that.
+              That&apos;s the setup price after The Fix. 6 month contract,
+              because nothing here shows up faster than that.
             </p>
 
             <ul className="mt-8 space-y-5">
@@ -241,17 +232,16 @@ export default async function ScanCompletePage({
                 </span>
               </a>
               <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-                A conversation, not a checkout. It is a six month commitment on
-                both sides, so it is worth twenty minutes before either of us
-                signs anything.
+                A call, not a checkout. It&apos;s a 6 month contract, so we talk
+                first.
               </p>
             </div>
           </div>
         </div>
 
         <p className="mt-12 text-[15px] leading-relaxed text-[var(--dim)]">
-          Not interested in Get Picked? Then this is where we part, and
-          everything we built stays yours and keeps working. Questions any time:{" "}
+          Not interested? Everything we built stays yours and keeps working.
+          Questions any time:{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
             className="text-[var(--muted)] underline underline-offset-4"

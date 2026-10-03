@@ -120,9 +120,7 @@ export default async function ScanNextPage({
               {findingCount === 1
                 ? "one fix is"
                 : `${findingCount} fixes are`}{" "}
-              unlocked on your report now. What to change, where, and which one
-              to do first. The link never expires, and it&apos;s in your inbox
-              too.
+              unlocked on your report. The link is in your inbox too.
             </p>
             <Link
               href={`/scan/${scan.token}`}
@@ -137,9 +135,8 @@ export default async function ScanNextPage({
               <span className="font-semibold text-[var(--text)]">
                 Your payment went through.
               </span>{" "}
-              We&apos;re unlocking the fixes on your report. It takes a few
-              seconds and this page will update on its own. Nothing else is
-              needed from you.
+              We&apos;re unlocking your fixes. This page updates on its own in
+              a few seconds.
             </p>
             <Link
               href={`/scan/${scan.token}`}
@@ -162,14 +159,14 @@ export default async function ScanNextPage({
           />
 
           <p className="mt-10 text-[15px] leading-relaxed text-[var(--dim)]">
-            Not now? Nothing happens. Your list stays on{" "}
+            Not now? Your list stays on{" "}
             <Link
               href={`/scan/${scan.token}`}
               className="text-[var(--muted)] underline underline-offset-4"
             >
               your report
             </Link>{" "}
-            and the offer is still there when you get to it. Questions first:{" "}
+            and so does this offer. Questions:{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
               className="text-[var(--muted)] underline underline-offset-4"

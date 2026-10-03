@@ -41,9 +41,8 @@ export default function StartPage() {
           </h1>
 
           <p className="mt-7 max-w-[52ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-            This is the part that decides how good the build is. Most of what
-            goes on your site cannot be looked up. It is in your head, and this
-            is where it comes out.
+            Most of what goes on your site can&apos;t be looked up. It&apos;s in
+            your head. This is where it comes out.
           </p>
 
           <div className="mt-10 space-y-5 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
@@ -52,12 +51,11 @@ export default function StartPage() {
                 1.
               </span>
               <p className="text-[15px] leading-[1.6] text-[var(--muted)]">
-                Twenty minutes if you take it seriously.{" "}
+                About twenty minutes.{" "}
                 <span className="text-[var(--text)]">
                   {REQUIRED_FIELD_COUNT} answers are required
                 </span>{" "}
-                and the rest are optional. Short answers are fine. Guesses are
-                fine. We would rather have a rough answer than a blank box.
+                and the rest are optional. Short answers and guesses are fine.
               </p>
             </div>
             <div className="flex gap-3.5">
@@ -65,10 +63,8 @@ export default function StartPage() {
                 2.
               </span>
               <p className="text-[15px] leading-[1.6] text-[var(--muted)]">
-                You can stop halfway. Everything you type is saved in this
-                browser as you go, so closing the tab and coming back later
-                picks up where you left off. Nothing reaches us until you press
-                the button at the bottom.
+                You can stop halfway. Your answers save in this browser as you
+                go. Nothing reaches us until you press send.
               </p>
             </div>
             <div className="flex gap-3.5">
@@ -76,10 +72,8 @@ export default function StartPage() {
                 3.
               </span>
               <p className="text-[15px] leading-[1.6] text-[var(--muted)]">
-                The agreement is already signed, so sending this is the last
-                thing standing between here and us starting. We read it
-                properly and come back with anything that needs a real
-                conversation rather than a form box.
+                Sending this is the last step before we start. We&apos;ll come
+                back with any questions.
               </p>
             </div>
           </div>
@@ -89,11 +83,9 @@ export default function StartPage() {
               Never put a password in this form
             </p>
             <p className="mt-3 text-[15px] leading-[1.6] text-[var(--muted)]">
-              Not for your website, not for your domain, not for Google. When we
-              need access we ask for it through the platform&rsquo;s own invite,
-              under our own login, and you can revoke it in one click when the
-              work is done. Anyone who asks you to type a password into a form
-              is doing it wrong.
+              We ask for access through each platform&rsquo;s own invite, under
+              our own login. You can revoke it in one click when we&apos;re
+              done.
             </p>
           </div>
         </div>
@@ -103,15 +95,14 @@ export default function StartPage() {
         <IntakeForm />
 
         <p className="mt-12 text-[15px] leading-[1.7] text-[var(--dim)]">
-          Stuck on something, or would rather say it out loud than type it?
-          Email{" "}
+          Stuck, or rather say it than type it? Email{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
             className="font-semibold text-[var(--accent)] underline underline-offset-4"
           >
             {CONTACT_EMAIL}
           </a>{" "}
-          and we will do this part on a call instead.
+          and we&apos;ll do it on a call.
         </p>
       </section>
     </main>

@@ -43,10 +43,8 @@ export default async function ScanThanksPage({
         </h1>
 
         <p className="mt-7 max-w-[46ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-          It takes a couple of minutes. We run your site through the checks that
-          decide whether an AI assistant can find you, understand what you sell,
-          and recommend you when somebody asks. Then we write up what we found
-          in plain English and email it over.
+          It takes a couple of minutes. We run an AI through your website, then
+          email you what it can and can&apos;t see.
         </p>
 
         <div className="mt-10 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
@@ -57,15 +55,14 @@ export default async function ScanThanksPage({
             <li className="flex gap-3">
               <span aria-hidden="true" className="text-[var(--accent)]">1.</span>
               <span>
-                Check your spam folder if nothing arrives in ten minutes, and
-                mark us as not spam so the follow-ups reach you.
+                Nothing in ten minutes? Check spam and mark us as not spam.
               </span>
             </li>
             <li className="flex gap-3">
               <span aria-hidden="true" className="text-[var(--accent)]">2.</span>
               <span>
-                Open ChatGPT and ask it to recommend a business like yours in
-                your area. Whatever it says is the thing your report is about.
+                Ask ChatGPT to recommend a business like yours in your area.
+                That answer is what your report is about.
               </span>
             </li>
           </ul>
@@ -80,7 +77,7 @@ export default async function ScanThanksPage({
             >
               view your report
             </Link>
-            . Bookmark it, because the link doesn&apos;t expire.
+            . The link doesn&apos;t expire.
           </p>
         )}
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { FixTerms } from "@/components/BuildOffer";
+import { FixBonus, FixTerms } from "@/components/BuildOffer";
 import { BuyButton } from "@/components/BuyButton";
 import { Eyebrow } from "@/components/ScanReportView";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
@@ -157,23 +157,18 @@ export default async function StartBuildPage({
           </BuyButton>
           <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
             Card payment through Whop. You get a receipt, then a short form
-            asking what we need to know about your business.
+            about your business.
           </p>
         </div>
 
-        <p className="mt-8 rounded-lg border border-[var(--line)] p-5 text-[15px] leading-[1.7] text-[var(--muted)]">
-          <span className="font-semibold text-[var(--text)]">Bonus: </span>
-          We also create a separate domain that&apos;s custom-built to give AI
-          everything it needs to find you. When we&apos;re done, the domain is
-          yours.
-        </p>
+        <FixBonus compact />
 
         <div className="mt-14 border-t border-[var(--line)] pt-8">
           <p className="text-[16px] leading-[1.7] text-[var(--muted)]">
             <span className="font-semibold text-[var(--text)]">
               Want to read the audit first?{" "}
             </span>
-            It is free, nothing is held back, and the fixes are all in it.
+            It&apos;s free, with every fix in it.
           </p>
           <a
             href={`/audit/${scan.token}`}
@@ -182,8 +177,8 @@ export default async function StartBuildPage({
             Read the full audit on {scan.domain}
           </a>
           <p className="mt-8 text-[14px] leading-relaxed text-[var(--dim)]">
-            Questions before you pay, or you would rather not hear from us
-            again: reply to the email, or write to{" "}
+            Questions, or rather not hear from us again? Reply to the email or
+            write to{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
               className="text-[var(--muted)] underline underline-offset-4"

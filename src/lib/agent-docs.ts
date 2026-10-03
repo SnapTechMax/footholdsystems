@@ -88,8 +88,8 @@ const PRICING_BLOCK = `- **Free scan — $0.** We run an AI through the website 
   each finding on the report, ordered by the points it puts back. You or your
   developer do the work. Not part of the three steps below; sold on the report.
 - **Step 1: The Fix — ${DONE_FOR_YOU_PRICE}, one time.** We fix everything in the scan
-  report so AI can read the site. No monthly fees, no contract. Delivered in 21
-  days or the money back. Paid in full before work starts; ${FIX_CANCEL_FEE} is
+  report so AI can read the site. No monthly fees, no contract. Delivered within 21 days of
+  the kickoff call or the money back. Paid in full before work starts; ${FIX_CANCEL_FEE} is
   non-refundable on cancellation. The ${DONE_FOR_YOU_PRICE} counts toward
   Step 2. Bonus: a separate domain custom-built to give AI
   everything it needs to find the business, owned by the client when done.
@@ -114,11 +114,10 @@ const PRICING_BLOCK = `- **Free scan — $0.** We run an AI through the website 
 export function llmsTxt(): string {
   return `# FootHold AEO
 
-> Answer engine optimization for United States service businesses. FootHold
-> measures what ChatGPT, Gemini, Perplexity, Copilot and Google AI Overviews
-> currently say about a business, rebuilds its site so those systems can read
-> and quote it, aligns its listings, and builds a second machine-readable domain
-> — so that when someone asks an assistant who to hire, the business gets named.
+> Answer engine optimization for United States service businesses. People now
+> ask AI (ChatGPT, Google Gemini, Microsoft Copilot) who to hire. If AI can't
+> read a website, it struggles to recommend the business. FootHold fixes that in
+> three steps, starting from a free scan.
 
 FootHold AEO is the consumer-facing brand of FootHold Systems, an independent
 consultancy based at ${BUSINESS_ADDRESS}. It is not affiliated with OpenAI,
@@ -139,8 +138,10 @@ Full detail: [/pricing](${SITE_ORIGIN}/pricing) — or
   a model recommends a business, and the free scan.
 - [Homepage as markdown](${SITE_ORIGIN}/index.md): the same content without the
   layout.
-- [Pricing](${SITE_ORIGIN}/pricing): all four tiers, with what each does and
-  does not include.
+- [Pricing](${SITE_ORIGIN}/pricing): the free scan and the three steps, with
+  what each does and does not include.
+- [Terms](${SITE_ORIGIN}/terms): payment, the 21 day guarantee, cancellation,
+  access and what is not promised.
 - [Contact](${SITE_ORIGIN}/contact): email, postal address, response times.
 - [Privacy policy](${SITE_ORIGIN}/privacy): what is collected, who processes it,
   how to have it deleted.
@@ -198,6 +199,9 @@ reputation problem.
 
 ## The four signals
 
+The free scan runs an AI through the website and shows exactly what it can and
+can't see.
+
 1. **Can it read you?** Content painted in by JavaScript, no structured data,
    services described in slogans, the deciding facts sitting inside an image or
    a PDF. The crawler finds nothing to quote and leaves.
@@ -213,27 +217,21 @@ reputation problem.
 
 ## The work
 
-1. **Measure.** Run the business through the models its customers use, against
-   real buying prompts in its category and service area. Record who gets named,
-   how often, and where it gets dropped.
-2. **Rebuild.** Restructure the site so a machine can understand what the
-   business is: entity and service schema, answer-shaped content, plain
-   crawlable facts.
-3. **Align.** Make the listings agree with each other — same name, address
-   format, phone and claims everywhere the business already appears. Not link
-   building; consistency, because a model checking whether you are real treats
-   disagreement as doubt.
-4. **Bonus domain.** A separate domain custom-built to give AI everything it
-   needs to find the business. The main site has a job already — sell to
-   people, carry the brand — so this one carries the machine-readable version.
-   The client owns it.
+1. **The Fix.** Everything in the scan report fixed so AI can read the site,
+   in the right order, without breaking what already works. One payment,
+   delivered within 21 days of the kickoff call or the money back. Bonus: a
+   separate domain custom-built to give AI everything it needs to find the
+   business, owned by the client when done.
+2. **Get Picked.** Every month, content about the business is added and spread
+   so AI sees it more often than its competitors. 6 month contract.
+3. **Your AI Assistant.** A custom assistant that answers the business's most
+   common questions and quote requests, 24/7. Not yet for sale.
 
 ## What is not promised
 
 No agency controls the output of a language model, and FootHold does not promise
-a specific ranking, placement or recommendation. What is controlled is every
-input a model uses to make that decision, and movement is shown by re-running
-the same prompts against the same competitors month after month.
+a specific ranking, placement or recommendation. What is controlled is the
+inputs a model uses to make that decision: the four signals above.
 
 FootHold Systems is independent and is not affiliated with, endorsed by, or
 partnered with OpenAI, Google, Microsoft, Perplexity or Anthropic.
@@ -251,6 +249,7 @@ FootHold Systems, ${BUSINESS_ADDRESS}, United States. ${CONTACT_EMAIL}.
 - [Pricing](${SITE_ORIGIN}/pricing)
 - [Contact](${SITE_ORIGIN}/contact)
 - [Privacy policy](${SITE_ORIGIN}/privacy)
+- [Terms](${SITE_ORIGIN}/terms)
 - [llms.txt](${SITE_ORIGIN}/llms.txt)
 `;
 }

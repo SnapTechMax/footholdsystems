@@ -100,26 +100,25 @@ const SIGNALS = [
   },
 ];
 
+/**
+ * The three steps from the "How we help" PDF. Prices live on /pricing; this
+ * section says what each step does. No ranking promise in Step 1.
+ */
 const PHASES = [
   {
     n: "01",
-    label: "Measure",
-    body: "We run your business through the models your customers actually use, against the questions they actually type. Dozens of real buying prompts in your category and your service area. We record who gets named, how often, in whose words, and exactly where you get dropped. That is your baseline, and for most people it is the moment this stops being theoretical.",
+    label: "The Fix",
+    body: "We fix everything in your scan report so AI can read your site. One payment, no contract, delivered within 21 days of your kickoff call or your money back. Bonus: we also create a separate domain that's custom-built to give AI everything it needs to find you. When we're done, the domain is yours.",
   },
   {
     n: "02",
-    label: "Rebuild",
-    body: "We restructure your site so a machine can understand what your business is, not just read what your pages say. Entity and service schema, answer-shaped content mapped to real questions, plain crawlable facts, the specifics from signal 03 written where they can be lifted and quoted. Most of this work is invisible to humans and decisive for models.",
+    label: "Get Picked",
+    body: "Now AI can read your site. Next, we give it more reasons to pick you. Every month we add and spread content about your business, so AI sees you more often than your competitors.",
   },
   {
     n: "03",
-    label: "Align",
-    body: "Your listings are made to agree with each other. Google Business Profile, the directories that carry weight in your trade, the profiles you already have. Same name, same address format, same phone, same claims, everywhere. This is not link building and it is not new mentions; it is the ones you already own, made consistent, because a model checking whether you are real treats disagreement as doubt. Unglamorous, and it moves more than it has any right to.",
-  },
-  {
-    n: "04",
-    label: "Bonus",
-    body: "On top of the fixes, we also create a separate domain that's custom-built to give AI everything it needs to find you. Your main site already has a job: sell to people and carry your brand. This one has a single audience, so it can be plain and unambiguous in a way your main site cannot. When we're done, the domain is yours.",
+    label: "Your AI Assistant",
+    body: "More customers means more questions and quote requests. We build a custom AI assistant that answers your most common ones, 24/7, so they stop eating your day.",
   },
 ];
 
@@ -130,9 +129,8 @@ const PHASES = [
 const COMPARE = [
   { row: "Shows up in Google’s blue links", no: false, seo: true, aeo: true },
   { row: "Shows up when AI is asked who to hire", no: false, seo: "By luck", aeo: true },
-  { row: "Tells you what AI says about you today", no: false, seo: false, aeo: true },
+  { row: "Shows you what AI can't read on your site", no: false, seo: false, aeo: true },
   { row: "Fixes how machines read your site", no: false, seo: "Partly", aeo: true },
-  { row: "Makes your listings agree with each other", no: false, seo: "Partly", aeo: true },
   { row: "Builds a site aimed at machines, not people", no: false, seo: false, aeo: true },
   { row: "Works before your competitors do it", no: false, seo: false, aeo: true },
 ];
@@ -149,7 +147,7 @@ const OBJECTIONS = [
     q: "Can you guarantee ChatGPT will recommend me?",
     a: [
       "No. Nobody can, and anyone who tells you otherwise is either lying to you or does not understand what they are selling. No agency controls the output of a language model.",
-      "What we control is every input the model uses to make that decision, all four signals, and we can show movement on it with the same prompts run month after month against the same competitors. If a vendor promises you a guaranteed number one in ChatGPT, walk away and keep your money.",
+      "What we control is the inputs the model uses to make that decision: all four signals. If a vendor promises you a guaranteed number one in ChatGPT, walk away and keep your money.",
     ],
   },
   {
@@ -169,8 +167,8 @@ const OBJECTIONS = [
   {
     q: "Can’t I just do this myself?",
     a: [
-      "Some of it, yes, and the scan will show you what is broken whether you hire us or not. That is not a trick; a business that reads the report and fixes it alone is a fine outcome for us.",
-      "The parts that are genuinely hard to do yourself are knowing which of the four signals is actually costing you the answer, and rebuilding your site’s structure for machines without breaking the human rankings you already have.",
+      "Some of it can be done, and the scan shows you everything that is broken whether you hire us or not.",
+      "But most of it is technical. It touches the parts of your site that already work, and done in the wrong order it can break the rankings you already have. Getting it right the first time is what we do.",
     ],
   },
 ];
@@ -208,7 +206,7 @@ const SCAN_DELIVERS = [
 const FAQS = [
   {
     q: "What exactly do I get from the free scan?",
-    a: "A written report showing what the major answer engines currently say about your business when someone asks for a recommendation in your category, who they name instead, and which of the four signals is holding you back. No call required to receive it.",
+    a: "We run an AI through your website. The report shows exactly what it can and can't see, with every problem ranked worst first and what each one costs you. No call required to receive it.",
   },
   {
     q: "How long does it take to see movement?",
@@ -224,7 +222,7 @@ const FAQS = [
   },
   {
     q: "Is there a contract?",
-    a: "We will cover terms on a call if the scan shows something worth acting on. Nothing about the scan itself commits you to anything.",
+    a: "The scan commits you to nothing. The Fix has no contract: one payment, delivered within 21 days of your kickoff call or your money back. Get Picked is a 6 month contract. Full terms are at footholdsystems.com/terms.",
   },
 ];
 
@@ -527,12 +525,6 @@ export default function SalesPage() {
           You can be number one on Google and invisible inside ChatGPT.
         </Punch>
 
-        <P>
-          We find it constantly. It is the single most common result of the
-          scan, and it is the one that changes how people think about their whole
-          marketing budget.
-        </P>
-
         {/* Two-column contrast. Kept to five rows — this is a rhythm break in
             the middle of long copy, not a spec sheet. */}
         <div className="mt-12 overflow-hidden rounded-xl border border-[var(--line)]">
@@ -622,8 +614,8 @@ export default function SalesPage() {
         <H2>The FootHold AEO system.</H2>
 
         <P>
-          Four phases. No retainer for &ldquo;strategy&rdquo;, and no
-          ninety-page audit you will never open.
+          Three steps, after a free scan. No ninety-page audit you will never
+          open.
         </P>
 
         <div className="mt-14 space-y-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
@@ -787,9 +779,8 @@ export default function SalesPage() {
 
           <P>
             Before you spend a dollar with anybody, see the problem for
-            yourself. We run your business through the major answer engines
-            against the real buying questions in your category, and send you back
-            what they actually say.
+            yourself. We run an AI through your website. It shows exactly what
+            the AI can and can&apos;t see.
           </P>
 
           <ul className="mt-9 space-y-4">
@@ -807,8 +798,7 @@ export default function SalesPage() {
           </ul>
 
           <p className="mt-8 max-w-[48ch] text-[16px] leading-[1.65] text-[var(--text)] sm:text-[17px]">
-            No call required. No card. If you read the report and go and fix all
-            of it yourself, that is a perfectly good outcome.
+            No call required. No card. The report is yours to keep.
           </p>
 
           <ScanForm entryPoint="scan-section" />

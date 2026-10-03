@@ -95,9 +95,8 @@ export default async function ScanBookedPage({
         {paid ? (
           <>
             <p className="mt-7 max-w-[52ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-              We have your {DONE_FOR_YOU_PRICE} and {domain} is on the board.
-              Everything from here is us doing the work, except one thing, and it
-              is the thing that sets your start date.
+              We have your {DONE_FOR_YOU_PRICE}. From here we do the work. You
+              just pick your start date.
             </p>
             <BookKickoff domain={domain} />
           </>
@@ -107,9 +106,8 @@ export default async function ScanBookedPage({
               <span className="font-semibold text-[var(--text)]">
                 Nothing else is needed from you.
               </span>{" "}
-              We&apos;re confirming it with our payment provider, which takes a
-              few seconds. This page updates on its own and your booking link
-              appears here as soon as it does.
+              We&apos;re confirming it now. Your booking link appears here in a
+              few seconds.
             </p>
             <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
               Still here after a minute? Email{" "}
@@ -119,8 +117,7 @@ export default async function ScanBookedPage({
               >
                 {CONTACT_EMAIL}
               </a>{" "}
-              and we&apos;ll confirm by hand. Your payment is safe either way. It
-              is recorded on our side before this page ever changes.
+              and we&apos;ll confirm by hand. Your payment is safe either way.
             </p>
           </div>
         )}
@@ -136,8 +133,7 @@ export default async function ScanBookedPage({
           >
             the same link
           </Link>
-          , and every fix on it is now ours to implement. Nothing there needs
-          doing by you.
+          . Every fix on it is ours to do now.
         </p>
       </div>
     </main>
