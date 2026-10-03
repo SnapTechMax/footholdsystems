@@ -146,15 +146,12 @@ export default async function AuditPage({
         {report.domain}
       </h1>
 
-      {/* The stranger's actual first question, answered before the score. A
-          report that opens with a grade and no explanation of where it came
-          from reads as a scare tactic, which is the one thing that would make
-          the rest of the page unreadable. */}
+      {/* What the scan is, answered before the score. The reader said yes to
+          the report in reply to a cold email, so this does not explain why it
+          arrived, only what it measured. A grade with no stated basis reads as
+          a scare tactic. */}
       <div className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
         <p className="text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-          <span className="font-semibold text-[var(--text)]">
-            You didn&apos;t ask for this, so here&apos;s what it is.{" "}
-          </span>
           We checked whether AI like ChatGPT can read {report.domain}. This is
           the full report, fixes included, free. The fixes are technical, and
           done in the wrong order they can break what already works. Getting
@@ -210,8 +207,7 @@ export default async function AuditPage({
           is here because a cold email that offers no way to say stop is the
           kind that gets marked as spam, and the reply goes to a person. */}
       <p className="mt-16 border-t border-[var(--line)] pt-8 text-[14px] leading-relaxed text-[var(--dim)]">
-        We ran this on our own. You&apos;re not on any list. To stop hearing
-        from us, reply to the email or write to{" "}
+        You&apos;re not on any list. To stop hearing from us, reply to the email or write to{" "}
         <a
           href={`mailto:${CONTACT_EMAIL}`}
           className="text-[var(--muted)] underline underline-offset-4"
