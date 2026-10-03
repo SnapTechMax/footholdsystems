@@ -85,11 +85,7 @@ export function BuildOffer({
           </p>
         </div>
 
-        <p className="mt-6 border-t border-[var(--line)] pt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-          <span className="font-semibold text-[var(--muted)]">Bonus: </span>
-          We also build a separate domain made for AI to find you. It&apos;s
-          yours to keep.
-        </p>
+        <FixBonus compact />
       </div>
     );
   }
@@ -152,16 +148,55 @@ export function BuildOffer({
 
       {/* Secondary, and after the button on purpose: it sweetens the decision
           without competing with it. */}
-      <div className="mt-6 rounded-lg border border-[var(--line)] p-6 sm:p-7">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--dim)]">
-          Bonus
-        </p>
-        <p className="mt-3 text-[15px] leading-[1.7] text-[var(--muted)] sm:text-[16px]">
-          We also build a separate domain made for AI to find you. It&apos;s
-          yours to keep.
-        </p>
-      </div>
+      <FixBonus />
     </>
+  );
+}
+
+/**
+ * The separate domain that comes with the Fix, as a labelled bonus.
+ *
+ * Louder than a footnote, quieter than the Fix: a lighter border than the offer
+ * box, and always after the button. Every point describes what the domain is,
+ * never what it will win. Being named by a model is Get Picked's promise, not
+ * this one's. See context/offer.md, "Claims to avoid".
+ */
+const BONUS_POINTS = [
+  "Built only for AI to read, with nothing on it for a model to trip over.",
+  "Lays out what you do, where you work and how to reach you, in one place.",
+  "Sits beside your main website. Nothing about your current site changes.",
+  "Included with The Fix at no extra cost, and the domain is yours to keep.",
+];
+
+function FixBonus({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={`${compact ? "mt-7" : "mt-6"} rounded-xl border border-[var(--accent)]/25 bg-[var(--accent)]/[0.04] p-6 sm:p-7`}
+    >
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+        Bonus
+      </p>
+      <h3
+        className={`mt-3 font-display ${compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"} font-extrabold uppercase leading-[1.1] tracking-[-0.01em] text-[var(--text)]`}
+      >
+        A second domain, built for AI.
+      </h3>
+      <ul className="mt-4 space-y-2.5">
+        {BONUS_POINTS.map((point) => (
+          <li key={point} className="flex gap-3">
+            <span
+              aria-hidden="true"
+              className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
+            />
+            <span
+              className={`${compact ? "text-[15px]" : "text-[15px] sm:text-[16px]"} leading-[1.6] text-[var(--muted)]`}
+            >
+              {point}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
