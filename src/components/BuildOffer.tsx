@@ -60,8 +60,7 @@ export function BuildOffer({
         </h2>
 
         <p className="mt-5 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-          We fix everything in this report so AI can read your site. {count}{" "}
-          on {domain}, done by us.
+          {count} on {domain}, fixed by us so AI can read your site.
         </p>
 
         <FixTerms compact />
@@ -82,15 +81,14 @@ export function BuildOffer({
             </span>
           </BuyButton>
           <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
-            You do not need to buy the list first.
+            No need to buy the list first.
           </p>
         </div>
 
         <p className="mt-6 border-t border-[var(--line)] pt-5 text-[14px] leading-relaxed text-[var(--dim)]">
           <span className="font-semibold text-[var(--muted)]">Bonus: </span>
-          We also create a separate domain that&apos;s custom-built to give AI
-          everything it needs to find you. When we&apos;re done, the domain is
-          yours.
+          We also build a separate domain made for AI to find you. It&apos;s
+          yours to keep.
         </p>
       </div>
     );
@@ -102,8 +100,8 @@ export function BuildOffer({
           the report for nothing and needs telling that it stays free. */}
       {variant === "outreach" && (
         <p className="mt-16 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-          The report is yours, and nothing above this line is held back. If you
-          would rather not do the work yourself, this is the offer.
+          The report is yours, free. If you&apos;d rather not do the work,
+          we&apos;ll do it.
         </p>
       )}
 
@@ -123,8 +121,7 @@ export function BuildOffer({
             We fix everything in this report so AI can read your site.
           </p>
           <p>
-            {count} above, done on {domain} itself. You do not brief anyone, and
-            you do not check whether it was done right.
+            {count} above, done on {domain}. No briefing, no checking our work.
           </p>
         </div>
 
@@ -148,8 +145,7 @@ export function BuildOffer({
             </span>
           </BuyButton>
           <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-            One payment, then you pick a time with us and we start. No call to
-            sit through before you can buy, and nothing to negotiate.
+            One payment, then pick a time and we start. No sales call.
           </p>
         </div>
       </div>
@@ -161,9 +157,8 @@ export function BuildOffer({
           Bonus
         </p>
         <p className="mt-3 text-[15px] leading-[1.7] text-[var(--muted)] sm:text-[16px]">
-          We also create a separate domain that&apos;s custom-built to give AI
-          everything it needs to find you. When we&apos;re done, the domain is
-          yours.
+          We also build a separate domain made for AI to find you. It&apos;s
+          yours to keep.
         </p>
       </div>
     </>

@@ -5,13 +5,22 @@ import { BookKickoff } from "@/components/BookKickoff";
 import { BuildOffer } from "@/components/BuildOffer";
 import { BuyButton } from "@/components/BuyButton";
 import { ReportOpenedPixel } from "@/components/ReportOpenedPixel";
-import { Eyebrow, Finding, ScoreHeader } from "@/components/ScanReportView";
+import {
+  AllPassed,
+  CheckoutFailedNotice,
+  Eyebrow,
+  Finding,
+  FindingsIntro,
+  PartialNotice,
+  ScanFailed,
+  ScanRunning,
+  ScoreHeader,
+} from "@/components/ScanReportView";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid, markReportOpened } from "@/lib/scan/db";
 import { sendReportOpened } from "@/lib/meta-capi";
 import { SOLUTIONS_PRICE, checkoutUrl, reportUrl } from "@/lib/scan/pricing";
 import { buildReport, toPublicReport } from "@/lib/scan/report";
-import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * The scan report, with the fixes behind a paywall.
@@ -68,37 +77,15 @@ function Paywall({
 
       <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
         <p>
-          Everything above is free and it&apos;s yours to keep. The diagnosis is
-          the easy half, because a scanner can do that. Knowing what to actually
-          change, in what order, without breaking the rankings you already have,
-          is the part that took us the time.
+          For {SOLUTIONS_PRICE} you get the exact fix for{" "}
+          {findingCount === 1 ? "the one problem" : `all ${findingCount} problems`}{" "}
+          above: what to change, where, and in what order. Hand it to whoever
+          runs your website.
         </p>
-        <p>
-          For {SOLUTIONS_PRICE} you get the exact fix for all{" "}
-          {findingCount === 1 ? "one problem" : `${findingCount} problems`} above.
-          What to change, where it goes, what to write, and which one to do first.
-          Written so you or whoever runs your website can just go and do it.
-        </p>
-        <p className="font-semibold text-[var(--text)]">
-          It reads like a checklist, because that is what it is.
-        </p>
+        <p className="font-semibold text-[var(--text)]">It&apos;s a checklist.</p>
       </div>
 
-      {failed && (
-        <p className="mt-7 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3 text-[14px] leading-relaxed text-[var(--muted)]">
-          <span className="font-semibold text-[var(--text)]">
-            That didn&apos;t reach the payment page.{" "}
-          </span>
-          Nothing was charged. Try again, and if it happens twice email{" "}
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="underline underline-offset-4"
-          >
-            {CONTACT_EMAIL}
-          </a>{" "}
-          and we&apos;ll send you a payment link directly.
-        </p>
-      )}
+      {failed && <CheckoutFailedNotice className="mt-7" />}
 
       <div className="mt-8">
         <BuyButton
@@ -116,9 +103,7 @@ function Paywall({
           </span>
         </BuyButton>
         <p className="mt-4 text-[14px] leading-relaxed text-[var(--dim)]">
-          One payment. Instant access on this page. {SOLUTIONS_PRICE} is less than
-          an hour of most people&apos;s billable time, and the answer only has
-          room for one name.
+          One payment. Instant access on this page.
         </p>
       </div>
     </div>
@@ -166,15 +151,7 @@ export default async function ScanReportPage({
     return (
       <Shell>
         <ScanPoller />
-        <Eyebrow>Scan running</Eyebrow>
-        <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          Still reading {scan.domain}.
-        </h1>
-        <p className="mt-6 max-w-[46ch] text-[17px] leading-[1.65] text-[var(--muted)]">
-          This page updates itself. It usually takes a minute or two, and the
-          report lands in your inbox either way, so you don&apos;t have to sit
-          here.
-        </p>
+        <ScanRunning domain={scan.domain} />
       </Shell>
     );
   }
@@ -182,25 +159,7 @@ export default async function ScanReportPage({
   if (scan.status === "failed" || !scan.report) {
     return (
       <Shell>
-        <Eyebrow>Something went wrong</Eyebrow>
-        <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          We couldn&apos;t finish this one.
-        </h1>
-        <p className="mt-6 max-w-[48ch] text-[17px] leading-[1.65] text-[var(--muted)]">
-          The scan on {scan.domain} didn&apos;t complete. That is usually the
-          site blocking automated readers, which is itself worth knowing, and is
-          one of the things we fix. We&apos;ll retry automatically.
-        </p>
-        <p className="mt-6 text-[15px] leading-relaxed text-[var(--dim)]">
-          If it still hasn&apos;t arrived tomorrow, email{" "}
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="text-[var(--muted)] underline underline-offset-4"
-          >
-            {CONTACT_EMAIL}
-          </a>{" "}
-          and we&apos;ll run it by hand.
-        </p>
+        <ScanFailed domain={scan.domain} />
       </Shell>
     );
   }
@@ -321,22 +280,11 @@ export default async function ScanReportPage({
         <ScoreHeader report={report} />
       </div>
 
-      {report.partial && (
-        <p className="mt-6 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-4 text-[14px] leading-relaxed text-[var(--dim)]">
-          Some checks didn&apos;t finish on this run, so this report is slightly
-          incomplete. Everything shown is accurate.
-        </p>
-      )}
+      {report.partial && <PartialNotice />}
 
       {findings.length > 0 ? (
         <>
-          <h2 className="mt-14 font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-            What&apos;s wrong
-          </h2>
-          <p className="mt-4 max-w-[48ch] text-[16px] leading-[1.65] text-[var(--muted)]">
-            Worst first. Every one of these is fixable, and none of them require
-            you to rebuild your website.
-          </p>
+          <FindingsIntro />
 
           <div className="mt-8 space-y-5">
             {findings.map((finding, i) => (
@@ -386,23 +334,7 @@ export default async function ScanReportPage({
           </div>
         </>
       ) : (
-        <div className="mt-14 rounded-xl border border-[var(--accent)]/40 bg-[var(--panel)] p-7 sm:p-10">
-          <h2 className="font-display text-3xl font-black uppercase leading-[0.98] text-[var(--text)]">
-            Nothing to sell you.
-          </h2>
-          <p className="mt-5 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)]">
-            You passed every check we run. That is genuinely rare, and it means
-            the technical half is done. What&apos;s left is whether an AI
-            actually picks you over the competitor down the road, which no scanner
-            can see. If you want a human to look at that, email me.
-          </p>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="mt-7 inline-flex items-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-colors hover:bg-[var(--accent-hot)]"
-          >
-            {CONTACT_EMAIL}
-          </a>
-        </div>
+        <AllPassed />
       )}
     </Shell>
   );

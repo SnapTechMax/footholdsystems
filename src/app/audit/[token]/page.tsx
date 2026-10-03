@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookKickoff } from "@/components/BookKickoff";
 import { BuildOffer } from "@/components/BuildOffer";
-import { Eyebrow, Finding, ScoreHeader } from "@/components/ScanReportView";
+import {
+  AllPassed,
+  CheckoutFailedNotice,
+  Eyebrow,
+  Finding,
+  FindingsIntro,
+  PartialNotice,
+  ScanFailed,
+  ScanRunning,
+  ScoreHeader,
+} from "@/components/ScanReportView";
 import { ScanPoller } from "@/components/ScanPoller";
 import { getScanByToken, isPaid } from "@/lib/scan/db";
 import { buildReport } from "@/lib/scan/report";
@@ -84,14 +94,7 @@ export default async function AuditPage({
     return (
       <Shell>
         <ScanPoller />
-        <Eyebrow>Scan running</Eyebrow>
-        <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          Still reading {scan.domain}.
-        </h1>
-        <p className="mt-6 max-w-[46ch] text-[17px] leading-[1.65] text-[var(--muted)]">
-          This page updates itself. It usually takes a minute or two. Leave it
-          open, or come back to this link later and it will be here.
-        </p>
+        <ScanRunning domain={scan.domain} />
       </Shell>
     );
   }
@@ -99,25 +102,7 @@ export default async function AuditPage({
   if (scan.status === "failed" || !scan.report) {
     return (
       <Shell>
-        <Eyebrow>Something went wrong</Eyebrow>
-        <h1 className="mt-5 text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl">
-          We couldn&apos;t finish this one.
-        </h1>
-        <p className="mt-6 max-w-[48ch] text-[17px] leading-[1.65] text-[var(--muted)]">
-          The scan on {scan.domain} didn&apos;t complete. That is usually the
-          site blocking automated readers, which is itself worth knowing, and is
-          one of the things we fix.
-        </p>
-        <p className="mt-6 text-[15px] leading-relaxed text-[var(--dim)]">
-          Reply to the email, or write to{" "}
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="text-[var(--muted)] underline underline-offset-4"
-          >
-            {CONTACT_EMAIL}
-          </a>
-          , and we&apos;ll run it by hand.
-        </p>
+        <ScanFailed domain={scan.domain} />
       </Shell>
     );
   }
@@ -168,18 +153,11 @@ export default async function AuditPage({
       <div className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
         <p className="text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
           <span className="font-semibold text-[var(--text)]">
-            You did not ask for this, so here is what it is.{" "}
+            You didn&apos;t ask for this, so here&apos;s what it is.{" "}
           </span>
-          We run a scan that checks whether AI assistants can read a website
-          well enough to recommend it. We ran ours on {report.domain}, and this
-          page is the whole result. Nothing is held back and there is nothing to
-          pay.
-        </p>
-        <p className="mt-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-          Every problem below comes with the fix for it. Take the list to
-          whoever runs your website. If you would rather we did it, that offer
-          is at the bottom, and it is the only thing on this page we are
-          selling.
+          We checked whether AI like ChatGPT can read {report.domain}. This is
+          the full report, fixes included, free. Hand it to whoever runs your
+          website, or have us do it. That offer is at the bottom.
         </p>
       </div>
 
@@ -187,38 +165,13 @@ export default async function AuditPage({
         <ScoreHeader report={report} />
       </div>
 
-      {report.partial && (
-        <p className="mt-6 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-4 text-[14px] leading-relaxed text-[var(--dim)]">
-          Some checks didn&apos;t finish on this run, so this report is slightly
-          incomplete. Everything shown is accurate.
-        </p>
-      )}
+      {report.partial && <PartialNotice />}
 
-      {checkoutFailed && (
-        <p className="mt-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3 text-[14px] leading-relaxed text-[var(--muted)]">
-          <span className="font-semibold text-[var(--text)]">
-            That didn&apos;t reach the payment page.{" "}
-          </span>
-          Nothing was charged. Try again, and if it happens twice email{" "}
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="underline underline-offset-4"
-          >
-            {CONTACT_EMAIL}
-          </a>{" "}
-          and we&apos;ll send you a payment link directly.
-        </p>
-      )}
+      {checkoutFailed && <CheckoutFailedNotice className="mt-6" />}
 
       {report.findings.length > 0 ? (
         <>
-          <h2 className="mt-14 font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
-            What&apos;s wrong
-          </h2>
-          <p className="mt-4 max-w-[48ch] text-[16px] leading-[1.65] text-[var(--muted)]">
-            Worst first, with the fix under each one. Every one of these is
-            fixable, and none of them require you to rebuild your website.
-          </p>
+          <FindingsIntro />
 
           <div className="mt-8 space-y-5">
             {/* `unlocked` is not a decision here, it is a constant. There is no
@@ -248,25 +201,7 @@ export default async function AuditPage({
           </div>
         </>
       ) : (
-        <div className="mt-14 rounded-xl border border-[var(--accent)]/40 bg-[var(--panel)] p-7 sm:p-10">
-          <h2 className="font-display text-3xl font-black uppercase leading-[0.98] text-[var(--text)]">
-            Nothing to sell you.
-          </h2>
-          <p className="mt-5 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)]">
-            You passed every check we run, which is genuinely rare and means the
-            technical half is already done. Whoever looks after your site knows
-            what they are doing. What&apos;s left is whether an AI picks you over
-            the competitor down the road, which no scanner can see. That is the
-            only thing we would have to talk about, and it is not something to
-            pitch on a page you did not ask for.
-          </p>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="mt-7 inline-flex items-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-colors hover:bg-[var(--accent-hot)]"
-          >
-            {CONTACT_EMAIL}
-          </a>
-        </div>
+        <AllPassed />
       )}
 
       {/* Not a legal unsubscribe link, because there is nothing to unsubscribe
@@ -274,15 +209,15 @@ export default async function AuditPage({
           is here because a cold email that offers no way to say stop is the
           kind that gets marked as spam, and the reply goes to a person. */}
       <p className="mt-16 border-t border-[var(--line)] pt-8 text-[14px] leading-relaxed text-[var(--dim)]">
-        We ran this on our own initiative and nobody is on a list. If you would
-        rather not hear from us again, reply to the email or write to{" "}
+        We ran this on our own. You&apos;re not on any list. To stop hearing
+        from us, reply to the email or write to{" "}
         <a
           href={`mailto:${CONTACT_EMAIL}`}
           className="text-[var(--muted)] underline underline-offset-4"
         >
           {CONTACT_EMAIL}
-        </a>{" "}
-        and that is the end of it.
+        </a>
+        .
       </p>
     </Shell>
   );

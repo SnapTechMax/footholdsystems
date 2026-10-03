@@ -206,15 +206,15 @@ function capGrade(
 function verdictFor(grade: Grade, domain: string): string {
   switch (grade) {
     case "A":
-      return `${domain} is in better shape than most. You are readable, and the gaps left are the ones your competitors haven't found either.`;
+      return `AI can read ${domain}. You're in better shape than most.`;
     case "B":
-      return `${domain} reads clearly to an AI. What is missing is the detail that turns "this is a real business" into "this is the one to call".`;
+      return `AI can read ${domain}, but it can't tell why you're the one to call.`;
     case "C":
-      return `${domain} is half-visible. An AI can find you and read some of you, but it cannot confidently say what you do or who you are for.`;
+      return `AI can only half-read ${domain}. It can't say what you do or who you're for.`;
     case "D":
-      return `${domain} is mostly invisible to AI. Some of the basics are there. The parts that decide whether you get named are not.`;
+      return `AI can barely read ${domain}. The parts that get you named are missing.`;
     case "F":
-      return `${domain} is effectively invisible. Right now, an AI asked to recommend a business like yours has almost nothing to go on.`;
+      return `AI can't read ${domain}. Asked to recommend a business like yours, it has almost nothing to go on.`;
   }
 }
 
@@ -238,31 +238,31 @@ function summaryFor(args: {
   const { grade, findings, requiredFailures, passed, assessed } = args;
 
   if (findings.length === 0) {
-    return `We checked ${assessed} things that decide whether an AI can find, read and recommend a business, and you passed all of them. That is rare. There is nothing here worth charging you for.`;
+    return `We ran ${assessed} checks and you passed all of them. That's rare. There's nothing here to fix.`;
   }
 
   const worst = findings[0];
   const parts: string[] = [];
 
   parts.push(
-    `We ran ${assessed} checks on the things that decide whether an AI assistant can find you, understand what you sell, and recommend you when someone asks, using the set that applies to ${args.categoryNoun}. You passed ${passed}.`
+    `We ran ${assessed} checks for ${args.categoryNoun}. You passed ${passed}.`
   );
 
   if (requiredFailures > 0) {
     parts.push(
       requiredFailures === 1
-        ? "One of them is in the group we treat as non-negotiable, which is the group that keeps coming up when a business simply never appears in an answer."
-        : `${requiredFailures} of them are in the group we treat as non-negotiable, which is the group that keeps coming up when a business simply never appears in an answer.`
+        ? "One failure is critical."
+        : `${requiredFailures} failures are critical.`
     );
   }
 
   parts.push(
-    `The biggest single problem: ${worst.title.toLowerCase()}. ${worst.consequence}`
+    `The biggest problem: ${worst.title.toLowerCase()}. ${worst.consequence}`
   );
 
   if (grade === "F") {
     parts.push(
-      `None of this is unusual and none of it is hard to fix. It is just that nobody has ever been asked to look.`
+      `None of it is hard to fix.`
     );
   }
 
