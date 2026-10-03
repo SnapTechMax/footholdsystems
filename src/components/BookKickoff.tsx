@@ -28,16 +28,13 @@ export function BookKickoff({ domain }: { domain: string }) {
 
       <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
         <p>
-          Your {DONE_FOR_YOU_PRICE} payment went through and {domain} is on the
-          board. The work takes two to three weeks from the day we start, and
-          the only thing setting that day is this call.
+          Your {DONE_FOR_YOU_PRICE} payment went through. We fix {domain}
+          within 21 days of this call, so booking it starts the clock.
         </p>
         <p>
-          Thirty minutes, and it is not a pitch. You have already bought. We go
-          through what you actually sell and who for, which of your listings we
-          need access to, and what your second domain should be called. Bring
-          logins for your website and your Google Business Profile if you have
-          them to hand; if you do not, we will sort that out on the call.
+          Thirty minutes, not a pitch. We cover what you sell and who for, and
+          what your second domain should be called. We ask for access through
+          each platform&apos;s own invite, never your passwords.
         </p>
       </div>
 
@@ -66,8 +63,7 @@ export function BookKickoff({ domain }: { domain: string }) {
         >
           {CONTACT_EMAIL}
         </a>{" "}
-        and we&apos;ll find a time by hand. Your slot is held either way. The
-        work is paid for and it is not going anywhere.
+        and we&apos;ll find a time by hand.
       </p>
     </div>
   );

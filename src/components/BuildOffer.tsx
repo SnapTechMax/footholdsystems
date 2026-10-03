@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BuyButton } from "@/components/BuyButton";
 import {
   DONE_FOR_YOU_PRICE,
@@ -19,7 +20,7 @@ import {
  *
  * NO RANKING HERE. Being named or picked by a model is the next offer, Get
  * Picked, and the only thing this one promises is delivery: the work in the
- * report, done in 21 days, or the money back. See context/offer.md, "Claims to
+ * report, done within 21 days of the kickoff call, or the money back. See context/offer.md, "Claims to
  * avoid".
  *
  * Voice, per context/voice.md: short sentences, plain English, no hype, US
@@ -97,8 +98,8 @@ export function BuildOffer({
       {variant === "outreach" && (
         <p className="mt-16 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
           The report is yours, free. The fixes can be done, but they&apos;re
-          technical, and they have to be done the way AI reads a site. That
-          part is our job.
+          technical, and they have to be done the way AI reads a site. That part
+          is our job.
         </p>
       )}
 
@@ -170,7 +171,7 @@ const BONUS_POINTS = [
   "Included with The Fix at no extra cost, and the domain is yours to keep.",
 ];
 
-function FixBonus({ compact = false }: { compact?: boolean }) {
+export function FixBonus({ compact = false }: { compact?: boolean }) {
   return (
     <div
       className={`${compact ? "mt-7" : "mt-6"} rounded-xl border border-[var(--accent)]/25 bg-[var(--accent)]/[0.04] p-6 sm:p-7`}
@@ -210,7 +211,10 @@ function FixBonus({ compact = false }: { compact?: boolean }) {
 export function FixTerms({ compact = false }: { compact?: boolean }) {
   const terms: [string, string][] = [
     ["Price", `${DONE_FOR_YOU_PRICE}, one time. No monthly fees. No contract.`],
-    ["Guarantee", "Service delivered in 21 days or you get your money back."],
+    [
+      "Guarantee",
+      "Delivered within 21 days of your kickoff call, or you get your money back.",
+    ],
     [
       "Next step",
       `The ${DONE_FOR_YOU_PRICE} counts toward our next step (Get Picked) if you continue.`,
@@ -222,23 +226,37 @@ export function FixTerms({ compact = false }: { compact?: boolean }) {
   ];
 
   return (
-    <dl
-      className={`${compact ? "mt-5 space-y-2.5" : "mt-8 space-y-3.5 border-t border-[var(--line)] pt-7"}`}
-    >
-      {terms.map(([label, body]) => (
-        <div key={label} className="flex gap-3.5">
-          <span
-            aria-hidden="true"
-            className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
-          />
-          <div
-            className={`${compact ? "text-[15px]" : "text-[16px] sm:text-[17px]"} leading-[1.6] text-[var(--muted)]`}
-          >
-            <dt className="inline font-semibold text-[var(--text)]">{label}: </dt>
-            <dd className="inline">{body}</dd>
+    <>
+      <dl
+        className={`${compact ? "mt-5 space-y-2.5" : "mt-8 space-y-3.5 border-t border-[var(--line)] pt-7"}`}
+      >
+        {terms.map(([label, body]) => (
+          <div key={label} className="flex gap-3.5">
+            <span
+              aria-hidden="true"
+              className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
+            />
+            <div
+              className={`${compact ? "text-[15px]" : "text-[16px] sm:text-[17px]"} leading-[1.6] text-[var(--muted)]`}
+            >
+              <dt className="inline font-semibold text-[var(--text)]">
+                {label}:{" "}
+              </dt>
+              <dd className="inline">{body}</dd>
+            </div>
           </div>
-        </div>
-      ))}
-    </dl>
+        ))}
+      </dl>
+      <p
+        className={`${compact ? "mt-2.5 text-[13px]" : "mt-3.5 text-[14px]"} pl-5 text-[var(--dim)]`}
+      >
+        <Link
+          href="/terms"
+          className="underline underline-offset-4 hover:text-[var(--muted)]"
+        >
+          Full terms
+        </Link>
+      </p>
+    </>
   );
 }

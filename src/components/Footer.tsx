@@ -71,6 +71,14 @@ export function Footer() {
             </li>
             <li>
               <Link
+                href="/terms"
+                className="text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+              >
+                Terms
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/privacy"
                 className="text-[var(--muted)] transition-colors hover:text-[var(--text)]"
               >

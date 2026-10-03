@@ -100,7 +100,7 @@ const TIERS = [
     gets: [
       "We fix everything in the report so AI can read your site.",
       `${DONE_FOR_YOU_PRICE}, one time. No monthly fees. No contract.`,
-      "Guarantee: service delivered in 21 days or you get your money back.",
+      "Guarantee: delivered within 21 days of your kickoff call, or you get your money back.",
       `The ${DONE_FOR_YOU_PRICE} counts toward Step 2 if you continue.`,
       "Bonus: we also create a separate domain that's custom-built to give AI everything it needs to find you. When we're done, the domain is yours.",
     ],
@@ -278,7 +278,14 @@ export default function PricingPage() {
           </div>
           <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
             Step 1 is paid in full before work starts. If you cancel,{" "}
-            {FIX_CANCEL_FEE} is non-refundable.
+            {FIX_CANCEL_FEE} is non-refundable. Full{" "}
+            <Link
+              href="/terms"
+              className="font-semibold underline underline-offset-2 hover:text-[var(--text)]"
+            >
+              terms
+            </Link>
+            .
           </p>
         </div>
 

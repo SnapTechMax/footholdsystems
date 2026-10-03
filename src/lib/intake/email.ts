@@ -225,11 +225,9 @@ export function buildIntakeConfirmation(args: {
                 What happens now
               </p>
               <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
-                We read your answers properly rather than skimming them, and
-                come back with anything that needs a real conversation rather
-                than a form box, plus the account access we need. Expect that
-                within one business day. Build time is two to three weeks from
-                there.
+                We read your answers and come back within one business day with
+                any questions and the access invites we need. The work is done
+                within 21 days of your kickoff call.
               </p>
               <p style="margin:0 0 18px;font:400 16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                 Remembered something, or got one wrong? Reply to this email and
@@ -254,7 +252,7 @@ export function buildIntakeConfirmation(args: {
     `Your answers for ${business} are in. That is the part that usually takes the longest, and it is done. The agreement is signed, the form is sent, and there is nothing else we need from you today.`,
     "",
     "WHAT HAPPENS NOW",
-    "We read your answers properly rather than skimming them, and come back with anything that needs a real conversation rather than a form box, plus the account access we need. Expect that within one business day. Build time is two to three weeks from there.",
+    "We read your answers and come back within one business day with any questions and the access invites we need. The work is done within 21 days of your kickoff call.",
     "",
     "Remembered something, or got one wrong? Reply to this email and say so. Nothing is locked in.",
     "",

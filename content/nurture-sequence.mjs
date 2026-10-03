@@ -562,7 +562,7 @@ const emails = [
       p("<strong>Everything in your scan report, fixed.</strong> Schema, sameAs, crawler access, llms.txt, metadata, trust pages, title tags. On your actual site, in the right order, without breaking what already works. You do not brief anyone and you do not check my work."),
       p("<strong>And a bonus I have not mentioned once in three weeks.</strong> I build you a second site, on its own domain, made only for AI to read."),
       p("Your website has a job already. It has to sell to people, look right and carry your brand, and every one of those pulls against being easy for a model to read. The second domain has one audience. It lays out what you do, where you work and how to reach you, in one place, with nothing for a model to trip over. Your current site does not change, and when we are done the domain is yours."),
-      p(`${UPGRADE_PRICE}, one time. No monthly fees, no contract. Delivered in 21 days or you get your money back. And if you want to go on to the part from a few emails ago that no checklist can do, the ${UPGRADE_PRICE} counts toward it.`),
+      p(`${UPGRADE_PRICE}, one time. No monthly fees, no contract. Delivered within 21 days of your kickoff call, or you get your money back. And if you want to go on to the part from a few emails ago that no checklist can do, the ${UPGRADE_PRICE} counts toward it.`),
       p("What it is not: a promise that ChatGPT will recommend you. Nobody controls a model's output, and anybody telling you otherwise is selling you something. What The Fix does is make sure that when a model goes looking, it can read you."),
     ],
     ask: "That is the only time I will describe it at length. If you would rather it was done right the first time, the link is there.",

@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 /**
  * sitemap.xml.
  *
- * Four public pages: the sales page, the privacy policy it is legally required
+ * Five public pages: the sales page, the terms, the privacy policy it is legally required
  * to carry, and the pricing and contact pages added after the 2026-08-27
  * agent-readiness scan — pricing because an assistant asked what this costs
  * needs somewhere to read it from, contact because it is one of the three
@@ -43,6 +43,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
+    },
+    {
+      url: `${BASE}/terms`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     {
       url: `${BASE}/contact`,

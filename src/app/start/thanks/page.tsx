@@ -32,9 +32,8 @@ export default function StartThanksPage() {
         </h1>
 
         <p className="mt-7 max-w-[46ch] text-[17px] leading-[1.65] text-[var(--muted)] sm:text-[19px]">
-          Your answers are in, and a confirmation is on its way to your inbox.
-          The agreement is signed, the form is sent, and there is nothing else
-          we need from you today.
+          Your answers are in and a confirmation is on its way. Nothing else
+          is needed from you today.
         </p>
 
         <div className="mt-10 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-6 sm:p-7">
@@ -42,13 +41,11 @@ export default function StartThanksPage() {
             What happens now
           </p>
           <p className="mt-5 text-[16px] leading-[1.65] text-[var(--muted)]">
-            We read your answers properly rather than skimming them. Anything
-            that needs a real conversation instead of a form box, we come back
-            to you on, along with the account access we need. Expect that within
-            one business day.
+            We read your answers and come back within one business day with
+            any questions and the access invites we need.
           </p>
           <p className="mt-4 text-[16px] leading-[1.65] text-[var(--muted)]">
-            Build time is two to three weeks from there.
+            The work is done within 21 days of your kickoff call.
           </p>
         </div>
 
@@ -64,8 +61,7 @@ export default function StartThanksPage() {
             >
               {CONTACT_EMAIL}
             </a>
-            . Nothing is locked in, and a late answer is better than a missing
-            one.
+            . A late answer beats a missing one.
           </p>
         </div>
       </div>

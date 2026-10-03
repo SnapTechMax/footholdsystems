@@ -204,7 +204,8 @@ export function offersSchema() {
       name: "The Fix",
       description:
         "We fix everything in your scan report so AI can read your site. One " +
-        "time, delivered in 21 days or your money back. Bonus: a separate " +
+        "time, delivered within 21 days of the kickoff call or your money " +
+        "back. Bonus: a separate " +
         "domain custom-built to give AI what it needs to find you.",
       price: (DONE_FOR_YOU_PRICE_CENTS / 100).toFixed(2),
       priceCurrency: "USD",
