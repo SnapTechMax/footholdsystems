@@ -1,4 +1,5 @@
 import type { ReportFinding, ScanReport } from "@/lib/scan/types";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * The report, rendered. Shared by the two pages that show one.
@@ -194,6 +195,115 @@ export function Finding({
           <LockedBlock seed={finding.checkId} />
         )}
       </div>
+    </div>
+  );
+}
+
+/*
+ * The page copy around the report, shared by /scan/<token> and /audit/<token>.
+ *
+ * One copy of each block so the two pages read the same. The only difference
+ * between them is the paywall, and that is the caller's job, as above.
+ */
+
+const PAGE_HEADING =
+  "text-balance font-display text-4xl font-black uppercase leading-[0.94] tracking-[-0.02em] text-[var(--text)] sm:text-5xl";
+
+function ContactLink({ className }: { className?: string }) {
+  return (
+    <a
+      href={`mailto:${CONTACT_EMAIL}`}
+      className={className ?? "underline underline-offset-4"}
+    >
+      {CONTACT_EMAIL}
+    </a>
+  );
+}
+
+export function ScanRunning({ domain }: { domain: string }) {
+  return (
+    <>
+      <Eyebrow>Scan running</Eyebrow>
+      <h1 className={`mt-5 ${PAGE_HEADING}`}>Still reading {domain}.</h1>
+      <p className="mt-6 max-w-[46ch] text-[17px] leading-[1.65] text-[var(--muted)]">
+        This page updates itself in a minute or two. You can also come back to
+        this link later.
+      </p>
+    </>
+  );
+}
+
+export function ScanFailed({ domain }: { domain: string }) {
+  return (
+    <>
+      <Eyebrow>Something went wrong</Eyebrow>
+      <h1 className={`mt-5 ${PAGE_HEADING}`}>We couldn&apos;t finish this one.</h1>
+      <p className="mt-6 max-w-[48ch] text-[17px] leading-[1.65] text-[var(--muted)]">
+        The scan on {domain} didn&apos;t finish. Usually the site is blocking
+        automated readers, and AI gets blocked too. We fix that.
+      </p>
+      <p className="mt-6 text-[15px] leading-relaxed text-[var(--dim)]">
+        Email{" "}
+        <ContactLink className="text-[var(--muted)] underline underline-offset-4" />{" "}
+        and we&apos;ll run it by hand.
+      </p>
+    </>
+  );
+}
+
+export function PartialNotice() {
+  return (
+    <p className="mt-6 rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-4 text-[14px] leading-relaxed text-[var(--dim)]">
+      Some checks didn&apos;t finish, so this report is incomplete. What&apos;s
+      shown is accurate.
+    </p>
+  );
+}
+
+export function CheckoutFailedNotice({ className = "" }: { className?: string }) {
+  return (
+    <p
+      className={`${className} rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/5 px-4 py-3 text-[14px] leading-relaxed text-[var(--muted)]`}
+    >
+      <span className="font-semibold text-[var(--text)]">
+        That didn&apos;t reach the payment page.{" "}
+      </span>
+      Nothing was charged. Try again, or email <ContactLink /> for a payment
+      link.
+    </p>
+  );
+}
+
+export function FindingsIntro() {
+  return (
+    <>
+      <h2 className="mt-14 font-display text-3xl font-black uppercase leading-[0.98] tracking-[-0.02em] text-[var(--text)] sm:text-4xl">
+        What&apos;s wrong
+      </h2>
+      <p className="mt-4 max-w-[48ch] text-[16px] leading-[1.65] text-[var(--muted)]">
+        Worst first. All fixable. No rebuild needed.
+      </p>
+    </>
+  );
+}
+
+export function AllPassed() {
+  return (
+    <div className="mt-14 rounded-xl border border-[var(--accent)]/40 bg-[var(--panel)] p-7 sm:p-10">
+      <h2 className="font-display text-3xl font-black uppercase leading-[0.98] text-[var(--text)]">
+        Nothing to sell you.
+      </h2>
+      <p className="mt-5 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)]">
+        You passed every check. That&apos;s rare. Whether AI picks you over
+        competitors is something a scanner can&apos;t see. If you want a human to
+        look at that, email me.
+      </p>
+      <a
+        href={`mailto:${CONTACT_EMAIL}`}
+        className="mt-7 inline-flex items-center gap-2.5 rounded-lg bg-[var(--accent)] px-8 py-4 font-display text-base font-extrabold uppercase tracking-[0.02em] text-[var(--ink)] transition-colors hover:bg-[var(--accent-hot)]"
+      >
+        {CONTACT_EMAIL}
+      </a>
     </div>
   );
 }
