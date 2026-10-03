@@ -156,8 +156,9 @@ export default async function AuditPage({
             You didn&apos;t ask for this, so here&apos;s what it is.{" "}
           </span>
           We checked whether AI like ChatGPT can read {report.domain}. This is
-          the full report, fixes included, free. Hand it to whoever runs your
-          website, or have us do it. That offer is at the bottom.
+          the full report, fixes included, free. The fixes are technical, and
+          done in the wrong order they can break what already works. Getting
+          them right is what we do. That offer is at the bottom.
         </p>
       </div>
 

@@ -96,8 +96,9 @@ export function BuildOffer({
           the report for nothing and needs telling that it stays free. */}
       {variant === "outreach" && (
         <p className="mt-16 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-          The report is yours, free. If you&apos;d rather not do the work,
-          we&apos;ll do it.
+          The report is yours, free. The fixes can be done, but they&apos;re
+          technical, and they have to be done the way AI reads a site. That
+          part is our job.
         </p>
       )}
 
@@ -117,7 +118,8 @@ export function BuildOffer({
             We fix everything in this report so AI can read your site.
           </p>
           <p>
-            {count} above, done on {domain}. No briefing, no checking our work.
+            {count} above, done on {domain}, in the right order, without
+            breaking what already works. No briefing, no checking our work.
           </p>
         </div>
 

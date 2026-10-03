@@ -216,7 +216,7 @@ export function buildReportEmail(args: {
                       The diagnosis above is free and it's yours to keep. The repair manual isn't.
                     </p>
                     <p style="margin:0 0 12px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${MUTED};">
-                      For ${SOLUTIONS_PRICE} you get the exact fix for every problem on this list: what to change, where, in what order, written so you or whoever runs your website can just do it. A checklist, in the order it should be done.
+                      For ${SOLUTIONS_PRICE} you get the exact fix for every problem on this list: what to change, where, and in what order. It's technical, so it's written for whoever does the hands-on work on your site. If you'd rather it was done right the first time, your report page has us doing it for you.
                     </p>
                     <p style="margin:0 0 20px;font:400 15px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:${INK};">
                       ${SOLUTIONS_PRICE} is less than an hour of most people's billable time. The answer only has room for one name, and right now it is not spoken for.
@@ -305,7 +305,9 @@ export function buildReportEmail(args: {
           ``,
           `The diagnosis above is free and yours to keep. The repair manual isn't.`,
           `For ${SOLUTIONS_PRICE} you get the exact fix for every problem listed: what to`,
-          `change, where, and in what order. A checklist, in the order it should be done.`,
+          `change, where, and in what order. It's technical, so it's written for whoever`,
+          `does the hands-on work on your site. If you'd rather it was done right the`,
+          `first time, your report page has us doing it for you.`,
           ``,
           `Pay and unlock: ${pay}`,
           `Read your report online: ${link}`,

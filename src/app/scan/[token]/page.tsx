@@ -79,10 +79,13 @@ function Paywall({
         <p>
           For {SOLUTIONS_PRICE} you get the exact fix for{" "}
           {findingCount === 1 ? "the one problem" : `all ${findingCount} problems`}{" "}
-          above: what to change, where, and in what order. Hand it to whoever
-          runs your website.
+          above: what to change, where, and in what order. It&apos;s technical,
+          so it&apos;s written for whoever does the hands-on work on your site.
         </p>
-        <p className="font-semibold text-[var(--text)]">It&apos;s a checklist.</p>
+        <p className="font-semibold text-[var(--text)]">
+          If you&apos;d rather it was done right the first time, we do it for
+          you below.
+        </p>
       </div>
 
       {failed && <CheckoutFailedNotice className="mt-7" />}
