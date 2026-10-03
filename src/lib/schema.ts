@@ -28,8 +28,10 @@ import {
 } from "@/lib/site";
 import {
   DONE_FOR_YOU_PRICE_CENTS,
+  formatPrice,
   RETAINER_MONTHLY_CENTS,
   RETAINER_SETUP_CENTS,
+  RETAINER_SETUP_WITHOUT_FIX_CENTS,
   SOLUTIONS_PRICE_CENTS,
 } from "@/lib/scan/pricing";
 
@@ -178,7 +180,7 @@ export function webSiteSchema() {
  *
  * The retainer is a compound price — setup plus monthly — which schema.org has
  * no clean single-Offer shape for, so it is published as its setup fee with the
- * recurring half in `priceSpecification`. Publishing only the $4,500 would read
+ * recurring half in `priceSpecification`. Publishing only the setup would read
  * as the whole cost of tier 3, which it is not.
  */
 export function offersSchema() {
@@ -215,9 +217,11 @@ export function offersSchema() {
       "@id": `${SITE_ORIGIN}/pricing#retainer`,
       name: "Get Picked",
       description:
-        "Six month engagement. Setup fee plus a monthly retainer, with the " +
-        "same prompts re-run against the same competitors every month.",
-      price: (RETAINER_SETUP_CENTS / 100).toFixed(2),
+        "Six month contract. Every month we add and spread content about the " +
+        "business so AI sees it more often than its competitors. Setup is " +
+        `${formatPrice(RETAINER_SETUP_CENTS)} after The Fix; this price is ` +
+        "setup without it.",
+      price: (RETAINER_SETUP_WITHOUT_FIX_CENTS / 100).toFixed(2),
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       url: `${SITE_ORIGIN}/pricing`,

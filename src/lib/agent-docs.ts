@@ -27,9 +27,9 @@
 import {
   DONE_FOR_YOU_PRICE,
   FIX_CANCEL_FEE,
-  GUARANTEE_PAYOUT,
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
+  RETAINER_SETUP_WITHOUT_FIX_PRICE,
   SOLUTIONS_PRICE,
 } from "@/lib/scan/pricing";
 import { BUSINESS_ADDRESS, CONTACT_EMAIL } from "@/lib/site";
@@ -81,24 +81,27 @@ is also registered as the in-page tool \`run_ai_visibility_scan\`, which takes
 person whose email address it is; the tool refuses without it.`;
 
 /** The offer ladder as prose. Prices interpolated, never typed twice. */
-const PRICING_BLOCK = `- **AI visibility scan — free, one off.** Your score out of 100, every place
-  the site is invisible or ambiguous to an assistant ranked worst first, what
-  each is costing you, and whether an AI can confirm the business is real. It
-  names the problems; it does not give the per-finding fix.
+const PRICING_BLOCK = `- **Free scan — $0.** We run an AI through the website and report exactly what
+  it can and can't see, every problem ranked worst first. It names the
+  problems; it does not give the per-finding fix.
 - **Scan solutions — ${SOLUTIONS_PRICE}, one off.** The exact change that clears
   each finding on the report, ordered by the points it puts back. You or your
-  developer do the work.
-- **The Fix — ${DONE_FOR_YOU_PRICE}, one time.** We fix everything in the scan
+  developer do the work. Not part of the three steps below; sold on the report.
+- **Step 1: The Fix — ${DONE_FOR_YOU_PRICE}, one time.** We fix everything in the scan
   report so AI can read the site. No monthly fees, no contract. Delivered in 21
   days or the money back. Paid in full before work starts; ${FIX_CANCEL_FEE} is
-  non-refundable on cancellation. The ${DONE_FOR_YOU_PRICE} counts toward the
-  next step, Get Picked. Bonus: a separate domain custom-built to give AI
+  non-refundable on cancellation. The ${DONE_FOR_YOU_PRICE} counts toward
+  Step 2. Bonus: a separate domain custom-built to give AI
   everything it needs to find the business, owned by the client when done.
-- **Get Picked — ${RETAINER_SETUP_PRICE} setup plus
-  ${RETAINER_MONTHLY_PRICE} a month, six month minimum.** Everything in The
-  Fix, plus the same buying prompts re-run against the same competitors every
-  month, and a written 180 day condition with ${GUARANTEE_PAYOUT} attached.
-  Books a call rather than taking a card.`;
+- **Step 2: Get Picked — ${RETAINER_SETUP_PRICE} setup after The Fix
+  (${RETAINER_SETUP_WITHOUT_FIX_PRICE} without it), then
+  ${RETAINER_MONTHLY_PRICE} a month on a 6 month contract.** Every month we add
+  and spread content about the business so AI sees it more often than its
+  competitors. No promise that a model will pick it. Books a call rather than
+  taking a card.
+- **Step 3: Your AI Assistant — price to be decided.** A custom AI assistant
+  that answers the business's most common questions and quote requests, 24/7.
+  Setup plus monthly upkeep; not yet for sale.`;
 
 /**
  * /llms.txt — the index.
@@ -256,8 +259,9 @@ FootHold Systems, ${BUSINESS_ADDRESS}, United States. ${CONTACT_EMAIL}.
 export function pricingMd(): string {
   return `# FootHold AEO pricing
 
-Four tiers. The first is free and every paid tier starts from it, because the
-fix list and the build are both produced off the scan report.
+People now ask AI (ChatGPT, Google Gemini, Microsoft Copilot) who to hire. If
+AI can't read a website, it struggles to recommend the business. FootHold fixes
+that in three steps, starting from a free scan.
 
 ${PRICING_BLOCK}
 
@@ -267,8 +271,8 @@ ${PRICING_BLOCK}
   under the one-off tiers, and no minimum term on anything except Get Picked.
 - The scan is genuinely free: no card, and no call required to receive the
   report.
-- Get Picked is not a checkout. A six month commitment with a guarantee
-  attached books a conversation first.
+- Get Picked is not a checkout. A six month commitment books a conversation
+  first.
 
 Start at [${SITE_ORIGIN}/](${SITE_ORIGIN}/) · full detail at
 [${SITE_ORIGIN}/pricing](${SITE_ORIGIN}/pricing) · questions to ${CONTACT_EMAIL}

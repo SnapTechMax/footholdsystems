@@ -28,8 +28,8 @@ export default function HandoverAdminPage() {
         </h1>
         <p className="mt-4 max-w-[62ch] text-[15px] leading-[1.7] text-[#a8a599]">
           For a build that is finished and delivered. This creates the page they
-          read at the end: what they own, what changed, and the retainer offer
-          with the guarantee. Until you publish, that URL returns a 404, so
+          read at the end: what they own, what changed, and the Get Picked
+          offer. Until you publish, that URL returns a 404, so
           there is nothing to stumble onto mid job.
         </p>
         <p className="mt-3 max-w-[62ch] text-[14px] leading-[1.7] text-[#7a786f]">

@@ -32,8 +32,7 @@ export const FIX_CANCEL_FEE = formatPrice(FIX_CANCEL_FEE_CENTS);
  * Tier 3, the retainer. Displayed only, never charged through here.
  *
  * It is not a checkout: the handover page books a call, because a six month
- * commitment with a guarantee attached is not something anyone should be able
- * to click into. Kept in this file anyway, in cents like the others, so a price
+ * commitment is not something anyone should be able to click into. Kept in this file anyway, in cents like the others, so a price
  * that appears on a customer-facing page has exactly one definition.
  *
  * That is not theoretical. Two prices in this codebase have already drifted in
@@ -41,13 +40,18 @@ export const FIX_CANCEL_FEE = formatPrice(FIX_CANCEL_FEE_CENTS);
  * charged $1,497, and a health check reported a hardcoded 1500 the moment the
  * constant moved. Both were copies of a number that should have had one home.
  */
-export const RETAINER_SETUP_CENTS = 450_000;
-export const RETAINER_MONTHLY_CENTS = 250_000;
+/**
+ * Setup is $1,500 for a Fix customer, whose $1,500 counts toward it, and
+ * $3,000 for anyone starting here. Six month contract on the monthly half.
+ */
+export const RETAINER_SETUP_CENTS = 150_000;
+export const RETAINER_SETUP_WITHOUT_FIX_CENTS = 300_000;
+export const RETAINER_MONTHLY_CENTS = 180_000;
 export const RETAINER_SETUP_PRICE = formatPrice(RETAINER_SETUP_CENTS);
+export const RETAINER_SETUP_WITHOUT_FIX_PRICE = formatPrice(
+  RETAINER_SETUP_WITHOUT_FIX_CENTS
+);
 export const RETAINER_MONTHLY_PRICE = formatPrice(RETAINER_MONTHLY_CENTS);
-
-/** What we pay out if the 180 day condition is not met. See the handover page. */
-export const GUARANTEE_PAYOUT = formatPrice(1_500_000);
 
 /**
  * Canonical origin for links in outgoing email.

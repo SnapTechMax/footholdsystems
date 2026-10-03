@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getScanByToken } from "@/lib/scan/db";
 import {
-  GUARANTEE_PAYOUT,
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
 } from "@/lib/scan/pricing";
@@ -23,11 +22,9 @@ import { CONTACT_EMAIL, calendlyRetainerUrl } from "@/lib/site";
  * produced. Putting a monthly commitment in front of somebody who has seen
  * nothing yet asks them to judge it on faith.
  *
- * ON THE GUARANTEE. It is stated as what it is, a payout if a condition is not
- * met, and never as a promise about rankings. voice.md is explicit that nobody
- * controls a model's output and that the copy says so outright. A guarantee
- * written carelessly here would contradict the rest of the site and be the one
- * claim that could not be defended.
+ * NO RANKING PROMISE. voice.md is explicit that nobody controls a model's
+ * output and that the copy says so outright. The $15,000 payout that used to
+ * sit here was dropped on 2026-10-03 to match the "How we help" PDF.
  */
 
 export const dynamic = "force-dynamic";
@@ -205,8 +202,9 @@ export default async function ScanCompletePage({
               month.
             </h3>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
-              Six month minimum, because nothing here shows up faster than that
-              and a shorter commitment would let us both pretend otherwise.
+              Your {RETAINER_SETUP_PRICE} from The Fix already counts toward
+              setup. Six month contract, because nothing here shows up faster
+              than that.
             </p>
 
             <ul className="mt-8 space-y-5">
@@ -226,27 +224,6 @@ export default async function ScanCompletePage({
               ))}
             </ul>
 
-            {/* Stated as a payout on a condition, never as a promise about a
-                ranking. The rest of the site says outright that nobody controls
-                a model's output, and this must not contradict it. */}
-            <div className="mt-9 rounded-lg border-2 border-[var(--accent)]/40 bg-[var(--ink)] p-6">
-              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-                The guarantee
-              </p>
-              <p className="mt-4 text-[16px] leading-[1.7] text-[var(--muted)] sm:text-[17px]">
-                We still cannot promise a model will name you. Nobody can, and
-                we have said so from the first page you read. What we can do is
-                put money against it.
-              </p>
-              <p className="mt-4 text-[17px] font-semibold leading-[1.6] text-[var(--text)]">
-                If you are not ranking on the LLM engines after 180 days, we pay
-                you {GUARANTEE_PAYOUT}.
-              </p>
-              <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
-                We can put that behind it because this work only goes to people
-                who have already done the first half properly. You have.
-              </p>
-            </div>
 
             <div className="mt-9">
               <a
@@ -264,9 +241,9 @@ export default async function ScanCompletePage({
                 </span>
               </a>
               <p className="mt-5 text-[14px] leading-relaxed text-[var(--dim)]">
-                A conversation, not a checkout. This one has a guarantee attached
-                and a six month commitment on both sides, so it is worth twenty
-                minutes before either of us signs anything.
+                A conversation, not a checkout. It is a six month commitment on
+                both sides, so it is worth twenty minutes before either of us
+                signs anything.
               </p>
             </div>
           </div>

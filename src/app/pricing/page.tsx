@@ -6,8 +6,8 @@ import {
   FIX_CANCEL_FEE,
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
+  RETAINER_SETUP_WITHOUT_FIX_PRICE,
   SOLUTIONS_PRICE,
-  GUARANTEE_PAYOUT,
 } from "@/lib/scan/pricing";
 import {
   breadcrumbSchema,
@@ -40,9 +40,10 @@ import {
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    `What FootHold AEO costs: ${SOLUTIONS_PRICE} for the full fix list from your ` +
-    `scan, ${DONE_FOR_YOU_PRICE} for The Fix, and ${RETAINER_SETUP_PRICE} ` +
-    `plus ${RETAINER_MONTHLY_PRICE} a month for Get Picked. The scan itself is free.`,
+    `What FootHold AEO costs: a free scan, ${SOLUTIONS_PRICE} for the fix list, ` +
+    `${DONE_FOR_YOU_PRICE} for The Fix, and ${RETAINER_SETUP_PRICE} setup ` +
+    `(${RETAINER_SETUP_WITHOUT_FIX_PRICE} without The Fix) plus ` +
+    `${RETAINER_MONTHLY_PRICE} a month for Get Picked.`,
   alternates: {
     canonical: "/pricing",
     types: { "text/markdown": "/pricing.md" },
@@ -52,71 +53,101 @@ export const metadata: Metadata = {
 const display = "font-display";
 
 /**
- * The ladder, in order, with what each tier is and is not.
+ * The ladder, in order, matching the "How we help" PDF: the free scan, then
+ * three steps. The $49 fix list is not in the PDF but is still sold on the
+ * report page, so it stays listed between the scan and Step 1.
  *
  * `not` is the important column and the reason this reads as a reference rather
  * than a pitch: the fastest way to make a price legible is to say what it stops
- * at. It is also the honest answer to the question a buyer actually has, which
- * is not "what do I get" but "what will I still be missing".
+ * at.
  */
 const TIERS = [
   {
     id: "scan",
-    name: "AI visibility scan",
+    step: "Start",
+    name: "Free scan",
     price: "Free",
     cadence: "One off",
-    lead: "Where you stand today, scored out of 100.",
+    lead: "See what AI can and can't see on your site.",
     gets: [
-      "Your AI visibility score: how readable, clear and recommendable your site is to an assistant right now.",
-      "Every place your site is invisible or ambiguous to an AI, ranked worst first.",
-      "What each one is costing you, in plain English.",
-      "Whether an AI can confirm your business is real when it goes looking for you by name.",
+      "We run an AI through your website. It shows exactly what the AI can and can't see.",
+      "Every problem, ranked worst first, with what each one costs you.",
+      "You get the report free.",
     ],
-    not: "It tells you what is wrong. It does not tell you the exact change that fixes each one — that is the tier below.",
+    not: "It tells you what is wrong. It does not fix it.",
   },
   {
     id: "solutions",
+    step: "Optional",
     name: "Scan solutions",
     price: SOLUTIONS_PRICE,
     cadence: "One off",
     lead: "The fix for every finding, written out.",
     gets: [
-      "The specific change that clears each finding on your report, not a category of change.",
-      "Ordered by the points it puts back, so the first hour of work is the one that moves the number most.",
-      "Written to be handed to whoever maintains your site, or done yourself.",
+      "The specific change that clears each finding on your report.",
+      "Ordered so the first hour of work moves the score most.",
+      "Technical, so it is written for whoever does the hands-on work on your site.",
     ],
-    not: "You or your developer do the work. Nothing is implemented for you.",
+    not: "Nothing is implemented for you. That is The Fix.",
   },
   {
     id: "done-for-you",
+    step: "Step 1",
     name: "The Fix",
     price: DONE_FOR_YOU_PRICE,
     cadence: "One time",
     lead: "Make AI able to read your site.",
     gets: [
-      "We fix everything in your scan report so AI can read your site.",
+      "We fix everything in the report so AI can read your site.",
       `${DONE_FOR_YOU_PRICE}, one time. No monthly fees. No contract.`,
       "Guarantee: service delivered in 21 days or you get your money back.",
-      `The ${DONE_FOR_YOU_PRICE} counts toward our next step (Get Picked) if you continue.`,
-      `Paid in full before work starts. If you cancel, ${FIX_CANCEL_FEE} is non-refundable.`,
-      "Bonus: We also create a separate domain that's custom-built to give AI everything it needs to find you. When we're done, the domain is yours.",
+      `The ${DONE_FOR_YOU_PRICE} counts toward Step 2 if you continue.`,
+      "Bonus: we also create a separate domain that's custom-built to give AI everything it needs to find you. When we're done, the domain is yours.",
     ],
-    not: "It makes your site readable to AI. It does not promise that AI will pick you. That is the next step.",
+    not: "It makes your site readable to AI. Getting AI to pick you is Step 2.",
   },
   {
     id: "retainer",
+    step: "Step 2",
     name: "Get Picked",
     price: `${RETAINER_SETUP_PRICE} + ${RETAINER_MONTHLY_PRICE}/mo`,
-    cadence: "Six month minimum",
-    lead: "The Fix, then somebody keeping the seat.",
+    cadence: "6 month contract",
+    lead: "Make AI choose you over competitors.",
     gets: [
-      "Everything in The Fix.",
-      "The same buying prompts re-run against the same competitors every month, so movement is measured rather than asserted.",
-      "Continued work on whichever of the four signals is currently costing you the answer.",
-      `A written 180 day condition with ${GUARANTEE_PAYOUT} attached to it.`,
+      "Now AI can read your site. Next, we give it more reasons to pick you.",
+      "Every month we add and spread content about your business, so AI sees you more often than your competitors.",
+      `Setup: ${RETAINER_SETUP_PRICE} if you did The Fix (${RETAINER_SETUP_WITHOUT_FIX_PRICE} if you didn't).`,
+      `Monthly: ${RETAINER_MONTHLY_PRICE}. Contract: 6 months.`,
     ],
-    not: "Not a checkout. A six month commitment with a guarantee attached is a conversation first, which is why this tier books a call instead of taking a card.",
+    not: "Nobody controls what a model says, so this is not a promise that AI will pick you. It starts with a call, not a checkout.",
   },
+  {
+    id: "assistant",
+    step: "Step 3",
+    name: "Your AI Assistant",
+    price: "Price TBD",
+    cadence: "Setup + monthly upkeep",
+    lead: "Handle the new customers for you.",
+    gets: [
+      "More customers means more questions and quote requests. That eats your day.",
+      "We build a custom AI assistant that answers your most common questions and quote requests, 24/7.",
+    ],
+    not: "Pricing isn't set yet. Get in touch if you want it.",
+  },
+];
+
+/** The PDF's "pricing at a glance" table. */
+const AT_A_GLANCE = [
+  ["Free scan", "Report: what AI can't see on your site", "$0", "$0"],
+  ["Scan solutions", "The written fix for every finding", SOLUTIONS_PRICE, "$0"],
+  ["1. The Fix", "AI can read your site", DONE_FOR_YOU_PRICE, "$0"],
+  [
+    "2. Get Picked",
+    "AI recommends you over competitors",
+    `${RETAINER_SETUP_PRICE} (${RETAINER_SETUP_WITHOUT_FIX_PRICE} without Step 1)`,
+    RETAINER_MONTHLY_PRICE,
+  ],
+  ["3. AI Assistant", "AI answers customer questions and quotes", "TBD", "TBD"],
 ];
 
 export default function PricingPage() {
@@ -161,15 +192,13 @@ export default function PricingPage() {
             Pricing
           </h1>
           <p className="mt-6 max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Four tiers, and the first one is free. Every price on this page is
-            the price you pay — there is no setup fee hiding under the one-off
-            tiers and no minimum term on anything except Get Picked, which
-            says so.
+            People now ask AI (ChatGPT, Google Gemini, Microsoft Copilot) who to
+            hire. If AI can&apos;t read your website, it struggles to recommend
+            you. Foothold fixes that in three steps.
           </p>
           <p className="mt-4 max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Start with the scan. It is the only one of the four that tells you
-            whether you need the other three, and you can read it and act on it
-            without ever speaking to us.
+            Start with the free scan. It shows what AI can&apos;t see on your
+            site.
           </p>
         </div>
       </section>
@@ -178,6 +207,9 @@ export default function PricingPage() {
         <div className="space-y-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
           {TIERS.map((tier) => (
             <div key={tier.id} id={tier.id} className="bg-[var(--bg)] p-6 sm:p-8">
+              <p className="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--accent)]">
+                {tier.step}
+              </p>
               <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
                 <h2
                   className={`${display} text-2xl font-black uppercase tracking-tight text-[var(--text)] sm:text-3xl`}
@@ -220,13 +252,46 @@ export default function PricingPage() {
           <h2
             className={`${display} text-2xl font-black uppercase tracking-tight text-[var(--text)] sm:text-3xl`}
           >
+            Pricing at a glance
+          </h2>
+          <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--line)]">
+            <table className="w-full min-w-[520px] text-left text-[15px]">
+              <thead className="bg-[var(--panel)] font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--dim)]">
+                <tr>
+                  <th className="px-4 py-3 font-bold">Step</th>
+                  <th className="px-4 py-3 font-bold">What you get</th>
+                  <th className="px-4 py-3 font-bold">Upfront</th>
+                  <th className="px-4 py-3 font-bold">Monthly</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--line)]">
+                {AT_A_GLANCE.map(([step, gets, upfront, monthly]) => (
+                  <tr key={step}>
+                    <td className="px-4 py-3 font-semibold text-[var(--text)]">{step}</td>
+                    <td className="px-4 py-3 text-[var(--muted)]">{gets}</td>
+                    <td className="px-4 py-3 font-mono text-[var(--accent)]">{upfront}</td>
+                    <td className="px-4 py-3 font-mono text-[var(--accent)]">{monthly}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-[15px] leading-relaxed text-[var(--dim)]">
+            Step 1 is paid in full before work starts. If you cancel,{" "}
+            {FIX_CANCEL_FEE} is non-refundable.
+          </p>
+        </div>
+
+        <div className="mt-14">
+          <h2
+            className={`${display} text-2xl font-black uppercase tracking-tight text-[var(--text)] sm:text-3xl`}
+          >
             How to start
           </h2>
           <p className="mt-4 max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Every tier begins with the free scan, including the paid ones — the
-            fix list and The Fix are both built off your report, so there is
-            no order in which buying first would save you a step. Run the scan,
-            read what it says, and decide then.
+            Everything starts with the free scan. The fix list and The Fix are
+            both built off your report. Run the scan, read what it says, and
+            decide then.
           </p>
 
           <div className="mt-8">
