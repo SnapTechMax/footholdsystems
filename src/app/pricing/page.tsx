@@ -7,7 +7,6 @@ import {
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
   RETAINER_SETUP_WITHOUT_FIX_PRICE,
-  SOLUTIONS_PRICE,
 } from "@/lib/scan/pricing";
 import {
   breadcrumbSchema,
@@ -40,8 +39,7 @@ import {
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    `What FootHold AEO costs: a free scan, ${SOLUTIONS_PRICE} for the fix list, ` +
-    `${DONE_FOR_YOU_PRICE} for The Fix, and ${RETAINER_SETUP_PRICE} setup ` +
+    `What FootHold AEO costs: a free scan, ${DONE_FOR_YOU_PRICE} for The Fix, and ${RETAINER_SETUP_PRICE} setup ` +
     `(${RETAINER_SETUP_WITHOUT_FIX_PRICE} without The Fix) plus ` +
     `${RETAINER_MONTHLY_PRICE} a month for Get Picked.`,
   alternates: {
@@ -54,8 +52,7 @@ const display = "font-display";
 
 /**
  * The ladder, in order, matching the "How we help" PDF: the free scan, then
- * three steps. The $49 fix list is not in the PDF but is still sold on the
- * report page, so it stays listed between the scan and Step 1.
+ * three steps. The $49 fix list is not listed: Max gives the fixes away.
  *
  * `not` is the important column and the reason this reads as a reference rather
  * than a pitch: the fastest way to make a price legible is to say what it stops
@@ -75,20 +72,6 @@ const TIERS = [
       "You get the report free.",
     ],
     not: "It tells you what is wrong. It does not fix it.",
-  },
-  {
-    id: "solutions",
-    step: "Optional",
-    name: "Scan solutions",
-    price: SOLUTIONS_PRICE,
-    cadence: "One off",
-    lead: "The fix for every finding, written out.",
-    gets: [
-      "The specific change that clears each finding on your report.",
-      "Ordered so the first hour of work moves the score most.",
-      "Technical, so it is written for whoever does the hands-on work on your site.",
-    ],
-    not: "Nothing is implemented for you. That is The Fix.",
   },
   {
     id: "done-for-you",
@@ -139,7 +122,6 @@ const TIERS = [
 /** The PDF's "pricing at a glance" table. */
 const AT_A_GLANCE = [
   ["Free scan", "Report: what AI can't see on your site", "$0", "$0"],
-  ["Scan solutions", "The written fix for every finding", SOLUTIONS_PRICE, "$0"],
   ["1. The Fix", "AI can read your site", DONE_FOR_YOU_PRICE, "$0"],
   [
     "2. Get Picked",
@@ -296,8 +278,8 @@ export default function PricingPage() {
             How to start
           </h2>
           <p className="mt-4 max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted)]">
-            Everything starts with the free scan. The fix list and The Fix are
-            both built off your report. Run the scan, read what it says, and
+            Everything starts with the free scan. The Fix is built off your
+            report. Run the scan, read what it says, and
             decide then.
           </p>
 

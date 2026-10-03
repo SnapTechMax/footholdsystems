@@ -30,7 +30,6 @@ import {
   RETAINER_MONTHLY_PRICE,
   RETAINER_SETUP_PRICE,
   RETAINER_SETUP_WITHOUT_FIX_PRICE,
-  SOLUTIONS_PRICE,
 } from "@/lib/scan/pricing";
 import { BUSINESS_ADDRESS, CONTACT_EMAIL } from "@/lib/site";
 import { SITE_ORIGIN } from "@/lib/schema";
@@ -84,9 +83,6 @@ person whose email address it is; the tool refuses without it.`;
 const PRICING_BLOCK = `- **Free scan — $0.** We run an AI through the website and report exactly what
   it can and can't see, every problem ranked worst first. It names the
   problems; it does not give the per-finding fix.
-- **Scan solutions — ${SOLUTIONS_PRICE}, one off.** The exact change that clears
-  each finding on the report, ordered by the points it puts back. You or your
-  developer do the work. Not part of the three steps below; sold on the report.
 - **Step 1: The Fix — ${DONE_FOR_YOU_PRICE}, one time.** We fix everything in the scan
   report so AI can read the site. No monthly fees, no contract. Delivered within 21 days of
   the kickoff call or the money back. Paid in full before work starts; ${FIX_CANCEL_FEE} is

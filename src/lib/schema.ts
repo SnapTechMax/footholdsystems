@@ -32,7 +32,6 @@ import {
   RETAINER_MONTHLY_CENTS,
   RETAINER_SETUP_CENTS,
   RETAINER_SETUP_WITHOUT_FIX_CENTS,
-  SOLUTIONS_PRICE_CENTS,
 } from "@/lib/scan/pricing";
 
 /** Canonical origin. www, matching metadataBase, the sitemap and the canonicals. */
@@ -185,19 +184,6 @@ export function webSiteSchema() {
  */
 export function offersSchema() {
   return [
-    {
-      "@type": "Offer",
-      "@id": `${SITE_ORIGIN}/pricing#solutions`,
-      name: "Scan solutions",
-      description:
-        "The full fix list for your AI visibility scan: every finding with the " +
-        "exact change that clears it, ranked by the points it puts back.",
-      price: (SOLUTIONS_PRICE_CENTS / 100).toFixed(2),
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-      url: `${SITE_ORIGIN}/pricing`,
-      seller: { "@id": ORG_ID },
-    },
     {
       "@type": "Offer",
       "@id": `${SITE_ORIGIN}/pricing#done-for-you`,
