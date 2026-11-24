@@ -7,7 +7,7 @@ import type { Resend } from "resend";
  * WHY THIS EXISTS. Resend matches a contact's address byte for byte. It keeps
  * whatever string the contact was created with, and every lookup or update by
  * email compares against that exact string — so a contact created as
- * LIDIA@EASTAXPREP.COM cannot be reached as lidia@eastaxprep.com. The API
+ * JANE@EXAMPLE.COM cannot be reached as jane@example.com. The API
  * answers 404 and the SDK reports it as an ordinary error, which is the worst
  * possible shape for this: nothing throws, nothing retries, and the caller
  * carries on believing it updated somebody.
