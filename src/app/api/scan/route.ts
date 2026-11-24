@@ -31,7 +31,7 @@ import { HONEYPOT_FIELD, MIN_FILL_MS } from "@/lib/spam";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// The scanner's own deadline is 75s (lib/scan/scanner); this has to outlast it
+// The scanner's own deadline is 45s (lib/scan/scanner); this has to outlast it
 // or `after()` gets killed mid-scan and the sweeper has to redo the work.
 export const maxDuration = 90;
 

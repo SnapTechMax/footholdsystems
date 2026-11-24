@@ -34,7 +34,7 @@ export const maxDuration = 300;
  * safety net: it recovers eighteen scans an hour, which a single advertising
  * spike can outrun. The number is now set by the two things that actually bind.
  *
- * Wall clock: maxDuration is 300s, a scan has a 75s deadline of its own and
+ * Wall clock: maxDuration is 300s, a scan has a 45s deadline of its own and
  * takes three to ten seconds on a healthy site, and the email pass ahead of
  * this one takes a few seconds. Eight sequential scans fit even if several hit
  * their deadline.
